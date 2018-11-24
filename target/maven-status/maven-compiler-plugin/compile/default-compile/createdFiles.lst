@@ -1,0 +1,5 @@
+com/cug/geo3d/GridInfo.class
+com/cug/geo3d/SpatialRecordReader.class
+com/cug/geo3d/EdgeFileSplit.class
+com/cug/geo3d/SpatialTextInputFormat.class
+com/cug/geo3d/App.class
