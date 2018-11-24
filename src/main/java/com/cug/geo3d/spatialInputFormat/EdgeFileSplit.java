@@ -16,7 +16,7 @@
  * limitations under the License.
  */
 
-package com.cug.geo3d;
+package com.cug.geo3d.spatialInputFormat;
 
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;

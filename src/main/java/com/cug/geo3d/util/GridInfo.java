@@ -1,4 +1,4 @@
-package com.cug.geo3d;
+package com.cug.geo3d.util;
 
 public class GridInfo {
   public long rowId;

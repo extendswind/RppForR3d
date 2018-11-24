@@ -42,8 +42,6 @@ class GridIndex {
   public long rowCellSize;
   public long colCellSize;
 
-//    public long xGridSize;
-//    public long yGridSize;
 }
 
 class GridCellInfo {
@@ -103,13 +101,16 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
   private Configuration conf;
 
 
+  /////////////////////////////////////////////
   // Spatial
   private GridIndex gridIndex;
-  private final String GRID_INDEX = "grid";  //　开头为此字符串的文件名为grid index TODO
+  public static final String GRID_INDEX_PREFIX = "grid";  //　开头为此字符串的文件名为grid index TODO
 
   private final String SPATIAL_STORAGE_PATH = "/user/sparkl/spatial_data";
+
   // 假设上传文件的位置（考虑读取NFS文件或者HBase存储对应关系） TODO
   private final String GRID_INDEX_PATH = "/tmp/"; //TODO 上传空间文件时记录先前上传文件的位置
+  //////////////////////////////////////////
 
   /**
    * A miss of that many heartbeats is tolerated for replica deletion policy.
@@ -194,7 +195,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
    */
   boolean getGridIndexFromFilename(String srcFile, GridCellInfo pos) {
     String[] filenameSplit = FilenameUtils.getName(srcFile).split("_");
-    if (filenameSplit.length != 4 && filenameSplit[0] != GRID_INDEX) {
+    if (filenameSplit.length != 4 && filenameSplit[0] != GRID_INDEX_PREFIX) {
       return false;
     }
 
@@ -202,7 +203,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
       pos = new GridCellInfo();
     pos.rowId = Long.parseLong(filenameSplit[2]);
     pos.colId = Long.parseLong(filenameSplit[3]);
-    pos.filename = GRID_INDEX + "_" + filenameSplit[1];
+    pos.filename = GRID_INDEX_PREFIX + "_" + filenameSplit[1];
     pos.filepath = FilenameUtils.getPath(srcFile);
     return true;
   }

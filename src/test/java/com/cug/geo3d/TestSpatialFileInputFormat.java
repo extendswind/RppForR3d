@@ -17,21 +17,15 @@
  */
 package com.cug.geo3d;
 
-import com.google.common.base.Function;
-import com.google.common.collect.Iterables;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Sets;
+import com.cug.geo3d.spatialInputFormat.EdgeFileSplit;
+import com.cug.geo3d.spatialInputFormat.SpatialTextInputFormat;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
-import org.apache.hadoop.mapred.SplitLocationInfo;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.Job;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
-import org.apache.hadoop.mapreduce.lib.input.FileSplit;
-import org.apache.hadoop.mapreduce.lib.input.InvalidInputException;
-import org.apache.hadoop.mapreduce.lib.input.TextInputFormat;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -40,13 +34,11 @@ import org.junit.runner.RunWith;
 import org.junit.runners.Parameterized;
 import org.junit.runners.Parameterized.Parameters;
 
-import javax.annotation.Nullable;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 
 @RunWith(value = Parameterized.class)
 public class TestSpatialFileInputFormat {
@@ -94,7 +86,7 @@ public class TestSpatialFileInputFormat {
     conf.setClass("fs.test.impl", MockFileSystem.class, FileSystem.class);
 
     // grid size contained in filename
-    conf.set(FileInputFormat.INPUT_DIR, "test:///spatial/grid_test.dat/info_3_3");
+    conf.set(FileInputFormat.INPUT_DIR, "test:///spatial/test.dat/info_3_3");
     return conf;
   }
 
@@ -102,10 +94,13 @@ public class TestSpatialFileInputFormat {
   public void testSpatialFileInputFormat() throws IOException {
     Configuration conf = getSpatialConfiguration();
     conf.set(FileInputFormat.INPUT_DIR_RECURSIVE, "true");
-//    conf.setInt(FileInputFormat.LIST_STATUS_NUM_THREADS, numThreads);
     Job job = Job.getInstance(conf);
     FileInputFormat<?, ?> fileInputFormat = new SpatialTextInputFormat();
     List<InputSplit> splits = fileInputFormat.getSplits(job);
+
+    Assert.assertTrue(splits.get(0) instanceof EdgeFileSplit);
+
+
   }
 
   ////////////////////////////////////
@@ -427,7 +422,7 @@ public class TestSpatialFileInputFormat {
                 new Path("test:/a1/a2/file2")),
             new FileStatus(10, false, 1, 151, 150,
                 new Path("test:/a1/a2/file3")) };
-      } else if (f.toString().equals("test:/spatial/grid_test.dat")) {
+      } else if (f.toString().equals("test:/spatial/test.dat")) {
         return new FileStatus[] {
             new FileStatus(10, false, 1, 150, 150,
                 new Path("test:/spatial/grid_test.dat/grid_test.dat_0_0")),
