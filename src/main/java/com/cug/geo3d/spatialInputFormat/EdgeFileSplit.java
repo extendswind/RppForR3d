@@ -18,6 +18,7 @@
 
 package com.cug.geo3d.spatialInputFormat;
 
+import com.cug.geo3d.util.GridIndexInfo;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.fs.Path;
@@ -37,6 +38,11 @@ public class EdgeFileSplit extends InputSplit {
   private Path []files;  // 左上/右上/左下/右下 四个位置的文件
   private long length;
   private String[] hosts;  // 暂时只传出所有文件都在的host node
+
+  private int splitId; // colId + rowId * width
+
+  private GridIndexInfo gridIndexInfo;
+
 //  private SplitLocationInfo[] hostInfos;
 
   public EdgeFileSplit() {}
@@ -48,68 +54,21 @@ public class EdgeFileSplit extends InputSplit {
    * @param length the number of bytes in the file to process
    * @param hosts the list of hosts containing the block, possibly null
    */
-  public EdgeFileSplit(Path []files, long length, String[] hosts) {
+  public EdgeFileSplit(Path[] files, long length, String[] hosts, int splitId, int gridRowSize, int gridColSize,
+                       int cellRowSize, int cellColSize) {
     this.files = files;
-    this.length = length; // how to calculate??
+    this.length = length;
     this.hosts = hosts;
+    this.splitId = splitId;
+    gridIndexInfo = new GridIndexInfo(gridRowSize, gridColSize, cellRowSize, cellColSize);
   }
 
-//  /** Constructs a split with host and cached-blocks information
-//  *
-//  * @param files the file name
-//  * @param start the position of the first byte in the file to process
-//  * @param length the number of bytes in the file to process
-//  * @param hosts the list of hosts containing the block
-//  * @param inMemoryHosts the list of hosts containing the block in memory
-//  */
-// public EdgeFileSplit(Path[] files, long start, long length, String[] hosts,
-//                      String[] inMemoryHosts) {
-//   this(files, length, hosts);
-//   hostInfos = new SplitLocationInfo[hosts.length];
-//   for (int i = 0; i < hosts.length; i++) {
-//     // because N will be tiny, scanning is probably faster than a HashSet
-//     boolean inMemory = false;
-//     for (String inMemoryHost : inMemoryHosts) {
-//       if (inMemoryHost.equals(hosts[i])) {
-//         inMemory = true;
-//         break;
-//       }
-//     }
-//     hostInfos[i] = new SplitLocationInfo(hosts[i], inMemory);
-//   }
-// }
-//
   /** The file containing this split's data. */
   public Path[] getPaths() { return files; }
-  
-//  /** The position of the first byte in the file to process. */
-//  public long getStart() { return start; }
   
   /** The number of bytes in the file to process. */
   @Override
   public long getLength() { return length; }
-
-//  @Override
-//  public String toString() { return file + ":" + start + "+" + length; }
-
-  ////////////////////////////////////////////
-  // Writable methods
-  ////////////////////////////////////////////
-
-//  @Override
-//  public void write(DataOutput out) throws IOException {
-//    Text.writeString(out, file.toString());
-//    out.writeLong(start);
-//    out.writeLong(length);
-//  }
-//
-//  @Override
-//  public void readFields(DataInput in) throws IOException {
-//    file = new Path(Text.readString(in));
-//    start = in.readLong();
-//    length = in.readLong();
-//    hosts = null;
-//  }
 
   @Override
   public String[] getLocations() throws IOException {
@@ -119,7 +78,16 @@ public class EdgeFileSplit extends InputSplit {
       return this.hosts;
     }
   }
-  
+
+
+  public int getSplitId() {
+    return splitId;
+  }
+
+  public GridIndexInfo getGridIndexInfo() {
+    return gridIndexInfo;
+  }
+
 //  default value return null, represent no memory location considered
 // @Override
 //  @Evolving

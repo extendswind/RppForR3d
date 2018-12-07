@@ -13,76 +13,123 @@ import java.net.URI;
 
 public class SpatialMapUploader {
 
-    public SpatialMapUploader() {
+  public SpatialMapUploader() {
 
+  }
+
+  public static void generateBinaryTestData(String filepath, int sizeX, int sizeY) throws IOException {
+    DataOutputStream outputStream = new DataOutputStream(new BufferedOutputStream(new FileOutputStream(new File(filepath))));
+    for (int i = 0; i < sizeY; i++) {
+      for (int j = 0; j < sizeX; j++) {
+        outputStream.writeInt(j + i * sizeX);
+      }
+    }
+    outputStream.close();
+  }
+
+  public static void splitSpatialDataBinary(String filepath, int fileRow, int fileCol, int row, int col) throws IOException {
+    DataInputStream inputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(new File(filepath))));
+    String filename = FilenameUtils.getName(filepath);
+    String uploadFilepath = filepath + "_upload";
+
+
+    DataOutputStream[] resultWriters = new DataOutputStream[row * col];
+    FileUtils.forceMkdir(new File(uploadFilepath));
+
+    for (int i = 0; i < row; i++) {
+      for (int j = 0; j < col; j++) {
+        FileOutputStream fileOutputStream = new FileOutputStream(new File(uploadFilepath +
+                "/grid_" + filename + "_" + Integer.toString(i) + "_" + Integer.toString(j)));
+        resultWriters[i * col + j] = new DataOutputStream(new BufferedOutputStream(fileOutputStream));
+      }
     }
 
-    public static void generateTestData(String filename, int sizeX, int sizeY) throws IOException {
-        FileOutputStream fileOutputStream = new FileOutputStream(new File(filename));
-        BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fileOutputStream));
+    int blockWidth = fileCol / col;
+    int blockHeight = fileRow / row;
 
-        for (int i = 0; i < sizeY; i++) {
-            for (int j = 0; j < sizeX; j++) {
-                bufferedWriter.write(Integer.toString(j + i * sizeX));
-                bufferedWriter.write("\n");
-            }
-        }
-        bufferedWriter.flush();
-        bufferedWriter.close();
+    int nextInt;
+    for (int i = 0; i < fileRow; i++) {
+      for (int j = 0; j < fileCol; j++) {
+        nextInt = inputStream.readInt();
+        int writerId = (i / blockHeight) * col + (j / blockWidth);
+        resultWriters[writerId].writeInt(nextInt);
+      }
     }
 
-    public void splitSpatialData(String filepath, int fileRow, int fileCol, int row, int col) throws IOException {
-        BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(filepath))));
-        String filename = FilenameUtils.getName(filepath);
-        String uploadFilepath = filepath + "_upload";
+    inputStream.close();
+    for (int i = 0; i < row * col; i++) {
+      resultWriters[i].close();
+    }
 
-        BufferedWriter[] resultWriters = new BufferedWriter[row * col];
-        FileUtils.forceMkdir(new File(uploadFilepath));
-
-        for (int i = 0; i < row; i++) {
-            for (int j = 0; j < col; j++) {
-                FileOutputStream fileOutputStream = new FileOutputStream(new File(uploadFilepath +
-                        "/grid_" + filename + "_" + Integer.toString(i) + "_" + Integer.toString(j)));
-                resultWriters[i * col + j] = new BufferedWriter(new OutputStreamWriter(fileOutputStream));
-            }
-        }
-
-        int blockWidth = fileCol / col;
-        int blockHeight = fileRow / row;
-
-        String lineText = null;
-        for (int i = 0; i < fileRow; i++) {
-            for (int j = 0; j < fileCol; j++) {
-                lineText = br.readLine();
-                int writerid = (i / blockHeight) * col + (j / blockWidth);
-                resultWriters[writerid].write(lineText + "\n");
-            }
-        }
-
-        br.close();
-        for (int i = 0; i < row * col; i++) {
-            resultWriters[i].flush();
-            resultWriters[i].close();
-        }
+  }
 
 
+  public static void generateTestData(String filename, int sizeX, int sizeY) throws IOException {
+    FileOutputStream fileOutputStream = new FileOutputStream(new File(filename));
+    BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fileOutputStream));
+
+    for (int i = 0; i < sizeY; i++) {
+      for (int j = 0; j < sizeX; j++) {
+        bufferedWriter.write(Integer.toString(j + i * sizeX));
+        bufferedWriter.write("\n");
+      }
+    }
+    bufferedWriter.flush();
+    bufferedWriter.close();
+  }
+
+  public static void splitSpatialData(String filepath, int fileRow, int fileCol, int row, int col) throws IOException {
+    BufferedReader br = new BufferedReader(new InputStreamReader(new FileInputStream(new File(filepath))));
+    String filename = FilenameUtils.getName(filepath);
+    String uploadFilepath = filepath + "_upload";
+
+    BufferedWriter[] resultWriters = new BufferedWriter[row * col];
+    FileUtils.forceMkdir(new File(uploadFilepath));
+
+    for (int i = 0; i < row; i++) {
+      for (int j = 0; j < col; j++) {
+        FileOutputStream fileOutputStream = new FileOutputStream(new File(uploadFilepath +
+                "/grid_" + filename + "_" + Integer.toString(i) + "_" + Integer.toString(j)));
+        resultWriters[i * col + j] = new BufferedWriter(new OutputStreamWriter(fileOutputStream));
+      }
+    }
+
+    int blockWidth = fileCol / col;
+    int blockHeight = fileRow / row;
+
+    String lineText = null;
+    for (int i = 0; i < fileRow; i++) {
+      for (int j = 0; j < fileCol; j++) {
+        lineText = br.readLine();
+        int writerid = (i / blockHeight) * col + (j / blockWidth);
+        resultWriters[writerid].write(lineText + "\n");
+      }
+    }
+
+    br.close();
+    for (int i = 0; i < row * col; i++) {
+      resultWriters[i].flush();
+      resultWriters[i].close();
     }
 
 
-    public static void main(String[] args) throws IOException {
+  }
 
 
-        Configuration conf = new Configuration();
-        conf.set("dfs.blocksize", "1048576");
-        FileSystem hdfs = FileSystem.get(URI.create("hdfs://hadoopmaster:9000/"), conf);
+  public static void main(String[] args) throws IOException {
 
-        String uploadFile = "testfile.dat";
-        Path uploadFilePath = new Path(uploadFile);
 
-        Path spatialDataPath = new Path("/user/sparkl/spatial_data");
-        if(!hdfs.exists(spatialDataPath)){
-            hdfs.mkdirs(spatialDataPath);
-        }
+    Configuration conf = new Configuration();
+    conf.set("dfs.blocksize", "1048576");
+    FileSystem hdfs = FileSystem.get(URI.create("hdfs://hadoopmaster:9000/"), conf);
+
+    String uploadFile = "testfile.dat";
+    Path uploadFilePath = new Path(uploadFile);
+
+    Path spatialDataPath = new Path("/user/sparkl/spatial_data");
+    if (!hdfs.exists(spatialDataPath)) {
+      hdfs.mkdirs(spatialDataPath);
+    }
 
 //        hdfs.mkdirs(new Path("hdfs://tdh1:9000/" + FilenameUtils.getBaseName(uploadFile)));
 //
@@ -92,8 +139,8 @@ public class SpatialMapUploader {
 //                new Path("hdfs://tdh1:9000/testData"));
 
 
-        hdfs.close();
+    hdfs.close();
 
-    }
+  }
 
 }

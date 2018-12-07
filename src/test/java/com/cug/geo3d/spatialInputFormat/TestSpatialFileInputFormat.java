@@ -6,19 +6,18 @@
  * to you under the Apache License, Version 2.0 (the
  * "License"); you may not use this file except in compliance
  * with the License.  You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.cug.geo3d;
+package com.cug.geo3d.spatialInputFormat;
 
-import com.cug.geo3d.spatialInputFormat.EdgeFileSplit;
-import com.cug.geo3d.spatialInputFormat.SpatialTextInputFormat;
+import com.cug.geo3d.util.GridCellInfo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -52,6 +51,8 @@ public class TestSpatialFileInputFormat {
 
   private int numThreads;
 
+  // 下面 parameters标签下的 1、5 会作为参数构造两个 TestSpatialFileInputFormat
+  // 后面的每一个test都会执行两次
   public TestSpatialFileInputFormat(int numThreads) {
     this.numThreads = numThreads;
     LOG.info("Running with numThreads: " + numThreads);
@@ -59,7 +60,7 @@ public class TestSpatialFileInputFormat {
 
   @Parameters
   public static Collection<Object[]> data() {
-    Object[][] data = new Object[][] { { 1 }, { 5 }};
+    Object[][] data = new Object[][]{{1}, {5}};
     return Arrays.asList(data);
   }
 
@@ -77,7 +78,6 @@ public class TestSpatialFileInputFormat {
   }
 
 
-
   /////////////////////////////////
 
   private Configuration getSpatialConfiguration() {
@@ -86,12 +86,12 @@ public class TestSpatialFileInputFormat {
     conf.setClass("fs.test.impl", MockFileSystem.class, FileSystem.class);
 
     // grid size contained in filename
-    conf.set(FileInputFormat.INPUT_DIR, "test:///spatial/test.dat/info_3_3");
+    conf.set(FileInputFormat.INPUT_DIR, "test:///spatial/test.dat/info_3_3_30_30");
     return conf;
   }
 
   @Test
-  public void testSpatialFileInputFormat() throws IOException {
+  public void testSpatialFileInputFormat() throws IOException, InterruptedException {
     Configuration conf = getSpatialConfiguration();
     conf.set(FileInputFormat.INPUT_DIR_RECURSIVE, "true");
     Job job = Job.getInstance(conf);
@@ -99,6 +99,8 @@ public class TestSpatialFileInputFormat {
     List<InputSplit> splits = fileInputFormat.getSplits(job);
 
     Assert.assertTrue(splits.get(0) instanceof EdgeFileSplit);
+    Assert.assertEquals(splits.get(0).getLocations()[0], "d1" );
+    Assert.assertEquals(splits.get(1).getLocations()[0], "d2" );
 
 
   }
@@ -241,7 +243,7 @@ public class TestSpatialFileInputFormat {
 //    }
 //  }
 
-//  public static List<Path> configureTestSimple(Configuration conf, FileSystem localFs)
+  //  public static List<Path> configureTestSimple(Configuration conf, FileSystem localFs)
 //      throws IOException {
 //    Path base1 = new Path(TEST_ROOT_DIR, "input1");
 //    Path base2 = new Path(TEST_ROOT_DIR, "input2");
@@ -409,57 +411,111 @@ public class TestSpatialFileInputFormat {
 
     @Override
     public FileStatus[] listStatus(Path f) throws FileNotFoundException,
-        IOException {
+            IOException {
       if (f.toString().equals("test:/a1")) {
-        return new FileStatus[] {
-            new FileStatus(0, true, 1, 150,
-                    150, new Path("test:/a1/a2")),
-            new FileStatus(10, false, 1, 150,
-                    150, new Path("test:/a1/file1")) };
+        return new FileStatus[]{
+                new FileStatus(0, true, 1, 150,
+                        150, new Path("test:/a1/a2")),
+                new FileStatus(10, false, 1, 150,
+                        150, new Path("test:/a1/file1"))};
       } else if (f.toString().equals("test:/a1/a2")) {
-        return new FileStatus[] {
-            new FileStatus(10, false, 1, 150, 150,
-                new Path("test:/a1/a2/file2")),
-            new FileStatus(10, false, 1, 151, 150,
-                new Path("test:/a1/a2/file3")) };
+        return new FileStatus[]{
+                new FileStatus(10, false, 1, 150, 150,
+                        new Path("test:/a1/a2/file2")),
+                new FileStatus(10, false, 1, 151, 150,
+                        new Path("test:/a1/a2/file3"))};
       } else if (f.toString().equals("test:/spatial/test.dat")) {
-        return new FileStatus[] {
-            new FileStatus(10, false, 1, 150, 150,
-                new Path("test:/spatial/grid_test.dat/grid_test.dat_0_0")),
-            new FileStatus(10, false, 1, 150, 150,
-                new Path("test:/spatial/grid_test.dat/grid_test.dat_0_1")),
-            new FileStatus(10, false, 1, 150, 150,
-                new Path("test:/spatial/grid_test.dat/grid_test.dat_1_0")),
-            new FileStatus(10, false, 1, 150, 150,
-                new Path("test:/spatial/grid_test.dat/grid_test.dat_1_1")),};
+        return new FileStatus[]{
+                new FileStatus(10, false, 1, 150, 150,
+                        new Path("test:/spatial/grid_test.dat/grid_test.dat_0_0")),
+                new FileStatus(10, false, 1, 150, 150,
+                        new Path("test:/spatial/grid_test.dat/grid_test.dat_0_1")),
+                new FileStatus(10, false, 1, 150, 150,
+                        new Path("test:/spatial/grid_test.dat/grid_test.dat_1_0")),
+                new FileStatus(10, false, 1, 150, 150,
+                        new Path("test:/spatial/grid_test.dat/grid_test.dat_1_1")),};
       }
       return new FileStatus[0];
     }
 
     @Override
     public FileStatus[] globStatus(Path pathPattern, PathFilter filter)
-        throws IOException {
-      return new FileStatus[] { new FileStatus(10, true, 1, 150, 150,
-          pathPattern) };
+            throws IOException {
+      return new FileStatus[]{new FileStatus(10, true, 1, 150, 150,
+              pathPattern)};
     }
 
     @Override
     public FileStatus[] listStatus(Path f, PathFilter filter)
-        throws FileNotFoundException, IOException {
+            throws FileNotFoundException, IOException {
       return this.listStatus(f);
     }
 
     @Override
+    public BlockLocation[] getFileBlockLocations(Path path, long start, long len)
+            throws IOException {
+      GridCellInfo cellInfo = new GridCellInfo();
+      GridCellInfo.getGridIndexFromFilename(path.getName(), cellInfo);
+
+
+//        BlockLocation blockLocationD1 = new BlockLocation(new String[]{"d0:50010", "d1:50010"},
+//                        new String[]{"d0", "d1"}, new String[]{"d1"},
+//                        new String[0], 0, len, false);
+//      BlockLocation blockLocationD2 =   new BlockLocation(new String[]{"d1:50010", "d2:50010"},
+//                        new String[]{"d1", "d2"}, new String[]{"d1"},
+//                        new String[0], 0, len, false);
+//      BlockLocation blockLocationD3 =                 new BlockLocation(new String[]{"d2:50010", "d3:50010"},
+//                        new String[]{"d2", "d3"}, new String[]{"d2"},
+//                        new String[0], 0, len, false);
+
+      // 暂以列为单位划分到数据节点
+      if (cellInfo.colId == 0) {
+        return new BlockLocation[]{
+                new BlockLocation(new String[]{"d0:50010", "d1:50010"},
+                        new String[]{"d0", "d1"}, new String[]{"d1"},
+                        new String[0], 0, len, false)};
+      }if (cellInfo.colId == 1) {
+        return new BlockLocation[]{
+                new BlockLocation(new String[]{"d1:50010", "d2:50010"},
+                        new String[]{"d1", "d2"}, new String[]{"d1"},
+                        new String[0], 0, len, false)};
+      } else {
+        return new BlockLocation[]{
+                new BlockLocation(new String[]{"d2:50010", "d3:50010"},
+                        new String[]{"d2", "d3"}, new String[]{"d2"},
+                        new String[0], 0, len, false)};
+      }
+    }
+
+    // TODO not use??
+    @Override
     public BlockLocation[] getFileBlockLocations(FileStatus file, long start, long len)
-        throws IOException {
-      return new BlockLocation[] {
-          new BlockLocation(new String[] { "localhost:50010", "otherhost:50010" },
-              new String[] { "localhost", "otherhost" }, new String[] { "localhost" },
-              new String[0], 0, len, false) };    }
+            throws IOException {
+      GridCellInfo cellInfo = new GridCellInfo();
+      GridCellInfo.getGridIndexFromFilename(file.getPath().getName(), cellInfo);
+
+      // 暂以列为单位划分到数据节点
+      if (cellInfo.colId == 0) {
+        return new BlockLocation[]{
+                new BlockLocation(new String[]{"d0:50010", "d1:50010"},
+                        new String[]{"d0", "d1"}, new String[]{"d1"},
+                        new String[0], 0, len, false)};
+      }if (cellInfo.colId == 1) {
+        return new BlockLocation[]{
+                new BlockLocation(new String[]{"d1:50010", "d2:50010"},
+                        new String[]{"d1", "d2"}, new String[]{"d1"},
+                        new String[0], 0, len, false)};
+      } else {
+        return new BlockLocation[]{
+                new BlockLocation(new String[]{"d2:50010", "d3:50010"},
+                        new String[]{"d2", "d3"}, new String[]{"d2"},
+                        new String[0], 0, len, false)};
+      }
+    }
 
     @Override
     protected RemoteIterator<LocatedFileStatus> listLocatedStatus(Path f,
-        PathFilter filter) throws FileNotFoundException, IOException {
+                                                                  PathFilter filter) throws FileNotFoundException, IOException {
       ++numListLocatedStatusCalls;
       return super.listLocatedStatus(f, filter);
     }

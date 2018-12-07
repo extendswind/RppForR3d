@@ -1,5 +1,8 @@
 package com.cug.geo3d.util;
 
+/**
+ * not used now
+ */
 public class GridInfo {
   public long rowId;
   public long colId;

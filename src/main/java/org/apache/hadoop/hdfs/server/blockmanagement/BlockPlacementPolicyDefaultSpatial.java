@@ -17,6 +17,7 @@
  */
 package org.apache.hadoop.hdfs.server.blockmanagement;
 
+import com.cug.geo3d.util.GridCellInfo;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -42,23 +43,6 @@ class GridIndex {
   public long rowCellSize;
   public long colCellSize;
 
-}
-
-class GridCellInfo {
-  public long rowId;
-  public long colId;
-  public String filename; // 不带grid编号的文件名
-  public String filepath;
-
-  GridCellInfo() {
-  }
-
-  GridCellInfo(GridCellInfo info) {
-    this.rowId = info.rowId;
-    this.colId = info.colId;
-    this.filename = info.filename;
-    this.filepath = info.filepath;
-  }
 }
 
 class CellStorageInfo {
@@ -173,7 +157,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
     String filename = FilenameUtils.getName(srcPath);
     // 通过文件名判断是否为空间索引，并取索引中的位置
     GridCellInfo gridCellInfo = new GridCellInfo();
-    if (getGridIndexFromFilename(filename, gridCellInfo)) { // 对于网格索引
+    if (GridCellInfo.getGridIndexFromFilename(filename, gridCellInfo)) { // 对于网格索引
       DatanodeStorageInfo[] results = chooseTargetSpatial(gridCellInfo, numOfReplicas, writer, chosenNodes, returnChosenNodes,
               excludedNodes, blocksize, storagePolicy);
       if (results != null)
@@ -186,27 +170,6 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
   }
 
 
-  /**
-   * 通过文件名判断是否为grid index
-   *
-   * @param srcFile 带路径的文件名
-   * @param pos     如果是，则通过pos传出位置
-   * @return grid index时返回ture 否则false
-   */
-  boolean getGridIndexFromFilename(String srcFile, GridCellInfo pos) {
-    String[] filenameSplit = FilenameUtils.getName(srcFile).split("_");
-    if (filenameSplit.length != 4 && filenameSplit[0] != GRID_INDEX_PREFIX) {
-      return false;
-    }
-
-    if (pos == null)
-      pos = new GridCellInfo();
-    pos.rowId = Long.parseLong(filenameSplit[2]);
-    pos.colId = Long.parseLong(filenameSplit[3]);
-    pos.filename = GRID_INDEX_PREFIX + "_" + filenameSplit[1];
-    pos.filepath = FilenameUtils.getPath(srcFile);
-    return true;
-  }
 
 
   public DatanodeStorageInfo[] chooseTargetSpatial(GridCellInfo gridCellInfo,
