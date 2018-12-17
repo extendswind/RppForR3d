@@ -34,6 +34,7 @@ import java.util.concurrent.TimeUnit;
 
 
 /**
+ * TODO  change name, remove text
  * An {@link InputFormat} for plain text files.  Files are broken into lines.
  * Either linefeed or carriage-return are used to signal end of line.  Keys are
  * the position in the file, and data are the line of text..

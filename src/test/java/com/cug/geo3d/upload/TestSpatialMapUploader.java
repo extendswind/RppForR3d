@@ -8,13 +8,11 @@ import java.io.*;
 
 public class TestSpatialMapUploader {
 
-  private SpatialMapUploader spatialMapUploader;
 
   public TestSpatialMapUploader() {
-    spatialMapUploader = new SpatialMapUploader();
   }
 
-  @Test(timeout = 5000)
+  @Test //(timeout = 5000)
   public void generateBinaryTestDataTest() throws IOException {
     SpatialMapUploader.generateBinaryTestData("test/test.dat", 1000, 10000);
     DataInputStream inputStream = new DataInputStream(new BufferedInputStream(new FileInputStream("test/test.dat")));
@@ -30,16 +28,16 @@ public class TestSpatialMapUploader {
     SpatialMapUploader.splitSpatialDataBinary("test/test.dat", 1000, 10000, 5, 5);
   }
 
-
-  @Test(timeout = 5000)
-  public void generateTestDataTest() throws IOException {
-    SpatialMapUploader.generateTestData("test/test.dat", 1000, 10000);
-  }
-
-  @Test
-  public void splitSpatialDataTest() throws IOException {
-    SpatialMapUploader.splitSpatialData("test/test.dat", 1000, 10000, 5, 5);
-  }
+//  不需要自动化运行，需要用的时候再调，或者改个名字加备注....
+//  @Test(timeout = 5000)
+//  public void generateTestDataTest() throws IOException {
+//    SpatialMapUploader.generateTestData("test/test.dat", 1000, 10000);
+//  }
+//
+//  @Test
+//  public void splitSpatialDataTest() throws IOException {
+//    SpatialMapUploader.splitSpatialData("test/test.dat", 1000, 10000, 5, 5);
+//  }
 
   @Test
   public void justTest() throws IOException {

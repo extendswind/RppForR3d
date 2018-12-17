@@ -212,7 +212,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
       addToExcludedNodes(storage.getDatanodeDescriptor(), excludedNodes);
     }
 
-    // left-top grid node will get a random place
+    // left-top grid node will get a random place, the same to default block placement
     if (gridCellInfo.rowId == 0 && gridCellInfo.colId == 0) {
       return chooseTarget(numOfReplicas, writer, chosenNodes, returnChosenNodes,
               excludedNodes, blocksize, storagePolicy);

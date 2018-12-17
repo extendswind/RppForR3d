@@ -22,25 +22,30 @@ import com.cug.geo3d.util.GridIndexInfo;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.io.Text;
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
+import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
 
 /** A section of an input file.  Returned by {@link
  * InputFormat#getSplits(JobContext)} and passed to
+ *
+ * Implemention of InputSplit should also implement Writable for spark reading!!!!!!!!!!!
+ *
  * {@link InputFormat#createRecordReader(InputSplit, TaskAttemptContext)}. */
 @InterfaceAudience.Public
 @InterfaceStability.Stable
-public class EdgeFileSplit extends InputSplit {
+public class EdgeFileSplit extends InputSplit implements Writable {
   private Path []files;  // 左上/右上/左下/右下 四个位置的文件
   private long length;
   private String[] hosts;  // 暂时只传出所有文件都在的host node
-
   private int splitId; // colId + rowId * width
-
   private GridIndexInfo gridIndexInfo;
 
 //  private SplitLocationInfo[] hostInfos;
@@ -86,6 +91,65 @@ public class EdgeFileSplit extends InputSplit {
 
   public GridIndexInfo getGridIndexInfo() {
     return gridIndexInfo;
+  }
+
+  /**
+   * Serialize the fields of this object to <code>out</code>.
+   *
+   * @param out <code>DataOuput</code> to serialize this object into.
+   * @throws IOException
+   */
+  @Override
+  public void write(DataOutput out) throws IOException {
+    // files
+    out.writeInt(files.length);
+    for (Path p: files ) {
+      Text.writeString(out, p.toString());
+    }
+
+    out.writeLong(length); // length
+
+    out.writeInt(hosts.length); // hosts
+    for(String s : hosts){
+      Text.writeString(out, s);
+    }
+
+    out.writeInt(splitId); // splitId
+
+    // gridIndexInfo
+    out.writeInt(gridIndexInfo.gridRowSize);
+    out.writeInt(gridIndexInfo.gridColSize);
+    out.writeInt(gridIndexInfo.cellRowSize);
+    out.writeInt(gridIndexInfo.cellColSize);
+  }
+
+  /**
+   * Deserialize the fields of this object from <code>in</code>.
+   * <p>
+   * <p>For efficiency, implementations should attempt to re-use storage in the
+   * existing object where possible.</p>
+   *
+   * @param in <code>DataInput</code> to deseriablize this object from.
+   * @throws IOException
+   */
+  @Override
+  public void readFields(DataInput in) throws IOException {
+    // files
+    files = new Path[in.readInt()];
+    for(int i=0; i<files.length; i++){
+      files[i] = new Path(Text.readString(in));
+    }
+
+    length = in.readLong();
+
+    hosts = new String[in.readInt()];
+    for(int i=0; i<hosts.length; i++){
+      hosts[i] = Text.readString(in);
+    }
+
+    splitId = in.readInt();
+
+    gridIndexInfo = new GridIndexInfo(in.readInt(), in.readInt(), in.readInt(), in.readInt());
   }
 
 //  default value return null, represent no memory location considered

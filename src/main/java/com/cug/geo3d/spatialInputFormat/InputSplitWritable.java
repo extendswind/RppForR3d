@@ -7,18 +7,24 @@ import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
 
+/**
+ * 用于SpatialInputFormat得到的value类型
+ * 由{@link SpatialRecordReader} 生成
+ *
+ * 记录每一个split的宽、高、数据
+ *
+ */
 public class InputSplitWritable implements Writable{
 
   private IntWritable width;
   private IntWritable height;
-
   private IntWritable[] data;
 
-  InputSplitWritable(){
+  public InputSplitWritable(){
 
   }
 
-  InputSplitWritable(IntWritable width, IntWritable height, IntWritable[] data){
+  public InputSplitWritable(IntWritable width, IntWritable height, IntWritable[] data){
     setAttributes(width, height, data);
   }
 

@@ -40,7 +40,8 @@ import java.io.IOException;
 //          value(width/height/value)
 
 /**
- * Treats keys as offset in file and value as line.
+ * 将InputSplit解析成键值对
+ * 一个inputSplit只得到一个键值对，其中key为splitId，value为{@link InputSplitWritable}，记录所在splitId的宽，高和具体数据
  */
 @InterfaceAudience.LimitedPrivate({"MapReduce", "Pig"})
 @InterfaceStability.Evolving
@@ -60,19 +61,18 @@ public class SpatialRecordReader extends RecordReader<LongWritable, InputSplitWr
 
   public SpatialRecordReader() throws IOException {
     inputStreams = new FSDataInputStream[4];
-
   }
 
 
   public void initialize(InputSplit genericSplit,
                          TaskAttemptContext context) throws IOException {
     inputSplit = (EdgeFileSplit) genericSplit;
-    Configuration job = context.getConfiguration();
+    Configuration conf = context.getConfiguration();
     final Path[] paths = inputSplit.getPaths();
 
 
     // open the file and seek to the start of the inputSplit
-    final FileSystem fs = paths[0].getFileSystem(job);
+    final FileSystem fs = paths[0].getFileSystem(conf);
     for (int i = 0; i < paths.length; i++) {
       inputStreams[i] = fs.open(paths[i]);
     }
@@ -116,24 +116,26 @@ public class SpatialRecordReader extends RecordReader<LongWritable, InputSplitWr
 
 
     // left-top file
+    inputStreams[0].skip(startRow * gridIndexInfo.cellColSize * 4); // skip {startRow} rows
     for (int row = 0; row < gridIndexInfo.cellRowSize - startRow; row++) {
-      inputStreams[0].skip(startCol);
+      inputStreams[0].skip(startCol * 4);
       for (int col = 0; col < gridIndexInfo.cellColSize - startCol; col++) {
         dataValue[row * valueWidth + col] = new IntWritable(inputStreams[0].readInt());
       }
     }
 
     // right-top file
+    inputStreams[0].skip(startRow * gridIndexInfo.cellColSize * 4); // skip {startRow} rows
     for (int row = 0; row < gridIndexInfo.cellRowSize - startRow; row++) {
       for (int col = gridIndexInfo.cellColSize - startCol; col < valueWidth; col++) {
         dataValue[row * valueWidth + col] = new IntWritable(inputStreams[1].readInt());
       }
-      inputStreams[1].skip(gridIndexInfo.cellColSize - endCol);
+      inputStreams[1].skip((gridIndexInfo.cellColSize - endCol) * 4);
     }
 
     // left-bottom file
     for (int row = gridIndexInfo.cellRowSize - startRow; row < valueHeight; row++) {
-      inputStreams[2].skip(startCol);
+      inputStreams[2].skip(startCol * 4);
       for (int col = 0; col < gridIndexInfo.cellColSize - startCol; col++) {
         dataValue[row * valueWidth + col] = new IntWritable(inputStreams[2].readInt());
       }
@@ -144,7 +146,7 @@ public class SpatialRecordReader extends RecordReader<LongWritable, InputSplitWr
       for (int col = gridIndexInfo.cellColSize - startCol; col < valueWidth; col++) {
         dataValue[row * valueWidth + col] = new IntWritable(inputStreams[3].readInt());
       }
-      inputStreams[3].skip(gridIndexInfo.cellColSize - endCol);
+      inputStreams[3].skip((gridIndexInfo.cellColSize - endCol) * 4);
     }
 
     value = new InputSplitWritable(

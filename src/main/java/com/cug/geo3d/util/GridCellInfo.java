@@ -3,6 +3,8 @@ package com.cug.geo3d.util;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.hdfs.server.blockmanagement.BlockPlacementPolicyDefaultSpatial;
 
+import java.util.Objects;
+
 
 /**
  * mainly used in BlockPlacementPolicyDefaultSpatial for *get cell info from filename*
@@ -32,7 +34,7 @@ public class GridCellInfo {
    */
   public static boolean getGridIndexFromFilename(String srcFile, GridCellInfo pos) {
     String[] filenameSplit = FilenameUtils.getName(srcFile).split("_");
-    if (filenameSplit.length != 4 && filenameSplit[0] != BlockPlacementPolicyDefaultSpatial.GRID_INDEX_PREFIX) {
+    if (filenameSplit.length != 4 || !filenameSplit[0].equals(BlockPlacementPolicyDefaultSpatial.GRID_INDEX_PREFIX)) {
       return false;
     }
 
