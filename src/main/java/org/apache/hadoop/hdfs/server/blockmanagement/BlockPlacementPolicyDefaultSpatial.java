@@ -45,11 +45,6 @@ class GridIndex {
 
 }
 
-class CellStorageInfo {
-  public long rowId;
-  public long colId;
-  public String[] blockPlaces;
-}
 
 /**
  * The class is responsible for choosing the desired number of targets
@@ -89,6 +84,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
   // Spatial
   private GridIndex gridIndex;
   public static final String GRID_INDEX_PREFIX = "grid";  //　开头为此字符串的文件名为grid index TODO
+ // private boolean isBalanceUpload;  // considering data balancing among datanode instead of random block placement
 
   private final String SPATIAL_STORAGE_PATH = "/user/sparkl/spatial_data";
 

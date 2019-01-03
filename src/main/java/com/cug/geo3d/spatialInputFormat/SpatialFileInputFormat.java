@@ -41,9 +41,9 @@ import java.util.concurrent.TimeUnit;
  */
 @InterfaceAudience.Public
 @InterfaceStability.Stable
-public class SpatialTextInputFormat extends FileInputFormat<LongWritable, InputSplitWritable> {
+public class SpatialFileInputFormat extends FileInputFormat<LongWritable, InputSplitWritable> {
 
-  private static final Log LOG = LogFactory.getLog(SpatialTextInputFormat.class);
+  private static final Log LOG = LogFactory.getLog(SpatialFileInputFormat.class);
   private int gridRowSize = 0;
   private int gridColSize = 0;
   private int cellRowSize = 0;
@@ -121,6 +121,7 @@ public class SpatialTextInputFormat extends FileInputFormat<LongWritable, InputS
     for (int i = 0; i < gridRowSize - 1; i++) {
       for (int j = 0; j < gridColSize - 1; j++) {
 
+        // to get a best host
         HashMap<String, Integer> nodeCount = new HashMap<>();
         Path[] edgeFilePaths = new Path[4];
 
@@ -128,10 +129,10 @@ public class SpatialTextInputFormat extends FileInputFormat<LongWritable, InputS
         for (int ii = 0; ii < 2; ii++) {
           for (int jj = 0; jj < 2; jj++) {
             String cellName = spatialFilepath + BlockPlacementPolicyDefaultSpatial.GRID_INDEX_PREFIX + "_" +
-                    spatialFilename + "_" + Integer.toString(i+ii)  + "_" + Integer.toString(j+jj);
-            edgeFilePaths[jj + ii*2] = new Path(cellName);
+                    spatialFilename + "_" + Integer.toString(i + ii) + "_" + Integer.toString(j + jj);
+            edgeFilePaths[jj + ii * 2] = new Path(cellName);
 //            FileStatus fileStatus = new FileStatus();//fs.getFileStatus(new Path(cellName));
-            BlockLocation[] blkLocations = fs.getFileBlockLocations(edgeFilePaths[jj+ii*2], 0, 1);
+            BlockLocation[] blkLocations = fs.getFileBlockLocations(edgeFilePaths[jj + ii * 2], 0, 1);
             String[] blkHosts = blkLocations[0].getHosts();
             for (String host : blkHosts) {
               if (nodeCount.containsKey(host)) {
@@ -143,6 +144,7 @@ public class SpatialTextInputFormat extends FileInputFormat<LongWritable, InputS
           }
         }
 
+        // sort by the replica number the host has
         List<Map.Entry<String, Integer>> tempList = new LinkedList<>(nodeCount.entrySet());
         Collections.sort(tempList, new Comparator<Map.Entry<String, Integer>>() {
           @Override
@@ -151,13 +153,25 @@ public class SpatialTextInputFormat extends FileInputFormat<LongWritable, InputS
           }
         });
 
-        String[] hosts = new String[3];
-        for(int ii=0; ii<3; ii++){
-          hosts[ii] = tempList.get(ii).getKey();
+        // if a host have all replicas of four cell
+        List<String> hosts = new LinkedList<>();
+        for (int ii = 0; ii < tempList.size(); ii++) {
+          if (tempList.get(ii).getValue() == 4)
+            hosts.add(tempList.get(ii).getKey());
         }
 
-        int splitId = j + i* gridColSize;
-        splits.add(new EdgeFileSplit(edgeFilePaths, 1, hosts, splitId, gridRowSize, gridColSize, cellRowSize, cellColSize));
+        // if no host have all replicas of four cell
+        // put the first 3
+        if (hosts.isEmpty()) {
+          for (int ii = 0; ii < 3 && ii < tempList.size(); ii++) {
+            hosts.add(tempList.get(ii).getKey());
+          }
+        }
+
+        int splitId = j + i * gridColSize;
+        splits.add(new EdgeFileSplit(edgeFilePaths, 1, hosts.toArray(new String[hosts.size()]),
+                splitId, gridRowSize, gridColSize, cellRowSize, cellColSize));
+
       }
     }
 

@@ -1,10 +1,9 @@
 package com.cug.geo3d.spatialInputFormat;
 
-import com.cug.geo3d.upload.SpatialMapUploader;
+import com.cug.geo3d.upload.SpatialDataGeneratorAndUploader;
 import org.apache.commons.io.FileUtils;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
@@ -13,8 +12,6 @@ import org.junit.*;
 import org.junit.rules.TemporaryFolder;
 
 import java.io.*;
-
-import static org.junit.Assert.*;
 
 public class TestSpatialRecordReader {
 
@@ -41,9 +38,9 @@ public class TestSpatialRecordReader {
   @Before
   public void generateData() throws IOException {
     FileUtils.forceMkdir(new File("test_recordReader"));
-    SpatialMapUploader.generateBinaryTestData("test_recordReader/test.dat",
+    SpatialDataGeneratorAndUploader.generateBinaryTestData("test_recordReader/test.dat",
             gridRowSize * cellRowSize, gridColSize * cellColSize);
-    SpatialMapUploader.splitSpatialDataBinary("test_recordReader/test.dat",
+    SpatialDataGeneratorAndUploader.splitSpatialDataBinary("test_recordReader/test.dat",
             gridRowSize * cellRowSize, gridColSize * cellColSize,
             gridRowSize, gridColSize);
   }

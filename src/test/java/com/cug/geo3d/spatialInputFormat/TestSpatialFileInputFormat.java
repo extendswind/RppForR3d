@@ -95,18 +95,21 @@ public class TestSpatialFileInputFormat {
     Configuration conf = getSpatialConfiguration();
     conf.set(FileInputFormat.INPUT_DIR_RECURSIVE, "true");
     Job job = Job.getInstance(conf);
-    FileInputFormat<?, ?> fileInputFormat = new SpatialTextInputFormat();
+    FileInputFormat<?, ?> fileInputFormat = new SpatialFileInputFormat();
     List<InputSplit> splits = fileInputFormat.getSplits(job);
 
     Assert.assertTrue(splits.get(0) instanceof EdgeFileSplit);
+    Assert.assertTrue(splits.size() == 4);
+    Assert.assertTrue(splits.get(0).getLength() == 1);
+    Assert.assertTrue(splits.get(0).getLocations().length == 1);
+    Assert.assertTrue(splits.get(1).getLength() == 1);
+    Assert.assertTrue(splits.get(1).getLocations().length == 1);
     Assert.assertEquals(splits.get(0).getLocations()[0], "d1" );
     Assert.assertEquals(splits.get(1).getLocations()[0], "d2" );
-
-
   }
 
-  ////////////////////////////////////
 
+  ////////////////////////////////////
 //
 //  @Test
 //  public void testNumInputFilesRecursively() throws Exception {

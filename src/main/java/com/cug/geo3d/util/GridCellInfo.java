@@ -10,7 +10,7 @@ import java.util.Objects;
  * mainly used in BlockPlacementPolicyDefaultSpatial for *get cell info from filename*
 */
 public class GridCellInfo {
-  public int rowId;  // TODO  change to int
+  public int rowId;
   public int colId;
   public String filename; // 不带grid编号的文件名
   public String filepath;
