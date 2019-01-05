@@ -1,2 +1,6 @@
+/mnt/data/liuzhipeng/spatialStorageHadoop/spatialStorage/src/test/java/org/apache/hadoop/hdfs/server/blockmanagement/TestReplicationPolicySpatial.java
+/mnt/data/liuzhipeng/spatialStorageHadoop/spatialStorage/src/test/java/com/cug/geo3d/spatialInputFormat/TestSpatialFileInputFormat.java
 /mnt/data/liuzhipeng/spatialStorageHadoop/spatialStorage/src/test/java/com/cug/geo3d/AppTest.java
-/mnt/data/liuzhipeng/spatialStorageHadoop/spatialStorage/src/test/java/com/cug/geo3d/TestSpatialFileInputFormat.java
+/mnt/data/liuzhipeng/spatialStorageHadoop/spatialStorage/src/test/java/com/cug/geo3d/util/TestGridCellInfo.java
+/mnt/data/liuzhipeng/spatialStorageHadoop/spatialStorage/src/test/java/com/cug/geo3d/upload/TestSpatialDataGeneratorAndUploader.java
+/mnt/data/liuzhipeng/spatialStorageHadoop/spatialStorage/src/test/java/com/cug/geo3d/spatialInputFormat/TestSpatialRecordReader.java

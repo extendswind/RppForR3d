@@ -34,6 +34,7 @@ import org.apache.hadoop.net.Node;
 import org.apache.hadoop.net.NodeBase;
 
 import java.io.*;
+import java.lang.reflect.Array;
 import java.util.*;
 
 import static org.apache.hadoop.util.Time.monotonicNow;
@@ -44,6 +45,17 @@ class GridIndex {
   public long colCellSize;
 
 }
+
+/**
+ * grid index file
+ * <p>
+ * block placement of previous upload spatial file is used in current block placement, so using a file to store the
+ * information to avoiding the visit of namenode.
+ * <p>
+ * gridRowId gridColId datanode1 datanode2 ....
+ * <p>
+ * gridRowId and gridColId is -1 represent the split id which will be got in InputFormat, used for datanode balance.
+ */
 
 
 /**
@@ -84,7 +96,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
   // Spatial
   private GridIndex gridIndex;
   public static final String GRID_INDEX_PREFIX = "grid";  //　开头为此字符串的文件名为grid index TODO
- // private boolean isBalanceUpload;  // considering data balancing among datanode instead of random block placement
+  private boolean isBalanceUpload;  // considering data balancing among datanode instead of random block placement
 
   private final String SPATIAL_STORAGE_PATH = "/user/sparkl/spatial_data";
 
@@ -101,6 +113,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
     gridIndex = new GridIndex();
     gridIndex.rowCellSize = 5;
     gridIndex.colCellSize = 5;
+    isBalanceUpload = true;
 
   }
 
@@ -166,8 +179,6 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
   }
 
 
-
-
   public DatanodeStorageInfo[] chooseTargetSpatial(GridCellInfo gridCellInfo,
                                                    int numOfReplicas,
                                                    Node writer,
@@ -180,15 +191,15 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
     // final result of the algorithm
     final List<DatanodeStorageInfo> results = new ArrayList<DatanodeStorageInfo>();
 
-    boolean avoidStaleNodes = (stats != null
-            && stats.isAvoidingStaleDataNodesForWrite());
+    boolean avoidStaleNodes = false;  // TODO  for debug
+    //(stats != null && stats.isAvoidingStaleDataNodesForWrite());
 
     // 根据集群结构调整副本的数量，输入已经选择的副本数和还要选择的副本数，返回调整后的副本数与MaxNodesPerRack
     int[] functionResult = getMaxNodesPerRack(chosenNodes.size(), numOfReplicas);
     numOfReplicas = functionResult[0];
     int maxNodesPerRack = functionResult[1];
 
-        // 一些变量的初始化
+    // 一些变量的初始化
     // choose storage types; use fallbacks for unavailable storages
     final List<StorageType> requiredStorageTypes = storagePolicy
             .chooseStorageTypes((short) numOfReplicas,
@@ -198,7 +209,8 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
             getRequiredStorageTypes(requiredStorageTypes);
 
     // prefer not using other replica position
-    Set<Node> softExcludedNodes = new TreeSet<Node>();
+    //Set<Node> softExcludedNodes = new TreeSet<Node>();
+    Set<Node> softExcludedNodes = new LinkedHashSet<>();
 
     if (excludedNodes == null)
       excludedNodes = new TreeSet<>();
@@ -246,12 +258,15 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
           }
         }
       }
+
+
       chooseTargetSpatial(3, excludedNodes, softExcludedNodes, results, avoidStaleNodes,
-            maxNodesPerRack, storageTypes, blocksize);
+              maxNodesPerRack, storageTypes, blocksize, gridCellInfo.filename);
       return results.toArray(new DatanodeStorageInfo[results.size()]);
     }
-    // just the same to the first row
-    else{
+    // the first two replicas are just the same to the first row
+    // and other replicas are placed randomly
+    else {
       GridCellInfo firstRowPos = new GridCellInfo(gridCellInfo);
       firstRowPos.rowId = 0;
       GridCellInfo[] positions = new GridCellInfo[1];
@@ -293,7 +308,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
                                                     Set<Node> softExcludedNodes) {
 //          throws NotEnoughReplicasException {
 
-    TreeSet<Node> tmpSoftExcludedNodes = new TreeSet<>();
+    LinkedHashSet<Node> tmpSoftExcludedNodes = new LinkedHashSet<>();
     tmpSoftExcludedNodes.addAll(softExcludedNodes);
     DatanodeStorageInfo result = null;
 
@@ -308,10 +323,15 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
                 results, avoidStaleNodes, storageTypes);
         break;
       } catch (NotEnoughReplicasException e) {
-        if(!tmpSoftExcludedNodes.isEmpty())
-          tmpSoftExcludedNodes.remove(tmpSoftExcludedNodes.last());
+        //  avoid unbalanced problem when different number in each rack
+        if(isBalanceUpload && scope.startsWith("~")){
+          break;
+        }
+        if (!tmpSoftExcludedNodes.isEmpty())
+          tmpSoftExcludedNodes.remove(tmpSoftExcludedNodes.toArray(new Node[0])[tmpSoftExcludedNodes.size()-1]);
       }
-    }while (!tmpSoftExcludedNodes.isEmpty());
+
+    } while (!tmpSoftExcludedNodes.isEmpty());
 
     if (result != null)
       excludedNodes.add(result.getDatanodeDescriptor());
@@ -355,7 +375,8 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
                               final boolean avoidStaleNodes,
                               final int maxNodesPerRack,
                               EnumMap<StorageType, Integer> storageTypes,
-                              final long blocksize
+                              final long blocksize,
+                              String previousBlockFilename
   ) {
     int resultNumber = results.size();
     int additionalNumOfReplicas = numOfReplicas - resultNumber;
@@ -366,14 +387,54 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
 
     // 第二个副本
     if (resultNumber <= 1) {
-      // TODO  chooseRandomSpatial 失败时的处理
+
+      // TODO  reading previous datanode
+
+      if (isBalanceUpload) {
+        String[] splitDatanodes = readSplitPositionsFromFile(GRID_INDEX_PATH + "/" + previousBlockFilename);
+        HashMap<String, Integer> nodeDataCount = new HashMap<>();
+        for(Node n: clusterMap.getLeaves(NodeBase.ROOT)){
+          String nodePos = n.getNetworkLocation() + "/" + n.getName();
+          nodeDataCount.put(nodePos, 0);
+        }
+        for (String splitDatanode : splitDatanodes) {
+          if (nodeDataCount.containsKey(splitDatanode)) {
+            nodeDataCount.put(splitDatanode, nodeDataCount.get(splitDatanode) + 1);
+          } else {
+            nodeDataCount.put(splitDatanode, 1);
+          }
+        }
+
+        // sort by the replica number the host has
+        LinkedList<Map.Entry<String, Integer>> tempList = new LinkedList<>(nodeDataCount.entrySet());
+        Collections.sort(tempList, new Comparator<Map.Entry<String, Integer>>() {
+          @Override
+          public int compare(Map.Entry<String, Integer> o1, Map.Entry<String, Integer> o2) {
+            return o1.getValue().compareTo(o2.getValue()) * (-1);
+          }
+        });
+
+//        if(tempList.getFirst().getKey().equals("/d1/r1/7.7.7.7:50010") && tempList.getFirst().getValue() > 2){
+//          System.out.println("test---------");
+//        }
+
+        for (int i = 0; i < tempList.size(); i++) {
+          if (tempList.get(i).getValue() > tempList.getLast().getValue()) {
+            softExcludedNodes.add(clusterMap.getNode(tempList.get(i).getKey()));
+          } else {
+            break;
+          }
+        }
+
+      }
+
       // 与第一个副本不同的rack
       DatanodeStorageInfo info = chooseRandomSpatial("~" + firstReplicaNode.getNetworkLocation(),
               excludedNodes, blocksize, maxNodesPerRack, results, avoidStaleNodes, storageTypes, softExcludedNodes);
-      if(info == null)
-       info = chooseRandomSpatial(NodeBase.ROOT,
-              excludedNodes, blocksize, maxNodesPerRack, results, avoidStaleNodes, storageTypes, softExcludedNodes);
-      if(info == null)
+      if (info == null)
+        info = chooseRandomSpatial(NodeBase.ROOT,
+                excludedNodes, blocksize, maxNodesPerRack, results, avoidStaleNodes, storageTypes, softExcludedNodes);
+      if (info == null)
         return false;
       if (--additionalNumOfReplicas <= 0)
         return true;
@@ -384,10 +445,10 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
       String secondReplicaRack = results.get(1).getDatanodeDescriptor().getNetworkLocation();
       DatanodeStorageInfo info = chooseRandomSpatial(secondReplicaRack, excludedNodes, blocksize, maxNodesPerRack, results, avoidStaleNodes,
               storageTypes, softExcludedNodes);
-      if(info == null)
-        info = chooseRandomSpatial(secondReplicaRack, excludedNodes, blocksize, maxNodesPerRack, results, avoidStaleNodes,
+      if (info == null)
+        info = chooseRandomSpatial(NodeBase.ROOT, excludedNodes, blocksize, maxNodesPerRack, results, avoidStaleNodes,
                 storageTypes, softExcludedNodes);
-      if(info == null)
+      if (info == null)
         return false;
       if (--additionalNumOfReplicas <= 0)
         return true;
@@ -397,7 +458,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
     while (additionalNumOfReplicas != 0) {
       DatanodeStorageInfo info = chooseRandomSpatial(NodeBase.ROOT, excludedNodes, blocksize, maxNodesPerRack, results, avoidStaleNodes,
               storageTypes, softExcludedNodes);
-      if(info == null)
+      if (info == null)
         return false;
       additionalNumOfReplicas--;
     }
@@ -513,8 +574,40 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
 //    return false;
 //  }
 
-  // input file and info
-  // get corresponding datanodeLocations of infos from file
+
+  /**
+   * read split positions from file
+   * every four adjacent cell will store in a datanode
+   * <p>
+   * used for data balancing
+   *
+   * @param file
+   * @return all split position of uploaded file
+   */
+  String[] readSplitPositionsFromFile(String file) {
+    ArrayList<String> datanodeLocs = new ArrayList<>();
+    try (BufferedReader br = new BufferedReader(new FileReader(file))) {
+      String line = br.readLine();
+      while (line != null) {
+        String[] lineSplit = line.split(" ");
+        Long lineRowId = Long.parseLong(lineSplit[0]);
+        Long lineColId = Long.parseLong(lineSplit[1]);
+        if (-1 == lineRowId && -1 == lineColId) {
+          datanodeLocs.add(lineSplit[2]);
+        }
+        line = br.readLine();
+      }
+    } catch (IOException e) {
+      e.printStackTrace();
+    }
+    return datanodeLocs.toArray(new String[datanodeLocs.size()]);
+  }
+
+
+  /**
+   * input file and info
+   * get corresponding datanodeLocations of infos from file
+   */
   String[][] readGridIndexFromFile(String file, GridCellInfo[] infos) {
 
     String[][] datanodeLocs = new String[infos.length][];
@@ -541,8 +634,15 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
     return datanodeLocs;
   }
 
+  /**
+   * save current datanode information of chosen result
+   *
+   * @param results  current chosen result
+   * @param info     grid cell info
+   * @param filepath file path
+   */
   void saveGridIndexToFile(DatanodeStorageInfo[] results, GridCellInfo info, String filepath) {
-    if(info.rowId == 0 && info.colId == 0)
+    if (info.rowId == 0 && info.colId == 0)
       new File(filepath + "/" + info.filename).delete();
     FileOutputStream fileOutputStream;
     try {
@@ -558,6 +658,16 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
                 results[i].getDatanodeDescriptor().getName());
       }
       bufferedWriter.write("\n");
+
+      // for data balance
+      if (info.rowId == 0 && info.colId != 0) {
+        bufferedWriter.write("-1 -1 ");
+        bufferedWriter.write(results[0].getDatanodeDescriptor().getNetworkLocation() + "/" +
+                results[0].getDatanodeDescriptor().getName());
+        bufferedWriter.write("\n");
+      }
+
+
       bufferedWriter.flush();
       bufferedWriter.close();
 
@@ -1175,6 +1285,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
   protected DatanodeDescriptor chooseDataNode(final String scope) {
     return (DatanodeDescriptor) clusterMap.chooseRandom(scope);
   }
+
 
   /**
    * If the given storage is a good target, add it to the result list and

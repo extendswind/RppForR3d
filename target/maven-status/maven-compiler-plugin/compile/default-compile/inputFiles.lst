@@ -1,4 +1,12 @@
+/mnt/data/liuzhipeng/spatialStorageHadoop/spatialStorage/src/main/java/com/cug/geo3d/upload/SpatialDataGeneratorAndUploader.java
 /mnt/data/liuzhipeng/spatialStorageHadoop/spatialStorage/src/main/java/com/cug/geo3d/App.java
-/mnt/data/liuzhipeng/spatialStorageHadoop/spatialStorage/src/main/java/com/cug/geo3d/SpatialRecordReader.java
-/mnt/data/liuzhipeng/spatialStorageHadoop/spatialStorage/src/main/java/com/cug/geo3d/SpatialTextInputFormat.java
-/mnt/data/liuzhipeng/spatialStorageHadoop/spatialStorage/src/main/java/com/cug/geo3d/EdgeFileSplit.java
+/mnt/data/liuzhipeng/spatialStorageHadoop/spatialStorage/src/main/java/com/cug/geo3d/spatialInputFormat/SpatialFileInputFormat.java
+/mnt/data/liuzhipeng/spatialStorageHadoop/spatialStorage/src/main/java/com/cug/geo3d/util/GridCellInfo.java
+/mnt/data/liuzhipeng/spatialStorageHadoop/spatialStorage/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicyDefaultSpatial.java
+/mnt/data/liuzhipeng/spatialStorageHadoop/spatialStorage/src/main/java/com/cug/geo3d/spatialInputFormat/InputSplitWritable.java
+/mnt/data/liuzhipeng/spatialStorageHadoop/spatialStorage/src/main/java/com/cug/geo3d/util/GridInfo.java
+/mnt/data/liuzhipeng/spatialStorageHadoop/spatialStorage/src/main/java/com/cug/geo3d/util/SpatialConstant.java
+/mnt/data/liuzhipeng/spatialStorageHadoop/spatialStorage/src/main/java/com/cug/geo3d/spatialInputFormat/SpatialRecordReader.java
+/mnt/data/liuzhipeng/spatialStorageHadoop/spatialStorage/src/main/java/com/cug/geo3d/util/GridIndexInfo.java
+/mnt/data/liuzhipeng/spatialStorageHadoop/spatialStorage/src/main/java/com/cug/geo3d/spatialInputFormat/EdgeFileSplit.java
+/mnt/data/liuzhipeng/spatialStorageHadoop/spatialStorage/src/main/java/com/cug/geo3d/upload/hdfs_oper.java
