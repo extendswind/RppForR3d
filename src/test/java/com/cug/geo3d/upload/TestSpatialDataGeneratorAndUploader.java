@@ -78,30 +78,32 @@ public class TestSpatialDataGeneratorAndUploader {
 
     }
 
+
+    // for data upload test
     @Test
     public void testUpload() throws IOException {
         System.setProperty("HADOOP_USER_NAME", "sparkl");
 
-        String filename = "spatial3G.dat";
+        String filename = "spatial3GNew.dat";
 //         String filename = "bigTestFile.dat";
 
         // grid size 30000*25000, with four bytes a pixel, totally about 3G
         int rowSize = 30000;
         int colSize = 25000;
-        generateBinaryTestData("test/" + filename, rowSize, colSize);
+        //generateBinaryTestData("test/" + filename, rowSize, colSize);
         System.out.println("data generate done!");
 
 
         // split into 5*5 file, every file 1000*5000, about 20M
         int cellRowSize = 10000;
         int cellColSize = 500;
-        splitSpatialDataBinary("test/" + filename, rowSize, colSize, rowSize / cellRowSize,
-                colSize / cellColSize);
+        //splitSpatialDataBinary("test/" + filename, rowSize, colSize, rowSize / cellRowSize,
+        //        colSize / cellColSize);
         System.out.println("data split done!");
 
 
         uploadSpatialFile("test/" + filename + "_upload",
-                "hdfs://kvmmaster:9000/" + filename,
+                "hdfs://kvmmaster:9000/notSpatial/" + filename,
                 rowSize / cellRowSize, colSize / cellColSize, cellRowSize, cellColSize);
         System.out.println("data upload done!");
     }
