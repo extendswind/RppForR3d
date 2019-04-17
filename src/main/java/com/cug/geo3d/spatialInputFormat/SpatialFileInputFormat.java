@@ -144,7 +144,7 @@ public class SpatialFileInputFormat extends FileInputFormat<LongWritable, InputS
           }
         }
 
-        // sort by the replica number the host has
+        // sort by the replica number of the host
         List<Map.Entry<String, Integer>> tempList = new LinkedList<>(nodeCount.entrySet());
         Collections.sort(tempList, new Comparator<Map.Entry<String, Integer>>() {
           @Override
@@ -161,7 +161,7 @@ public class SpatialFileInputFormat extends FileInputFormat<LongWritable, InputS
         }
 
         // if no host have all replicas of four cell
-        // put the first 3
+        // put the first 3 which has most replicas
         if (hosts.isEmpty()) {
           for (int ii = 0; ii < 3 && ii < tempList.size(); ii++) {
             hosts.add(tempList.get(ii).getKey());
