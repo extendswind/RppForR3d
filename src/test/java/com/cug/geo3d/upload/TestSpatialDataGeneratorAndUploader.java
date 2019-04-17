@@ -39,7 +39,7 @@ public class TestSpatialDataGeneratorAndUploader {
 //  不需要自动化运行，需要用的时候再调，或者改个名字加备注....
 //  @Test(timeout = 5000)
 //  public void generateTestDataTest() throws IOException {
-//    SpatialDataGeneratorAndUploader.generateTestData("test/test.dat", 1000, 10000);
+//    SpatialDataGeneratorAndUploader.generateTextTestData("test/test.dat", 1000, 10000);
 //  }
 //
 //  @Test

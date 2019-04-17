@@ -63,6 +63,8 @@ public class SpatialDataGeneratorAndUploader {
 
     int cellRowSize = fileRowSize / rowSplitSize;
     int cellColSize = fileColSize / colSplitSize;
+
+
     FileOutputStream infoFileStream = new FileOutputStream(new File(uploadFilepath +
             "/info_" + Integer.toString(rowSplitSize) + "_" + Integer.toString(colSplitSize) + "_" +
             Integer.toString(cellRowSize) + "_" + Integer.toString(cellColSize)));
@@ -97,7 +99,7 @@ public class SpatialDataGeneratorAndUploader {
 
 
   /**
-   * generate test data in binary format
+   * generate test data in text format
    * a sizeRow * sizeCol file whose pixel is represented by an Integer of four bytes
    * pixel values are counted from 0
    *
@@ -106,7 +108,7 @@ public class SpatialDataGeneratorAndUploader {
    * @param sizeCol col size
    * @throws IOException
    */
-  public static void generateTestData(String filepath, int sizeRow, int sizeCol) throws IOException {
+  public static void generateTextTestData(String filepath, int sizeRow, int sizeCol) throws IOException {
     FileOutputStream fileOutputStream = new FileOutputStream(new File(filepath));
     BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fileOutputStream));
 

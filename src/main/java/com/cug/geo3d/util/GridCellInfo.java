@@ -7,7 +7,7 @@ import java.util.Objects;
 
 
 /**
- * mainly used in BlockPlacementPolicyDefaultSpatial for *get cell info from filename*
+ * mainly used in BlockPlacementPolicyDefaultSpatial for *getting cell info from filename*
 */
 public class GridCellInfo {
   public int rowId;
@@ -27,6 +27,7 @@ public class GridCellInfo {
 
   /**
    * 通过文件名判断是否为grid index
+   * filename example:  grid_filename_0_1
    *
    * @param srcFile 带路径的文件名
    * @param pos     如果是，则通过pos传出位置

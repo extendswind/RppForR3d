@@ -34,15 +34,16 @@ import org.apache.hadoop.net.Node;
 import org.apache.hadoop.net.NodeBase;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.*;
 
 import static org.apache.hadoop.util.Time.monotonicNow;
 
+
+
 /**
  * grid index file
  * <p>
- * block placement of previous upload spatial file is used in current block placement, so using a file to store the
+ * block placement of previous upload spatial file will be used in current block placement, so using a file to store the
  * information to avoiding the visit of namenode.
  * <p>
  * gridRowId gridColId datanode1 datanode2 ....
@@ -61,7 +62,7 @@ import static org.apache.hadoop.util.Time.monotonicNow;
  * which is on a different node of the rack as the second replica.
  */
 @InterfaceAudience.Private
-public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
+public class BlockPlacementPolicySpatialColumeGroup extends BlockPlacementPolicy {
 
   private static final String enableDebugLogging =
           "For more information, please enable DEBUG log level on "
@@ -102,7 +103,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
    */
   protected int tolerateHeartbeatMultiplier;
 
-  protected BlockPlacementPolicyDefaultSpatial() {
+  protected BlockPlacementPolicySpatialColumeGroup() {
     gridIndex = new GridIndex();
     gridIndex.rowCellSize = 5;
     gridIndex.colCellSize = 5;
@@ -145,6 +146,10 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
     System.out.println(this.host2datanodeMap.toString());
   }
 
+  private int  getGroupNumber(int rowId, int colId){
+
+    return 0;
+  }
 
   // 判断是否为空间数据，进入对应的函数处理
   @Override
