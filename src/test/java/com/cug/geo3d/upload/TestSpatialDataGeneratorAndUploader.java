@@ -52,21 +52,21 @@ public class TestSpatialDataGeneratorAndUploader {
         System.setProperty("HADOOP_USER_NAME", "sparkl");
 
         // grid size 25000*25000, with four bytes a pixel, totally about 2.5G
-        int rowSize = 25000;
-        int colSize = 25000;
-        //generateBinaryTestData("test/big2.dat", rowSize, colSize);
+        int gridRowSize = 25000;
+        int gridColSize = 25000;
+        //generateBinaryTestData("test/big2.dat", gridRowSize, gridColSize);
         System.out.println("data generate done!");
 
         // split into 5*5 file, every file 1000*5000, about 20M
         int cellRowSize = 5000;
         int cellColSize = 1000;
-        //splitSpatialDataBinary("test/big2.dat", rowSize, colSize, rowSize / cellRowSize,
-        //        colSize / cellColSize);
+        //splitSpatialDataBinary("test/big2.dat", gridRowSize, gridColSize, gridRowSize / cellRowSize,
+        //        gridColSize / cellColSize);
         System.out.println("data split done!");
 
         uploadSpatialFile("test/big2.dat_upload",
                 "hdfs://kvmmaster:9000/user/sparkl/big2.dat",
-                rowSize / cellRowSize, colSize / cellColSize, cellRowSize, cellColSize);
+                gridRowSize / cellRowSize, gridColSize / cellColSize, cellRowSize, cellColSize);
         System.out.println("data upload done!");
 //    System.setProperty("HADOOP_USER_NAME", "sparkl");
 //      // get block location
@@ -88,23 +88,23 @@ public class TestSpatialDataGeneratorAndUploader {
 //         String filename = "bigTestFile.dat";
 
         // grid size 30000*25000, with four bytes a pixel, totally about 3G
-        int rowSize = 30000;
-        int colSize = 25000;
-        //generateBinaryTestData("test/" + filename, rowSize, colSize);
+        int gridRowSize = 30000;
+        int gridColSize = 25000;
+        //generateBinaryTestData("test/" + filename, gridRowSize, gridColSize);
         System.out.println("data generate done!");
 
 
         // split into 5*5 file, every file 1000*5000, about 20M
         int cellRowSize = 10000;
         int cellColSize = 500;
-        //splitSpatialDataBinary("test/" + filename, rowSize, colSize, rowSize / cellRowSize,
-        //        colSize / cellColSize);
+        //splitSpatialDataBinary("test/" + filename, gridRowSize, gridColSize, gridRowSize / cellRowSize,
+        //        gridColSize / cellColSize);
         System.out.println("data split done!");
 
 
         uploadSpatialFile("test/" + filename + "_upload",
                 "hdfs://kvmmaster:9000/notSpatial/" + filename,
-                rowSize / cellRowSize, colSize / cellColSize, cellRowSize, cellColSize);
+                gridRowSize / cellRowSize, gridColSize / cellColSize, cellRowSize, cellColSize);
         System.out.println("data upload done!");
     }
 

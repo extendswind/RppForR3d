@@ -1,21 +1,21 @@
 package com.cug.geo3d.spatialInputFormat;
 
-/**
- * Licensed to the Apache Software Foundation (ASF) under one
- * or more contributor license agreements.  See the NOTICE file
- * distributed with this work for additional information
- * regarding copyright ownership.  The ASF licenses this file
- * to you under the Apache License, Version 2.0 (the
- * "License"); you may not use this file except in compliance
- * with the License.  You may obtain a copy of the License at
- * <p>
- * http://www.apache.org/licenses/LICENSE-2.0
- * <p>
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+/*
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+  <p>
+  http://www.apache.org/licenses/LICENSE-2.0
+  <p>
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
  */
 
 import com.cug.geo3d.util.GridCellInfo;
@@ -47,8 +47,8 @@ import java.io.IOException;
  */
 @InterfaceAudience.LimitedPrivate({"MapReduce", "Pig"})
 @InterfaceStability.Evolving
-public class SpatialRecordReader extends RecordReader<LongWritable, InputSplitWritable> {
-  private static final Log LOG = LogFactory.getLog(SpatialRecordReader.class);
+public class SpatialRecordReaderGroup extends RecordReader<LongWritable, InputSplitWritable> {
+  private static final Log LOG = LogFactory.getLog(SpatialRecordReaderGroup.class);
   public static final String MAX_LINE_LENGTH =
           "mapreduce.input.linerecordreader.line.maxlength";
 
@@ -61,7 +61,7 @@ public class SpatialRecordReader extends RecordReader<LongWritable, InputSplitWr
   private InputSplitWritable value;
   private EdgeFileSplit inputSplit;
 
-  public SpatialRecordReader() {
+  public SpatialRecordReaderGroup() throws IOException {
     inputStreams = new FSDataInputStream[4];
   }
 
@@ -182,8 +182,8 @@ public class SpatialRecordReader extends RecordReader<LongWritable, InputSplitWr
   public synchronized void close() {
     try {
       if (inputStreams != null) {
-        for (FSDataInputStream inputStream : inputStreams) {
-          inputStream.close();
+        for (int i = 0; i < inputStreams.length; i++) {
+          inputStreams[i].close();
         }
       }
     } catch (IOException e) {

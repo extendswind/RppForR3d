@@ -1,4 +1,6 @@
-package com.cug.geo3d.spatialInputFormat; /**
+package com.cug.geo3d.spatialInputFormat;
+
+/**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -22,8 +24,10 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
-import org.apache.hadoop.fs.*;
-import org.apache.hadoop.hdfs.server.blockmanagement.BlockPlacementPolicyDefaultSpatial;
+import org.apache.hadoop.fs.BlockLocation;
+import org.apache.hadoop.fs.FileStatus;
+import org.apache.hadoop.fs.FileSystem;
+import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -42,9 +46,9 @@ import java.util.concurrent.TimeUnit;
  */
 @InterfaceAudience.Public
 @InterfaceStability.Stable
-public class SpatialFileInputFormat extends FileInputFormat<LongWritable, InputSplitWritable> {
+public class SpatialFileInputFormatGroup extends FileInputFormat<LongWritable, InputSplitWritable> {
 
-  private static final Log LOG = LogFactory.getLog(SpatialFileInputFormat.class);
+  private static final Log LOG = LogFactory.getLog(SpatialFileInputFormatGroup.class);
   private int cellRowNum = 0;
   private int cellColNum = 0;
   private int cellRowSize = 0;
@@ -63,7 +67,12 @@ public class SpatialFileInputFormat extends FileInputFormat<LongWritable, InputS
   public RecordReader<LongWritable, InputSplitWritable>
   createRecordReader(InputSplit split,
                      TaskAttemptContext context) {
+    try {
       return new SpatialRecordReader();
+    } catch (IOException e) {
+      e.printStackTrace();
+      return null;
+    }
   }
 
 
@@ -79,7 +88,7 @@ public class SpatialFileInputFormat extends FileInputFormat<LongWritable, InputS
    * Generate the list of files and make them into FileSplits.
    *
    * @param job the job context
-   * @throws IOException io
+   * @throws IOException when INPUT_DIR is not set
    */
   public List<InputSplit> getSplits(JobContext job) throws IOException {
     StopWatch sw = new StopWatch().start();
@@ -150,9 +159,9 @@ public class SpatialFileInputFormat extends FileInputFormat<LongWritable, InputS
 
         // if a host have all replicas of four cell
         List<String> hosts = new LinkedList<>();
-        for (Map.Entry<String, Integer> stringIntegerEntry : tempList) {
-          if (stringIntegerEntry.getValue() == 4)
-            hosts.add(stringIntegerEntry.getKey());
+        for (int ii = 0; ii < tempList.size(); ii++) {
+          if (tempList.get(ii).getValue() == 4)
+            hosts.add(tempList.get(ii).getKey());
         }
 
         // if no host have all replicas of four cell

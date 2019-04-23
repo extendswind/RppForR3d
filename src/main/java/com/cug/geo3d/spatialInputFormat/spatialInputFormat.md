@@ -2,8 +2,10 @@
 
 # File Input
 
-设置input路径为 spatialFilePath/info_rowSize_colSize
+设置input路径为 spatialFilePath/info.dat
 
-因此能够直接从input路径中读取row size和col size，从spatialFilePath中读取文件名
+从info.dat中读取grid的信息，然后进行计算。
+
+
 
 

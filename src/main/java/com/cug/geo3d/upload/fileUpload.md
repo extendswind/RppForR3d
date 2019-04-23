@@ -1,22 +1,27 @@
 
-
 # Upload Spatial Raster Data to HDFS
-
 
 新建文件夹与文件名相同
 
-对文件划分成rowSize*colSize块，每个块保存到文件grid_filename_rowId_colId。
+对文件划分成cellRowNum*cellColNum块，每个块保存到文件grid_filename_rowId_colId。
+
+
+# info.txt
 
 新建文件info.txt 用于保存文件的基本空间信息
 
 将所有划分后的文件与info文件上传到HDFS。SpatialBlockPlacementPolicy会对grid开头的划分后数据文件使用空间数据的存储机制，对info文件使用默认存储机制。
 
-# info.txt
+## file content
 
-- rowSize
-- colSize
+- cellRowNum
+- cellColNum
 - cellRowSize
 - cellColSize
+- groupRowSize
+- groupColSize
+- groupRowOverlap # 行的重叠宽度  默认给1(两行之间会有两个文件的重叠）
+- groupColOverlap # 列的重叠宽度  默认给1（1个文件）
 
 # TODO
 

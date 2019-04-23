@@ -17,8 +17,8 @@ public class TestSpatialRecordReader {
 
   // the whole grid is divided to 3*3 cells
   // each cell contains 30*30 pixel
-  private int gridRowSize = 5;
-  private int gridColSize = 5;
+  private int cellRowNum = 5;
+  private int cellColNum = 5;
   private int cellRowSize = 200;
   private int cellColSize = 2000;
   private int radius = 5;
@@ -39,14 +39,14 @@ public class TestSpatialRecordReader {
   public void generateData() throws IOException {
     FileUtils.forceMkdir(new File("test_recordReader"));
     SpatialDataGeneratorAndUploader.generateBinaryTestData("test_recordReader/test.dat",
-            gridRowSize * cellRowSize, gridColSize * cellColSize);
+            cellRowNum * cellRowSize, cellColNum * cellColSize);
     SpatialDataGeneratorAndUploader.splitSpatialDataBinary("test_recordReader/test.dat",
-            gridRowSize * cellRowSize, gridColSize * cellColSize,
-            gridRowSize, gridColSize);
+            cellRowNum * cellRowSize, cellColNum * cellColSize,
+            cellRowNum, cellColNum);
   }
 
   @After
-  public void deleteTestData() throws IOException {
+  public void deleteTestData() {
     FileUtil.fullyDelete(new File("test_recordReader"));
   }
 
@@ -63,7 +63,7 @@ public class TestSpatialRecordReader {
     paths[3] = new Path("test_recordReader/test.dat_upload/grid_test.dat_1_1");
 
     EdgeFileSplit inputSplit = new EdgeFileSplit(paths, 1, null, 0,
-            gridRowSize, gridColSize, cellRowSize, cellColSize);
+            cellRowNum, cellColNum, cellRowSize, cellColSize);
     TaskAttemptContext context = new TaskAttemptContextImpl(conf, new TaskAttemptID());
     recordReader.initialize(inputSplit, context);
     recordReader.nextKeyValue();
@@ -76,12 +76,12 @@ public class TestSpatialRecordReader {
     Assert.assertEquals(value.getWidth().get(), cellColSize + cellColSize / 2 + radius);
     Assert.assertEquals(value.getData()[0].get(), 0);
     Assert.assertEquals(value.getData()[1].get(), 1);
-    Assert.assertEquals(value.getData()[1 + 2 * value.getWidth().get()].get(), 1 + 2 * gridColSize * cellColSize);
+    Assert.assertEquals(value.getData()[1 + 2 * value.getWidth().get()].get(), 1 + 2 * cellColNum * cellColSize);
 
-    Assert.assertEquals(recordReader.nextKeyValue(), false);
+    Assert.assertFalse(recordReader.nextKeyValue());
   }
 
-  // for splitId = 1*gridColSize + 1
+  // for splitId = 1*cellColNum + 1
   @Test
   public void recordReadTest2() throws IOException {
     Configuration conf = new Configuration();
@@ -95,7 +95,7 @@ public class TestSpatialRecordReader {
     paths[3] = new Path("test_recordReader/test.dat_upload/grid_test.dat_2_2");
 
     EdgeFileSplit inputSplit = new EdgeFileSplit(paths, 1, null, 1,
-            gridRowSize, gridColSize, cellRowSize, cellColSize);
+            cellRowNum, cellColNum, cellRowSize, cellColSize);
     TaskAttemptContext context = new TaskAttemptContextImpl(conf, new TaskAttemptID());
     recordReader.initialize(inputSplit, context);
     recordReader.nextKeyValue();
@@ -109,14 +109,14 @@ public class TestSpatialRecordReader {
 
     // value.data[0] is the (cellRowSize + cellRowSize/2 - radius, cellColSize + cellColSize/2 - radius)
     Assert.assertEquals(value.getData()[0].get(), (cellRowSize + cellRowSize / 2 - radius) *
-            cellColSize * gridColSize + cellColSize + cellColSize/2 - radius);
+            cellColSize * cellColNum + cellColSize + cellColSize/2 - radius);
 //    Assert.assertEquals(value.getData()[1].get(), 1);
-//    Assert.assertEquals(value.getData()[1 + 2 * value.getWidth().get()].get(), 1 + 2 * gridColSize * cellColSize);
+//    Assert.assertEquals(value.getData()[1 + 2 * value.getWidth().get()].get(), 1 + 2 * cellColNum * cellColSize);
 
-    Assert.assertEquals(recordReader.nextKeyValue(), false);
+    Assert.assertFalse(recordReader.nextKeyValue());
   }
 
-  // for splitId == 1*gridRowSize + 0
+  // for splitId == 1*cellRowNum + 0
   @Test
   public void recordReadTest3() throws IOException {
     Configuration conf = new Configuration();
@@ -130,7 +130,7 @@ public class TestSpatialRecordReader {
     paths[3] = new Path("test_recordReader/test.dat_upload/grid_test.dat_2_1");
 
     EdgeFileSplit inputSplit = new EdgeFileSplit(paths, 1, null, 1,
-            gridRowSize, gridColSize, cellRowSize, cellColSize);
+            cellRowNum, cellColNum, cellRowSize, cellColSize);
     TaskAttemptContext context = new TaskAttemptContextImpl(conf, new TaskAttemptID());
     recordReader.initialize(inputSplit, context);
     recordReader.nextKeyValue();
@@ -144,11 +144,11 @@ public class TestSpatialRecordReader {
 
     // value.data[0] is the (cellRowSize + cellRowSize/2 - radius, cellColSize + cellColSize/2 - radius)
     Assert.assertEquals(value.getData()[0].get(), (cellRowSize + cellRowSize / 2 - radius) *
-            cellColSize * gridColSize );
+            cellColSize * cellColNum);
 //    Assert.assertEquals(value.getData()[1].get(), 1);
-//    Assert.assertEquals(value.getData()[1 + 2 * value.getWidth().get()].get(), 1 + 2 * gridColSize * cellColSize);
+//    Assert.assertEquals(value.getData()[1 + 2 * value.getWidth().get()].get(), 1 + 2 * cellColNum * cellColSize);
 
-    Assert.assertEquals(recordReader.nextKeyValue(), false);
+    Assert.assertFalse(recordReader.nextKeyValue());
   }
 
 
@@ -188,7 +188,7 @@ public class TestSpatialRecordReader {
     in.close();
 
     Assert.assertEquals(fileSplitRead.getLength(), 1);
-    Assert.assertEquals(true, fileSplitRead.getPaths()[0].toString().equals("test1"));
+    Assert.assertTrue(fileSplitRead.getPaths()[0].toString().equals("test1"));
     Assert.assertEquals(fileSplitRead.getLocations()[0], "host1");
     Assert.assertEquals(fileSplitRead.getGridIndexInfo().cellColSize, 6);
     Assert.assertEquals(fileSplitRead.getSplitId(), 2);

@@ -7,6 +7,7 @@ import java.util.Objects;
 
 
 /**
+ * id and file of every cell in the grid
  * mainly used in BlockPlacementPolicyDefaultSpatial for *getting cell info from filename*
 */
 public class GridCellInfo {
@@ -17,6 +18,12 @@ public class GridCellInfo {
 
   public GridCellInfo() {
   }
+
+  public GridCellInfo(int rowId, int colId) {
+    this.rowId = rowId;
+    this.colId = colId;
+  }
+
 
   public GridCellInfo(GridCellInfo info) {
     this.rowId = info.rowId;
@@ -35,7 +42,7 @@ public class GridCellInfo {
    */
   public static boolean getGridIndexFromFilename(String srcFile, GridCellInfo pos) {
     String[] filenameSplit = FilenameUtils.getName(srcFile).split("_");
-    if (filenameSplit.length != 4 || !filenameSplit[0].equals(BlockPlacementPolicyDefaultSpatial.GRID_INDEX_PREFIX)) {
+    if (filenameSplit.length != 4 || !filenameSplit[0].equals(SpatialConstant.GRID_INDEX_PREFIX)) {
       return false;
     }
 
@@ -43,9 +50,10 @@ public class GridCellInfo {
       pos = new GridCellInfo();
     pos.rowId = Integer.parseInt(filenameSplit[2]);
     pos.colId = Integer.parseInt(filenameSplit[3]);
-    pos.filename = BlockPlacementPolicyDefaultSpatial.GRID_INDEX_PREFIX + "_" + filenameSplit[1];
+    pos.filename = SpatialConstant.GRID_INDEX_PREFIX + "_" + filenameSplit[1];
     pos.filepath = FilenameUtils.getPath(srcFile);
     return true;
   }
+
 
 }

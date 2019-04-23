@@ -41,7 +41,7 @@ import java.io.IOException;
  * {@link InputFormat#createRecordReader(InputSplit, TaskAttemptContext)}. */
 @InterfaceAudience.Public
 @InterfaceStability.Stable
-public class EdgeFileSplit extends InputSplit implements Writable {
+public class EdgeFileSplitGroup extends InputSplit implements Writable {
   private Path []files;  // 左上/右上/左下/右下 四个位置的文件
   private long length;
   private String[] hosts;  // 暂时只传出所有文件都在的host node
@@ -50,7 +50,7 @@ public class EdgeFileSplit extends InputSplit implements Writable {
 
 //  private SplitLocationInfo[] hostInfos;
 
-  public EdgeFileSplit() {}
+  public EdgeFileSplitGroup() {}
 
   /** Constructs a split with host information
    *
@@ -59,8 +59,8 @@ public class EdgeFileSplit extends InputSplit implements Writable {
    * @param length the number of bytes in the file to process
    * @param hosts the list of hosts containing the block, possibly null
    */
-  public EdgeFileSplit(Path[] files, long length, String[] hosts, int splitId, int cellRowNum, int cellColNum,
-                       int cellRowSize, int cellColSize) {
+  public EdgeFileSplitGroup(Path[] files, long length, String[] hosts, int splitId, int cellRowNum, int cellColNum,
+                            int cellRowSize, int cellColSize) {
     this.files = files;
     this.length = length;
     this.hosts = hosts;
@@ -76,7 +76,7 @@ public class EdgeFileSplit extends InputSplit implements Writable {
   public long getLength() { return length; }
 
   @Override
-  public String[] getLocations() throws IOException {
+  public String[] getLocations() {
     if (this.hosts == null) {
       return new String[]{};
     } else {
@@ -97,7 +97,7 @@ public class EdgeFileSplit extends InputSplit implements Writable {
    * Serialize the fields of this object to <code>out</code>.
    *
    * @param out <code>DataOuput</code> to serialize this object into.
-   * @throws IOException
+   * @throws IOException may happen in writeInt and writeLong
    */
   @Override
   public void write(DataOutput out) throws IOException {
@@ -130,7 +130,7 @@ public class EdgeFileSplit extends InputSplit implements Writable {
    * existing object where possible.</p>
    *
    * @param in <code>DataInput</code> to deseriablize this object from.
-   * @throws IOException
+   * @throws IOException may happen in inputstream
    */
   @Override
   public void readFields(DataInput in) throws IOException {

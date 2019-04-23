@@ -22,11 +22,10 @@ public class hdfs_oper {
 
         for (BlockLocation loc: locs) {
           System.out.println(loc.toString());
-
         }
 
         Path listf = new Path("hdfs://hadoopmaster:9000/user/sparkl");
-        FileStatus stats[] = hdfs.listStatus(listf);
+        FileStatus[] stats = hdfs.listStatus(listf);
         for (int i = 0; i < stats.length; ++i) {
             System.out.println(stats[i].getPath().toString());
         }

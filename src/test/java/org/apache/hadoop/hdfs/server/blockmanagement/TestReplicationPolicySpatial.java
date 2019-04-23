@@ -217,30 +217,6 @@ public class TestReplicationPolicySpatial {
   }
 
 
-  @Test
-  public void testSaveAndReadGridIndexToFile() throws IOException {
-    File tmpPath = tempFolder.newFolder("tmp");
-
-    GridCellInfo pos = new GridCellInfo();
-    BlockPlacementPolicyDefaultSpatial bppSpatial = (BlockPlacementPolicyDefaultSpatial) replicator;
-    GridCellInfo.getGridIndexFromFilename("grid_test.dat_2_3", pos);
-    bppSpatial.saveGridIndexToFile(storages, pos, tmpPath.getPath());
-
-    GridCellInfo pos2 = new GridCellInfo();
-    GridCellInfo.getGridIndexFromFilename("grid_test.dat_2_3", pos2);
-    pos2.colId = 1;
-    bppSpatial.saveGridIndexToFile(storages, pos2, tmpPath.getPath());
-
-    GridCellInfo[] readInfos = new GridCellInfo[]{pos, pos2};
-    String[][] readResult = bppSpatial.readGridIndexFromFile(tmpPath.getPath() + "/" + pos.filename, readInfos);
-
-    Node node = bppSpatial.clusterMap.getNode(readResult[0][0]);
-    Node node2 = bppSpatial.clusterMap.getNode(readResult[1][1]);
-
-    assertEquals(storages[0].getDatanodeDescriptor().getNetworkLocation(), node.getNetworkLocation());
-    assertEquals(storages[1].getDatanodeDescriptor().getNetworkLocation(), node2.getNetworkLocation());
-
-  }
 
   /**
    * In this testcase, client is dataNodes[0]. So the 1st replica should be
@@ -254,10 +230,9 @@ public class TestReplicationPolicySpatial {
    * The only excpetion is when the <i>numOfReplicas</i> is 2,
    * the 1st is on dataNodes[0] and the 2nd is on a different rack.
    *
-   * @throws Exception
    */
   @Test
-  public void testChooseTargetSpatial() throws Exception {
+  public void testChooseTargetSpatial() {
 
     System.out.println("\n\n\n -------chooseTargetSpatial------------- \n");
 
@@ -266,7 +241,7 @@ public class TestReplicationPolicySpatial {
 //            HdfsConstants.MIN_BLOCKS_FOR_WRITE * BLOCK_SIZE, 0L,
 //            0L, 0L, 4, 0); // overloaded
 
-    List<DatanodeStorageInfo> chosenNodes = new ArrayList<DatanodeStorageInfo>();
+    List<DatanodeStorageInfo> chosenNodes = new ArrayList<>();
 //    Set<Node> excludedNodes = null;
     String filename = "grid_test_0_0";
     DatanodeStorageInfo[] targets1 = replicator.chooseTarget(filename, 3, dataNodes[0], chosenNodes, true,
@@ -340,18 +315,17 @@ public class TestReplicationPolicySpatial {
    * The only excpetion is when the <i>numOfReplicas</i> is 2,
    * the 1st is on dataNodes[0] and the 2nd is on a different rack.
    *
-   * @throws Exception
    */
   @Test
-  public void testChooseTargetSpatialDataBalance() throws Exception {
+  public void testChooseTargetSpatialDataBalance() {
 
-    List<DatanodeStorageInfo> chosenNodes = new ArrayList<DatanodeStorageInfo>();
+    List<DatanodeStorageInfo> chosenNodes = new ArrayList<>();
 
     int[] splitBlockCount = new int[cluster.getNumOfLeaves()];
 
     for (int i = 0; i < 1; i++) {
       for (int j = 0; j < 150; j++) {
-        String filename_ij = "grid_testfile_" + Integer.toString(i) + "_" + Integer.toString(j);
+        String filename_ij = "grid_testfile_" + i + "_" + j;
         DatanodeStorageInfo[] targetsij = replicator.chooseTarget(filename_ij, 3, dataNodes[0], chosenNodes, true,
                 null, BLOCK_SIZE, TestBlockStoragePolicy.DEFAULT_STORAGE_POLICY);
 

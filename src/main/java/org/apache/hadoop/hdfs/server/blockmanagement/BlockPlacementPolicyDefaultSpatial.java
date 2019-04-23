@@ -34,7 +34,6 @@ import org.apache.hadoop.net.Node;
 import org.apache.hadoop.net.NodeBase;
 
 import java.io.*;
-import java.lang.reflect.Array;
 import java.util.*;
 
 import static org.apache.hadoop.util.Time.monotonicNow;
@@ -48,17 +47,14 @@ import static org.apache.hadoop.util.Time.monotonicNow;
  * gridRowId gridColId datanode1 datanode2 ....
  * <p>
  * gridRowId and gridColId is -1 represent the split id which will be got in InputFormat, used for datanode balance.
- */
-
-
-/**
- * The class is responsible for choosing the desired number of targets
- * for placing block replicas.
- * The replica placement strategy is that if the writer is on a datanode,
- * the 1st replica is placed on the local machine,
- * otherwise a random datanode. The 2nd replica is placed on a datanode
- * that is on a different rack. The 3rd replica is placed on a datanode
- * which is on a different node of the rack as the second replica.
+ *
+ * 修改的BlockPlacementPolicyDefault类，主要对空间数据进行按列分组存储
+ * 第1/2列放在同一节点，第2/3列放在第二节点....
+ * 此时会使用两个副本，第三副本在集群上根据机架信息随机放置
+ *
+ *
+ * 网格索引的文件会被命名为 grid_filename_rowId_colId，根据rowId和colId决定文件的存储位置
+ *
  */
 @InterfaceAudience.Private
 public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
@@ -87,11 +83,9 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
 
   /////////////////////////////////////////////
   // Spatial
-  private GridIndex gridIndex;
-  public static final String GRID_INDEX_PREFIX = "grid";  //　开头为此字符串的文件名为grid index TODO
   private boolean isBalanceUpload;  // considering data balancing among datanode instead of random block placement
 
-  private final String SPATIAL_STORAGE_PATH = "/user/sparkl/spatial_data";
+//  private final String SPATIAL_STORAGE_PATH = "/user/sparkl/spatial_data";
 
   // 假设上传文件的位置（考虑读取NFS文件或者HBase存储对应关系） TODO
   private final String GRID_INDEX_PATH = "/tmp/"; //TODO 上传空间文件时记录先前上传文件的位置
@@ -103,11 +97,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
   protected int tolerateHeartbeatMultiplier;
 
   protected BlockPlacementPolicyDefaultSpatial() {
-    gridIndex = new GridIndex();
-    gridIndex.rowCellSize = 5;
-    gridIndex.colCellSize = 5;
     isBalanceUpload = true;
-
   }
 
   @Override
@@ -160,10 +150,11 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
     // 通过文件名判断是否为空间索引，并取索引中的位置
     GridCellInfo gridCellInfo = new GridCellInfo();
     if (GridCellInfo.getGridIndexFromFilename(filename, gridCellInfo)) { // 对于网格索引
-      DatanodeStorageInfo[] results = chooseTargetSpatial(gridCellInfo, numOfReplicas, writer, chosenNodes, returnChosenNodes,
-              excludedNodes, blocksize, storagePolicy);
+      DatanodeStorageInfo[] results = chooseTargetSpatial(gridCellInfo, numOfReplicas, writer, chosenNodes,
+          returnChosenNodes, excludedNodes, blocksize, storagePolicy);
       if (results != null)
-        saveGridIndexToFile(results, gridCellInfo, GRID_INDEX_PATH);
+        BlockPlacementPolicySpatialUtil.saveGridIndexToFile(results, gridCellInfo,
+            GRID_INDEX_PATH + "/" + gridCellInfo.filename);
       return results;
     } else {  // 对于没有索引的普通数据
       return chooseTarget(numOfReplicas, writer, chosenNodes, returnChosenNodes,
@@ -205,8 +196,9 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
     //Set<Node> softExcludedNodes = new TreeSet<Node>();
     Set<Node> softExcludedNodes = new LinkedHashSet<>();
 
-    if (excludedNodes == null)
+    if (excludedNodes == null) {
       excludedNodes = new TreeSet<>();
+    }
 
     for (DatanodeStorageInfo storage : chosenNodes) {
       // add localMachine and related nodes to excludedNodes
@@ -226,7 +218,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
       leftPos.colId -= 1;
       GridCellInfo leftPos2 = new GridCellInfo(gridCellInfo);
       leftPos2.colId -= 2;
-      GridCellInfo[] positions = null;
+      GridCellInfo[] positions;
       if (gridCellInfo.colId == 1) {
         positions = new GridCellInfo[1];
         positions[0] = leftPos;
@@ -236,7 +228,8 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
         positions[1] = leftPos2;
       }
 
-      String[][] fileLocss = readGridIndexFromFile(GRID_INDEX_PATH + "/" + gridCellInfo.filename, positions);
+      String[][] fileLocss = BlockPlacementPolicySpatialUtil.readGridIndexFromFile(GRID_INDEX_PATH + "/" +
+              gridCellInfo.filename, positions);
 
       // 左方第一个节点的第二个副本作为此格点的第一个副本
       DatanodeDescriptor firstReplicaNode = (DatanodeDescriptor) clusterMap.getNode(fileLocss[0][1]);
@@ -252,10 +245,9 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
         }
       }
 
-
       chooseTargetSpatial(3, excludedNodes, softExcludedNodes, results, avoidStaleNodes,
               maxNodesPerRack, storageTypes, blocksize, gridCellInfo.filename);
-      return results.toArray(new DatanodeStorageInfo[results.size()]);
+      return results.toArray(new DatanodeStorageInfo[0]);
     }
     // the first two replicas are just the same to the first row
     // and other replicas are placed randomly
@@ -265,7 +257,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
       GridCellInfo[] positions = new GridCellInfo[1];
       positions[0] = firstRowPos;
 
-      String[][] fileLocss = readGridIndexFromFile(GRID_INDEX_PATH + "/" + gridCellInfo.filename, positions);
+      String[][] fileLocss = BlockPlacementPolicySpatialUtil.readGridIndexFromFile(GRID_INDEX_PATH + "/" + gridCellInfo.filename, positions);
 
       DatanodeDescriptor firstReplicaNode = (DatanodeDescriptor) clusterMap.getNode(fileLocss[0][0]);
       DatanodeDescriptor secondReplicaNode = (DatanodeDescriptor) clusterMap.getNode(fileLocss[0][1]);
@@ -275,7 +267,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
       excludedNodes.add(secondReplicaNode);
       chooseRandomSpatial(NodeBase.ROOT, excludedNodes, blocksize, maxNodesPerRack, results, avoidStaleNodes,
               storageTypes, softExcludedNodes);
-      return results.toArray(new DatanodeStorageInfo[results.size()]);
+      return results.toArray(new DatanodeStorageInfo[0]);
     }
 
 
@@ -301,8 +293,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
                                                     Set<Node> softExcludedNodes) {
 //          throws NotEnoughReplicasException {
 
-    LinkedHashSet<Node> tmpSoftExcludedNodes = new LinkedHashSet<>();
-    tmpSoftExcludedNodes.addAll(softExcludedNodes);
+    LinkedHashSet<Node> tmpSoftExcludedNodes = new LinkedHashSet<>(softExcludedNodes);
     DatanodeStorageInfo result = null;
 
     // 当无法满足要求时，降低softExcludedNodes的限制
@@ -331,27 +322,25 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
 
     return result;
   }
-
-  /**
-   * not use now
-   * TODO storageInfo can be considered in the future
-   * choose a random node in the scope
-   * "~" prefix in scope will make the scope not choose
-   *
-   * @param scope
-   * @param excludedNodes
-   */
-  private Node chooseDataNode(String scope, Set<Node> excludedNodes) {
-    int numOfAvailableNodes = clusterMap.countNumOfAvailableNodes(scope, excludedNodes);
-    while (numOfAvailableNodes != 0) {
-      DatanodeDescriptor node = chooseDataNode(scope);
-      if (!excludedNodes.contains(node)) {
-        // todo DatanodeStorageInfo verify
-        return node;
-      }
-    }
-    return null;
-  }
+//
+//  /**
+//   * not use now
+//   * TODO storageInfo can be considered in the future
+//   * choose a random node in the scope
+//   * "~" prefix in scope will make the scope not choose
+//   *
+//   */
+//  private Node chooseDataNode(String scope, Set<Node> excludedNodes) {
+//    int numOfAvailableNodes = clusterMap.countNumOfAvailableNodes(scope, excludedNodes);
+//    while (numOfAvailableNodes != 0) {
+//      DatanodeDescriptor node = chooseDataNode(scope);
+//      if (!excludedNodes.contains(node)) {
+//        // todo DatanodeStorageInfo verify
+//        return node;
+//      }
+//    }
+//    return null;
+//  }
 
   // TODO writer 的问题暂不考虑
   // excludedNodes contain choosenNodes and other unwanted nodes(maybe a node not contain proper storage, not consider now)
@@ -593,80 +582,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
     } catch (IOException e) {
       e.printStackTrace();
     }
-    return datanodeLocs.toArray(new String[datanodeLocs.size()]);
-  }
-
-
-  /**
-   * input file and info
-   * get corresponding datanodeLocations of infos from file
-   */
-  String[][] readGridIndexFromFile(String file, GridCellInfo[] infos) {
-
-    String[][] datanodeLocs = new String[infos.length][];
-    try (BufferedReader br = new BufferedReader(new FileReader(file))) {
-      String line = br.readLine();
-
-      while (line != null) {
-        String[] lineSplit = line.split(" ");
-        Long lineRowId = Long.parseLong(lineSplit[0]);
-        Long lineColId = Long.parseLong(lineSplit[1]);
-
-        for (int i = 0; i < infos.length; i++) {
-          if (infos[i].rowId == lineRowId && infos[i].colId == lineColId) {
-            datanodeLocs[i] = new String[lineSplit.length - 2];
-            System.arraycopy(lineSplit, 2, datanodeLocs[i], 0, lineSplit.length - 2);
-          }
-        }
-
-        line = br.readLine();
-      }
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    return datanodeLocs;
-  }
-
-  /**
-   * save current datanode information of chosen result
-   *
-   * @param results  current chosen result
-   * @param info     grid cell info
-   * @param filepath file path
-   */
-  void saveGridIndexToFile(DatanodeStorageInfo[] results, GridCellInfo info, String filepath) {
-    if (info.rowId == 0 && info.colId == 0)
-      new File(filepath + "/" + info.filename).delete();
-    FileOutputStream fileOutputStream;
-    try {
-      fileOutputStream = new FileOutputStream(new File(filepath + "/" + info.filename), true);
-      BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fileOutputStream));
-      bufferedWriter.write(Long.toString(info.rowId) + " ");
-      bufferedWriter.write(Long.toString(info.colId) + " ");
-      bufferedWriter.write(results[0].getDatanodeDescriptor().getNetworkLocation() + "/" +
-              results[0].getDatanodeDescriptor().getName());
-      for (int i = 1; i < results.length; i++) {
-        bufferedWriter.write(" ");
-        bufferedWriter.write(results[i].getDatanodeDescriptor().getNetworkLocation() + "/" +
-                results[i].getDatanodeDescriptor().getName());
-      }
-      bufferedWriter.write("\n");
-
-      // for data balance
-      if (info.rowId == 0 && info.colId != 0) {
-        bufferedWriter.write("-1 -1 ");
-        bufferedWriter.write(results[0].getDatanodeDescriptor().getNetworkLocation() + "/" +
-                results[0].getDatanodeDescriptor().getName());
-        bufferedWriter.write("\n");
-      }
-
-
-      bufferedWriter.flush();
-      bufferedWriter.close();
-
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
+    return datanodeLocs.toArray(new String[0]);
   }
 
 
@@ -688,18 +604,18 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
       }
 
       Set<Node> favoriteAndExcludedNodes = excludedNodes == null ?
-              new HashSet<Node>() : new HashSet<Node>(excludedNodes);
+              new HashSet<Node>() : new HashSet<>(excludedNodes);
       final List<StorageType> requiredStorageTypes = storagePolicy
               .chooseStorageTypes((short) numOfReplicas);
       final EnumMap<StorageType, Integer> storageTypes =
               getRequiredStorageTypes(requiredStorageTypes);
 
       // Choose favored nodes
-      List<DatanodeStorageInfo> results = new ArrayList<DatanodeStorageInfo>();
+      List<DatanodeStorageInfo> results = new ArrayList<>();
       boolean avoidStaleNodes = stats != null
               && stats.isAvoidingStaleDataNodesForWrite();
 
-      int maxNodesAndReplicas[] = getMaxNodesPerRack(0, numOfReplicas);
+      int[] maxNodesAndReplicas = getMaxNodesPerRack(0, numOfReplicas);
       numOfReplicas = maxNodesAndReplicas[0];
       int maxNodesPerRack = maxNodesAndReplicas[1];
 
@@ -724,12 +640,10 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
         DatanodeStorageInfo[] remainingTargets =
                 chooseTarget(src, numOfReplicas, writer, results,
                         false, favoriteAndExcludedNodes, blocksize, storagePolicy);
-        for (int i = 0; i < remainingTargets.length; i++) {
-          results.add(remainingTargets[i]);
-        }
+        Collections.addAll(results, remainingTargets);
       }
       return getPipeline(writer,
-              results.toArray(new DatanodeStorageInfo[results.size()]));
+              results.toArray(new DatanodeStorageInfo[0]));
     } catch (NotEnoughReplicasException nr) {
       if (LOG.isDebugEnabled()) {
         LOG.debug("Failed to choose with favored nodes (=" + favoredNodes
@@ -757,14 +671,14 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
     }
 
     if (excludedNodes == null) {
-      excludedNodes = new HashSet<Node>();
+      excludedNodes = new HashSet<>();
     }
 
     int[] result = getMaxNodesPerRack(chosenStorage.size(), numOfReplicas);
     numOfReplicas = result[0];
     int maxNodesPerRack = result[1];
 
-    final List<DatanodeStorageInfo> results = new ArrayList<DatanodeStorageInfo>(chosenStorage);
+    final List<DatanodeStorageInfo> results = new ArrayList<>(chosenStorage);
     for (DatanodeStorageInfo storage : chosenStorage) {
       // add localMachine and related nodes to excludedNodes
       addToExcludedNodes(storage.getDatanodeDescriptor(), excludedNodes);
@@ -781,9 +695,9 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
 
     // sorting nodes to form a pipeline
     return getPipeline(
-            (writer != null && writer instanceof DatanodeDescriptor) ? writer
+            (writer instanceof DatanodeDescriptor) ? writer
                     : localNode,
-            results.toArray(new DatanodeStorageInfo[results.size()]));
+            results.toArray(new DatanodeStorageInfo[0]));
   }
 
   /**
@@ -831,8 +745,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
 
   private EnumMap<StorageType, Integer> getRequiredStorageTypes(
           List<StorageType> types) {
-    EnumMap<StorageType, Integer> map = new EnumMap<StorageType,
-            Integer>(StorageType.class);
+    EnumMap<StorageType, Integer> map = new EnumMap<>(StorageType.class);
     for (StorageType type : types) {
       if (!map.containsKey(type)) {
         map.put(type, 1);
@@ -871,12 +784,12 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
     }
     final int numOfResults = results.size();
     final int totalReplicasExpected = numOfReplicas + numOfResults;
-    if ((writer == null || !(writer instanceof DatanodeDescriptor)) && !newBlock) {
+    if ((!(writer instanceof DatanodeDescriptor)) && !newBlock) {
       writer = results.get(0).getDatanodeDescriptor();
     }
 
     // Keep a copy of original excludedNodes
-    final Set<Node> oldExcludedNodes = new HashSet<Node>(excludedNodes);
+    final Set<Node> oldExcludedNodes = new HashSet<>(excludedNodes);
 
     // choose storage types; use fallbacks for unavailable storages
     final List<StorageType> requiredStorageTypes = storagePolicy
@@ -1460,7 +1373,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
     minRacks = Math.min(minRacks, numberOfReplicas);
     // 1. Check that all locations are different.
     // 2. Count locations on different racks.
-    Set<String> racks = new TreeSet<String>();
+    Set<String> racks = new TreeSet<>();
     for (DatanodeInfo dn : locs)
       racks.add(dn.getNetworkLocation());
     return new BlockPlacementStatusDefault(racks.size(), minRacks);
@@ -1590,12 +1503,10 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
       return false; // delHint storage type is not an excess type
     } else {
       // check if removing delHint reduces the number of racks
+      // the added node adds a new rack
       if (moreThan1Racks.contains(delHint)) {
         return true; // delHint and some other nodes are under the same rack
-      } else if (added != null && !moreThan1Racks.contains(added)) {
-        return true; // the added node adds a new rack
-      }
-      return false; // removing delHint reduces the number of racks;
+      } else return added != null && !moreThan1Racks.contains(added);
     }
   }
 

@@ -5,9 +5,7 @@ import org.apache.commons.compress.compressors.FileNameUtil;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.FileSystem;
-import org.apache.hadoop.fs.FileUtil;
-import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.*;
 
 import java.io.*;
 import java.net.URI;
@@ -66,14 +64,14 @@ public class SpatialDataGeneratorAndUploader {
 
 
     FileOutputStream infoFileStream = new FileOutputStream(new File(uploadFilepath +
-            "/info_" + Integer.toString(rowSplitSize) + "_" + Integer.toString(colSplitSize) + "_" +
-            Integer.toString(cellRowSize) + "_" + Integer.toString(cellColSize)));
+            "/info_" + rowSplitSize + "_" + colSplitSize + "_" +
+        cellRowSize + "_" + cellColSize));
     infoFileStream.close();
 
     for (int i = 0; i < rowSplitSize; i++) {
       for (int j = 0; j < colSplitSize; j++) {
         FileOutputStream fileOutputStream = new FileOutputStream(new File(uploadFilepath +
-                "/grid_" + filename + "_" + Integer.toString(i) + "_" + Integer.toString(j)));
+                "/grid_" + filename + "_" + i + "_" + j));
         resultWriters[i * colSplitSize + j] = new DataOutputStream(new BufferedOutputStream(fileOutputStream));
       }
     }
@@ -144,7 +142,7 @@ public class SpatialDataGeneratorAndUploader {
     for (int i = 0; i < rowSplitSize; i++) {
       for (int j = 0; j < colSplitSize; j++) {
         FileOutputStream fileOutputStream = new FileOutputStream(new File(uploadFilepath +
-                "/grid_" + filename + "_" + Integer.toString(i) + "_" + Integer.toString(j)));
+                "/grid_" + filename + "_" + i + "_" + j));
         resultWriters[i * colSplitSize + j] = new BufferedWriter(new OutputStreamWriter(fileOutputStream));
       }
     }
@@ -172,15 +170,15 @@ public class SpatialDataGeneratorAndUploader {
    * upload the split file in *localDirectory* to *hdfsDirectory* , and create a new file named
    * *info_rowSize_colSize_cellRowSize_cellColSize*
    *
-   * @param localDirectory local dir, contains rowSize * colSize file named by the name of localDirectory and position
+   * @param localDirectory local dir, contains cellRowNum * cellColNum file named by the name of localDirectory and position
    * @param hdfsDirectory hdfs dir
-   * @param rowSize  specified in {@link SpatialDataGeneratorAndUploader#splitSpatialDataBinary}
-   * @param colSize idem
+   * @param cellRowNum  specified in {@link SpatialDataGeneratorAndUploader#splitSpatialDataBinary}
+   * @param cellColNum idem
    * @param cellRowSize  idem
    * @param cellColSize  idem
    */
   public static void uploadSpatialFile(String localDirectory, String hdfsDirectory,
-                                       int rowSize, int colSize, int cellRowSize, int cellColSize)
+                                       int cellRowNum, int cellColNum, int cellRowSize, int cellColSize)
           throws IOException {
     String filename = FilenameUtils.getName(localDirectory).split("_")[0];
     Configuration conf = new Configuration();
@@ -188,18 +186,46 @@ public class SpatialDataGeneratorAndUploader {
 
     Path hdfsPath = new Path(hdfsDirectory);
     hdfs.mkdirs(hdfsPath);
-    for (int i = 0; i < rowSize; i++) {
-      for (int j = 0; j < colSize; j++) {
-        String localFilename = "grid_" + filename + "_" + Integer.toString(i) + "_" + Integer.toString(j);
+    for (int i = 0; i < cellRowNum; i++) {
+      for (int j = 0; j < cellColNum; j++) {
+        String localFilename = "grid_" + filename + "_" + i + "_" + j;
         Path localPath = new Path(localDirectory + "/" + localFilename);
         hdfs.copyFromLocalFile(localPath, hdfsPath);
       }
     }
-    hdfs.create(new Path(hdfsDirectory +
-            "/info_" + Integer.toString(rowSize) + "_" + Integer.toString(colSize)+ "_" +
-            Integer.toString(cellRowSize)+ "_" + Integer.toString(cellColSize))).close();
+
+
+//    hdfs.create(new Path(hdfsDirectory +
+//            "/info_" + Integer.toString(cellRowNum) + "_" + Integer.toString(cellColNum)+ "_" +
+//            Integer.toString(cellRowSize)+ "_" + Integer.toString(cellColSize))).close();
+
     hdfs.close();
   }
+
+  public static void createInfoFileInHDFS(String hdfsDirectory,
+                                    int cellRowNum, int cellColNum, int cellRowSize, int cellColSize,
+                                    int groupRowSize, int groupColSize, int groupRowOverlap, int groupColOverlap )
+          throws IOException{
+
+    Configuration conf = new Configuration();
+    FileSystem hdfs = FileSystem.get(URI.create(hdfsDirectory), conf);
+    FSDataOutputStream infoFileStream = hdfs.create(new Path(hdfsDirectory + "/info.dat"));
+    infoFileStream.writeInt(cellRowNum);
+    infoFileStream.writeInt(cellColNum);
+    infoFileStream.writeInt(cellRowSize);
+    infoFileStream.writeInt(cellColSize);
+    infoFileStream.writeInt(groupRowSize);
+    infoFileStream.writeInt(groupColSize);
+    infoFileStream.writeInt(groupRowOverlap);
+    infoFileStream.writeInt(groupColOverlap);
+    infoFileStream.close();
+
+
+    hdfs.close();
+
+  }
+
+//  public static void addGroupInfo2Filename(String filename, grou)
 
 
   public static void main(String[] args) throws IOException {
@@ -207,21 +233,38 @@ public class SpatialDataGeneratorAndUploader {
     System.setProperty("HADOOP_USER_NAME", "sparkl");
 
     // grid size 25000*25000, with four bytes a pixel, totally about 2.5G
-    int rowSize = 25000;
-    int colSize = 25000;
-//    generateBinaryTestData("test/big2.dat", rowSize, colSize);
-    System.out.println("data generate done!");
+    int gridRowSize = 25000;
+    int gridColSize = 25000;
+    String localFile = "test_data/test-2-5G-5-25.dat";
 
-    // split into 5*5 file, every file 1000*5000, about 20M
+
+    // split into 5*25 file, every file 1000*5000, about 20M
     int cellRowSize = 5000;
     int cellColSize = 1000;
-//    splitSpatialDataBinary("test/big2.dat", rowSize, colSize, rowSize/cellRowSize,
- //           colSize/cellColSize);
-    System.out.println("data split done!");
 
-    uploadSpatialFile("test/big2.dat_upload",
-            "hdfs://kvmmaster:9000/user/sparkl/big2.dat",
-            rowSize/cellRowSize, colSize/cellColSize, cellRowSize, cellColSize);
+    // upload directory
+    String hdfsDir = "hdfs://kvmmaster:9000/user/sparkl/" + FilenameUtils.getName(localFile);
+
+    // group info    rowOverlap use default 1
+    int groupRowSize = 1;
+    int groupColSize = 2;
+
+
+    if (false){
+      generateBinaryTestData(localFile, gridRowSize, gridColSize);
+      System.out.println("data generate done!");
+
+      splitSpatialDataBinary(localFile, gridRowSize, gridColSize, gridRowSize/cellRowSize,
+              gridColSize/cellColSize);
+      System.out.println("data split done!");
+
+      createInfoFileInHDFS(hdfsDir, gridRowSize/cellRowSize, gridColSize/cellColSize,
+              cellRowSize, cellColSize, groupRowSize, groupColSize, 1, 1);
+
+    }
+
+    uploadSpatialFile(localFile + "_upload", hdfsDir,
+            gridRowSize/cellRowSize, gridColSize/cellColSize, cellRowSize, cellColSize);
     System.out.println("data upload done!");
 
 
