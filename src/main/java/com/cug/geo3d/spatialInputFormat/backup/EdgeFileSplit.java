@@ -16,9 +16,8 @@
  * limitations under the License.
  */
 
-package com.cug.geo3d.spatialInputFormat;
+package com.cug.geo3d.spatialInputFormat.backup;
 
-import com.cug.geo3d.util.GridIndexInfo;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.fs.Path;
@@ -41,7 +40,7 @@ import java.io.IOException;
  * {@link InputFormat#createRecordReader(InputSplit, TaskAttemptContext)}. */
 @InterfaceAudience.Public
 @InterfaceStability.Stable
-public class EdgeFileSplitGroup extends InputSplit implements Writable {
+public class EdgeFileSplit extends InputSplit implements Writable {
   private Path []files;  // 左上/右上/左下/右下 四个位置的文件
   private long length;
   private String[] hosts;  // 暂时只传出所有文件都在的host node
@@ -50,7 +49,7 @@ public class EdgeFileSplitGroup extends InputSplit implements Writable {
 
 //  private SplitLocationInfo[] hostInfos;
 
-  public EdgeFileSplitGroup() {}
+  public EdgeFileSplit() {}
 
   /** Constructs a split with host information
    *
@@ -59,8 +58,8 @@ public class EdgeFileSplitGroup extends InputSplit implements Writable {
    * @param length the number of bytes in the file to process
    * @param hosts the list of hosts containing the block, possibly null
    */
-  public EdgeFileSplitGroup(Path[] files, long length, String[] hosts, int splitId, int cellRowNum, int cellColNum,
-                            int cellRowSize, int cellColSize) {
+  public EdgeFileSplit(Path[] files, long length, String[] hosts, int splitId, int cellRowNum, int cellColNum,
+                       int cellRowSize, int cellColSize) {
     this.files = files;
     this.length = length;
     this.hosts = hosts;
@@ -76,7 +75,7 @@ public class EdgeFileSplitGroup extends InputSplit implements Writable {
   public long getLength() { return length; }
 
   @Override
-  public String[] getLocations() {
+  public String[] getLocations() throws IOException {
     if (this.hosts == null) {
       return new String[]{};
     } else {
@@ -97,7 +96,7 @@ public class EdgeFileSplitGroup extends InputSplit implements Writable {
    * Serialize the fields of this object to <code>out</code>.
    *
    * @param out <code>DataOuput</code> to serialize this object into.
-   * @throws IOException may happen in writeInt and writeLong
+   * @throws IOException
    */
   @Override
   public void write(DataOutput out) throws IOException {
@@ -130,7 +129,7 @@ public class EdgeFileSplitGroup extends InputSplit implements Writable {
    * existing object where possible.</p>
    *
    * @param in <code>DataInput</code> to deseriablize this object from.
-   * @throws IOException may happen in inputstream
+   * @throws IOException
    */
   @Override
   public void readFields(DataInput in) throws IOException {

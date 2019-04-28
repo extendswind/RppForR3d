@@ -111,7 +111,7 @@ public class BlockPlacementPolicySpatialGroup extends BlockPlacementPolicy {
 
   protected BlockPlacementPolicySpatialGroup() {
     isBalanceUpload = false;
-    groupInfo = new GroupInfo(3, 3, 1, 1); // TODO 从哪获取合适的信息，上传文件和配置？
+    groupInfo = GroupInfo.getDefaultGroupInfo(); // TODO 从哪获取合适的信息，上传文件和配置？
   }
 
   @Override
@@ -153,8 +153,8 @@ public class BlockPlacementPolicySpatialGroup extends BlockPlacementPolicy {
                                             final BlockStoragePolicy storagePolicy) {
     String filename = FilenameUtils.getName(srcPath);
     // 通过文件名判断是否为空间索引，并取索引中的位置
-    GridCellInfo gridCellInfo = new GridCellInfo();
-    if (GridCellInfo.getGridIndexFromFilename(filename, gridCellInfo)) { // 对于网格索引的文件
+    GridCellInfo gridCellInfo = GridCellInfo.getGridIndexFromFilename(filename);
+    if (gridCellInfo != null) { // 对于网格索引的文件
       DatanodeStorageInfo[] results = chooseTargetSpatial(gridCellInfo, numOfReplicas, writer, chosenNodes, returnChosenNodes,
           excludedNodes, blocksize, storagePolicy);
 //      if (results != null)  TODO  whether move to the inner method?

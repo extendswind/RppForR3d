@@ -196,7 +196,6 @@ public class TestReplicationPolicySpatial {
 //    resetHeartbeatForStorages();
 //  }
 
-  @Test
   public void testJustAtest() {
     String filename = "/home/fly/test.dat";
     System.out.println(FilenameUtils.getName(filename));
@@ -206,7 +205,7 @@ public class TestReplicationPolicySpatial {
     System.out.println("---------test for showing the cluster map----------");
 
     BlockPlacementPolicyDefaultSpatial spatialReplicator = (BlockPlacementPolicyDefaultSpatial) replicator;
-    spatialReplicator.tmpPrintDatanodeInfo();
+//    spatialReplicator.tmpPrintDatanodeInfo();
 
     System.out.println(cluster.getLeaves("").get(0).getNetworkLocation());
     Node node = cluster.getNode("/d1/r1/1.1.1.1:50010");
@@ -265,13 +264,13 @@ public class TestReplicationPolicySpatial {
     assertTrue(isOnSameRack(targets2[1], targets2[2]));
 
 
-
     String filename02 = "grid_test_0_2";
     DatanodeStorageInfo[] targets02 = replicator.chooseTarget(filename02, 3, dataNodes[0], chosenNodes, true,
             null, BLOCK_SIZE, TestBlockStoragePolicy.DEFAULT_STORAGE_POLICY);
     assertEquals(targets2[1].getDatanodeDescriptor(), targets02[0].getDatanodeDescriptor());
     assertFalse(isOnSameRack(targets02[0], targets02[1]));
     assertTrue(isOnSameRack(targets02[1], targets02[2]));
+
 
     String filename22 = "grid_test_2_2";
     DatanodeStorageInfo[] targets22 = replicator.chooseTarget(filename22, 3, dataNodes[0], chosenNodes, true,

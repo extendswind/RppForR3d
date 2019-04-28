@@ -1,4 +1,4 @@
-package com.cug.geo3d.spatialInputFormat;
+package com.cug.geo3d.spatialInputFormat.backup;
 
 /**
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -18,8 +18,8 @@ package com.cug.geo3d.spatialInputFormat;
  * limitations under the License.
  */
 
+import com.cug.geo3d.spatialInputFormat.InputSplitWritable;
 import com.cug.geo3d.util.GridCellInfo;
-import com.cug.geo3d.util.GridIndexInfo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -79,8 +79,7 @@ public class SpatialRecordReader extends RecordReader<LongWritable, InputSplitWr
       inputStreams[i] = fs.open(paths[i]);
     }
 
-    GridCellInfo leftTop = new GridCellInfo();
-    GridCellInfo.getGridIndexFromFilename(paths[0].getName(), leftTop);
+    GridCellInfo leftTop = GridCellInfo.getGridIndexFromFilename(paths[0].getName());
     splitColId = leftTop.colId;
     splitRowId = leftTop.rowId;
 

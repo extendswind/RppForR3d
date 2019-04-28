@@ -18,8 +18,6 @@ package com.cug.geo3d.spatialInputFormat;
  * limitations under the License.
  */
 
-import com.cug.geo3d.util.GridCellInfo;
-import com.cug.geo3d.util.GroupCellInfo;
 import com.cug.geo3d.util.GroupInfo;
 import com.cug.geo3d.util.SpatialConstant;
 import org.apache.commons.io.FilenameUtils;
@@ -28,7 +26,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.fs.BlockLocation;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -37,7 +34,6 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.util.StopWatch;
 
 import java.io.IOException;
-import java.security.acl.Group;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
@@ -50,7 +46,7 @@ import java.util.concurrent.TimeUnit;
  */
 @InterfaceAudience.Public
 @InterfaceStability.Stable
-public class SpatialFileInputFormatGroup extends FileInputFormat<LongWritable, InputSplitWritable> {
+public class SpatialFileInputFormatTradition extends FileInputFormat<LongWritable, InputSplitWritable> {
 
   private static final Log LOG = LogFactory.getLog(SpatialFileInputFormatGroup.class);
   private int cellRowNum;
@@ -243,3 +239,4 @@ public class SpatialFileInputFormatGroup extends FileInputFormat<LongWritable, I
   //  }
 
 }
+

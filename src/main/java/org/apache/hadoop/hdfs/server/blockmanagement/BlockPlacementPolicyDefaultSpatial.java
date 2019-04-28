@@ -126,14 +126,14 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
     this.conf = conf;
   }
 
-
-  /**
-   * just a test code for showing concert cluster map info
-   */
-  void tmpPrintDatanodeInfo() {
-    System.out.println(this.clusterMap.toString());
-    System.out.println(this.host2datanodeMap.toString());
-  }
+//
+//  /**
+//   * just a test code for showing concert cluster map info
+//   */
+//  void tmpPrintDatanodeInfo() {
+//    System.out.println(this.clusterMap.toString());
+//    System.out.println(this.host2datanodeMap.toString());
+//  }
 
 
   // 判断是否为空间数据，进入对应的函数处理
@@ -148,8 +148,8 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
                                             final BlockStoragePolicy storagePolicy) {
     String filename = FilenameUtils.getName(srcPath);
     // 通过文件名判断是否为空间索引，并取索引中的位置
-    GridCellInfo gridCellInfo = new GridCellInfo();
-    if (GridCellInfo.getGridIndexFromFilename(filename, gridCellInfo)) { // 对于网格索引
+    GridCellInfo gridCellInfo = GridCellInfo.getGridIndexFromFilename(filename);
+    if (gridCellInfo != null) { // 对于网格索引
       DatanodeStorageInfo[] results = chooseTargetSpatial(gridCellInfo, numOfReplicas, writer, chosenNodes,
           returnChosenNodes, excludedNodes, blocksize, storagePolicy);
       if (results != null)

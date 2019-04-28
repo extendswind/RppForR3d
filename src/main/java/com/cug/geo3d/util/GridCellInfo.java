@@ -37,22 +37,19 @@ public class GridCellInfo {
    * filename example:  grid_filename_0_1
    *
    * @param srcFile 带路径的文件名
-   * @param pos     如果是，则通过pos传出位置
-   * @return grid index时返回ture 否则false
+   * @return grid index时返回对象 否则null
    */
-  public static boolean getGridIndexFromFilename(String srcFile, GridCellInfo pos) {
+  public static GridCellInfo getGridIndexFromFilename(String srcFile) {
     String[] filenameSplit = FilenameUtils.getName(srcFile).split("_");
     if (filenameSplit.length != 4 || !filenameSplit[0].equals(SpatialConstant.GRID_INDEX_PREFIX)) {
-      return false;
+      return null;
     }
-
-    if (pos == null)
-      pos = new GridCellInfo();
+    GridCellInfo pos = new GridCellInfo();
     pos.rowId = Integer.parseInt(filenameSplit[2]);
     pos.colId = Integer.parseInt(filenameSplit[3]);
     pos.filename = SpatialConstant.GRID_INDEX_PREFIX + "_" + filenameSplit[1];
     pos.filepath = FilenameUtils.getPath(srcFile);
-    return true;
+    return pos;
   }
 
 

@@ -9,7 +9,6 @@ public class GroupCellInfo extends Coord {
 
   public Coord OCCoord; // right overlapped column
   public Coord ORCoord; // bottom overlapped row
-  // TODO 是否直接表达成bool值，坐标有没有用？
 
 //    boolean isROC; // right overlapped colum
 //    boolean isBOR; // bottom overlapped row
@@ -49,21 +48,21 @@ public class GroupCellInfo extends Coord {
       groupCellInfo.colId = 0;
     } else {
       // overlapped columns 算在左边的group里
-      groupCellInfo.colId = 1 + (gridCellInfo.colId - groupInfo.colSize) / (groupInfo.colSize - groupInfo.colOverlap);
+      groupCellInfo.colId = 1 + (gridCellInfo.colId - groupInfo.colSize) / (groupInfo.colSize - groupInfo.colOverlapSize);
     }
     groupCellInfo.rowId = gridCellInfo.rowId / groupInfo.rowSize;
 
     // Judging whether or not it is an overlapped column
-    if (gridCellInfo.colId != 0  &&
-        gridCellInfo.colId % (groupInfo.colSize - groupInfo.colOverlap) < groupInfo.colOverlap) {
+    if (gridCellInfo.colId != 0 &&
+        gridCellInfo.colId % (groupInfo.colSize - groupInfo.colOverlapSize) < groupInfo.colOverlapSize) {
       groupCellInfo.OCCoord = new Coord(groupCellInfo.rowId, groupCellInfo.colId);
     }
 
     // Judging whether or not it is an overlapped row
-    if (gridCellInfo.rowId % (groupInfo.rowSize) < groupInfo.rowOverlap && (groupCellInfo.rowId != 0)) {
+    if (gridCellInfo.rowId % (groupInfo.rowSize) < groupInfo.rowOverlapSize && (groupCellInfo.rowId != 0)) {
       groupCellInfo.ORCoord = new Coord(groupCellInfo.rowId - 1, 0);
     }
-    if (gridCellInfo.rowId % (groupInfo.rowSize) >= groupInfo.rowSize - groupInfo.rowOverlap) {
+    if (gridCellInfo.rowId % (groupInfo.rowSize) >= groupInfo.rowSize - groupInfo.rowOverlapSize) {
       groupCellInfo.ORCoord = new Coord(groupCellInfo.rowId, 0);
     }
 

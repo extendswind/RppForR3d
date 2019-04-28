@@ -1,4 +1,4 @@
-package com.cug.geo3d.spatialInputFormat; /**
+package com.cug.geo3d.spatialInputFormat.backup; /**
  * Licensed to the Apache Software Foundation (ASF) under one
  * or more contributor license agreements.  See the NOTICE file
  * distributed with this work for additional information
@@ -16,6 +16,7 @@ package com.cug.geo3d.spatialInputFormat; /**
  * limitations under the License.
  */
 
+import com.cug.geo3d.spatialInputFormat.InputSplitWritable;
 import com.cug.geo3d.util.SpatialConstant;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
@@ -23,7 +24,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.fs.*;
-import org.apache.hadoop.hdfs.server.blockmanagement.BlockPlacementPolicyDefaultSpatial;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.*;
 import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
@@ -45,10 +45,10 @@ import java.util.concurrent.TimeUnit;
 public class SpatialFileInputFormat extends FileInputFormat<LongWritable, InputSplitWritable> {
 
   private static final Log LOG = LogFactory.getLog(SpatialFileInputFormat.class);
-  private int cellRowNum = 0;
-  private int cellColNum = 0;
-  private int cellRowSize = 0;
-  private int cellColSize = 0;
+  private int cellRowNum;
+  private int cellColNum;
+  private int cellRowSize;
+  private int cellColSize;
   private String spatialFilepath;
   private String spatialFilename;
 
@@ -97,8 +97,8 @@ public class SpatialFileInputFormat extends FileInputFormat<LongWritable, InputS
 
     String infoFilename = FilenameUtils.getName(dir);
 
-    cellRowNum = Integer.parseInt(infoFilename.split("_")[1]);
-    cellColNum = Integer.parseInt(infoFilename.split("_")[2]);
+    cellRowNum  = Integer.parseInt(infoFilename.split("_")[1]);
+    cellColNum  = Integer.parseInt(infoFilename.split("_")[2]);
     cellRowSize = Integer.parseInt(infoFilename.split("_")[3]);
     cellColSize = Integer.parseInt(infoFilename.split("_")[4]);
 

@@ -1,5 +1,6 @@
 package com.cug.geo3d.spatialInputFormat;
 
+import com.cug.geo3d.spatialInputFormat.backup.SpatialRecordReader;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
 

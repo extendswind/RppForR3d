@@ -7,13 +7,25 @@ package com.cug.geo3d.util;
 public class GroupInfo {
     public int rowSize; // put *rowSize* row files to a group
     public int colSize;
-    public int rowOverlap; // overlap *rowOverlap* rows between two row group
-    public int colOverlap;
+    public int rowOverlapSize; // overlap *rowOverlapSize* rows between two row group
+    public int colOverlapSize;
 
-    public GroupInfo(int rowSize, int colSize, int rowOverlap, int colOverlap){
+    public GroupInfo(GroupInfo info){
+        rowSize = info.rowSize;
+        colSize = info.colSize;
+        rowOverlapSize = info.rowOverlapSize;
+        colOverlapSize = info.colOverlapSize;
+    }
+
+    public GroupInfo(int rowSize, int colSize, int rowOverlapSize, int colOverlapSize){
         this.rowSize = rowSize;
         this.colSize = colSize;
-        this.rowOverlap = rowOverlap;
-        this.colOverlap = colOverlap;
+        this.rowOverlapSize = rowOverlapSize;
+        this.colOverlapSize = colOverlapSize;
     }
+
+    public static GroupInfo getDefaultGroupInfo(){
+      return new GroupInfo(3, 3, 1,1);
+    }
+
 }

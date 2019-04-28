@@ -18,7 +18,9 @@ package com.cug.geo3d.spatialInputFormat;
   limitations under the License.
  */
 
+import com.cug.geo3d.util.GridCellInfo;
 import com.cug.geo3d.util.SpatialConstant;
+import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -29,6 +31,7 @@ import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
+import org.apache.hadoop.io.Writable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
@@ -46,34 +49,34 @@ import java.io.IOException;
  */
 @InterfaceAudience.LimitedPrivate({"MapReduce", "Pig"})
 @InterfaceStability.Evolving
-public class SpatialRecordReaderGroup extends RecordReader<LongWritable, InputSplitWritable> {
-  private static final Log LOG = LogFactory.getLog(SpatialRecordReaderGroup.class);
+public class SpatialRecordReaderTradition extends RecordReader<LongWritable, InputSplitWritable> {
+  private static final Log LOG = LogFactory.getLog(SpatialRecordReaderTradition.class);
 
   public int radius = 5; // analysis radius
 
   private FSDataInputStream[] inputStreams;
   //  private int splitColId;
-//  private int splitRowId;
+  //  private int splitRowId;
   private LongWritable key;
   private InputSplitWritable value;
   private FileSplitGroup inputSplit;
+  private Path[] paths;
 
+  private int cellRowSize = 1000;
+  private int cellColSize = 1000;
+  private int groupRowSize = 10;
+  private int groupColSize = 10;
+  private boolean isFirstColGroup = true; // mark the first column group, the overlapped row is also FirstColGroup !
+  private int splitId = 0;
 
-  int cellRowSize = 1000;
-  int cellColSize = 1000;
-  int groupRowSize = 10;
-  int groupColSize = 10;
-  boolean isFirstColGroup = true; // mark the first column group, the overlapped row is also FirstColGroup !
-  int splitId = 0;
-
-  public SpatialRecordReaderGroup() {
+  public SpatialRecordReaderTradition() {
   }
 
 
   public void initialize(InputSplit genericSplit, TaskAttemptContext context) throws IOException {
     inputSplit = (FileSplitGroup) genericSplit;
     Configuration conf = context.getConfiguration();
-    final Path[] paths = inputSplit.getPaths();
+    paths = inputSplit.getPaths();
 
 
     // open the file and seek to the start of the inputSplit
@@ -87,16 +90,16 @@ public class SpatialRecordReaderGroup extends RecordReader<LongWritable, InputSp
     radius = inputSplit.radius;
     cellRowSize = inputSplit.cellRowSize;
     cellColSize = inputSplit.cellColSize;
-    groupRowSize = inputSplit.groupRowSize;
-    groupColSize = inputSplit.groupColSize;
-    isFirstColGroup = inputSplit.isFirstColGroup; // mark the first column group, the overlapped row is also
+    groupRowSize = inputSplit.groupRowSize; // useless
+    groupColSize = inputSplit.groupColSize; // useless
+    isFirstColGroup = inputSplit.isFirstColGroup; // useless
     splitId = inputSplit.splitId;
 
 
-//    GridCellInfo leftTop = new GridCellInfo();
-//    GridCellInfo.getGridIndexFromFilename(paths[0].getName(), leftTop);
+    //    GridCellInfo leftTop = new GridCellInfo();
+    //    GridCellInfo.getGridIndexFromFilename(paths[0].getName(), leftTop);
 
-//    radius = context.getConfiguration().getInt("geo3d.spatial.radius", 5);
+    //    radius = context.getConfiguration().getInt("geo3d.spatial.radius", 5);
 
   }
 
@@ -112,12 +115,87 @@ public class SpatialRecordReaderGroup extends RecordReader<LongWritable, InputSp
 
     int valueWidth;
     int valueHeight;
-    if (isFirstColGroup) {
-      valueWidth = cellColSize * groupColSize;
-    } else {
-      valueWidth = cellColSize * (groupColSize - 1) + (2 * radius)%cellColSize;
+    IntWritable[] dataValue;
+
+    if (paths.length == 4) {
+      valueWidth = cellColSize + radius * 2;
+      valueHeight = cellRowSize + radius * 2;
+      dataValue = new IntWritable[valueWidth * valueHeight];
+
+      for (int i = 0; i < cellRowSize; i++) {
+        for (int j = 0; j < cellColSize; j++) {
+          dataValue[i * valueWidth + j] = new IntWritable(inputStreams[0].readInt());
+        }
+      }
+
+      for (int i = 0; i < cellRowSize; i++) {
+        for (int j = 0; j < radius * 2; j++) {
+          dataValue[i * valueWidth + j + cellColSize] = new IntWritable(inputStreams[1].readInt());
+        }
+        inputStreams[1].skip(4 * (cellColSize - radius * 2));
+      }
+
+      for (int i = 0; i < radius * 2; i++) {
+        for (int j = 0; j < cellColSize; j++) {
+          dataValue[(i+cellRowSize) * valueWidth + j] = new IntWritable(inputStreams[2].readInt());
+        }
+      }
+
+      for (int i = 0; i < radius * 2; i++) {
+        for (int j = 0; j < radius * 2; j++) {
+          dataValue[(i+cellRowSize) * valueWidth + j + cellColSize] = new IntWritable(inputStreams[3].readInt());
+        }
+      }
     }
-    IntWritable[] dataValue ;
+
+    if (paths.length == 2){
+      GridCellInfo cell1 = GridCellInfo.getGridIndexFromFilename(paths[0].toString());
+      GridCellInfo cell2 = GridCellInfo.getGridIndexFromFilename(paths[1].toString());
+      if(cell1.rowId == cell2.rowId){ // bottom most row
+        valueWidth = cellColSize + radius * 2;
+        valueHeight = cellRowSize;
+        dataValue = new IntWritable[valueWidth * valueHeight];
+
+        for (int i = 0; i < cellRowSize; i++) {
+          for (int j = 0; j < cellColSize; j++) {
+            dataValue[i * valueWidth + j] = new IntWritable(inputStreams[0].readInt());
+          }
+        }
+
+        for (int i = 0; i < cellRowSize; i++) {
+          for (int j = 0; j < radius * 2; j++) {
+            dataValue[i * valueWidth + j + cellColSize] = new IntWritable(inputStreams[1].readInt());
+          }
+          inputStreams[1].skip(4 * (cellColSize - radius * 2));
+        }
+      } else{ // right most column
+        valueWidth = cellColSize + radius * 2;
+        valueHeight = cellRowSize;
+        dataValue = new IntWritable[valueWidth * valueHeight];
+
+        for (int i = 0; i < cellRowSize; i++) {
+          for (int j = 0; j < cellColSize; j++) {
+            dataValue[i * valueWidth + j] = new IntWritable(inputStreams[0].readInt());
+          }
+        }
+
+        for (int i = 0; i < cellRowSize; i++) {
+          for (int j = 0; j < radius * 2; j++) {
+            dataValue[i * valueWidth + j + cellColSize] = new IntWritable(inputStreams[1].readInt());
+          }
+          inputStreams[1].skip(4 * (cellColSize - radius * 2));
+        }
+      }
+    }
+
+
+
+    if (isFirstColGroup) {
+      valueWidth = cellColSize + radius * 2;
+      valueHeight = cellColSize + radius * 2;
+    } else {
+      valueWidth = cellColSize * (groupColSize - 1) + (2 * radius) % cellColSize;
+    }
 
     if (splitId >= SpatialConstant.ROW_OVERLAPPED_GROUP_SPLIT_ID_BEGIN) { // overlapped row
       valueHeight = radius * 4;
@@ -148,7 +226,7 @@ public class SpatialRecordReaderGroup extends RecordReader<LongWritable, InputSp
             for (int ii = 0; ii < cellRowSize; ii++) {
               for (int jj = 0; jj < cellColSize; jj++) {  // for every value in a file
                 dataValue[cellColSize * j + jj + // col number of the value
-                    valueWidth * (ii + ((2*radius) % cellRowSize + (i - 1) * cellRowSize))
+                    valueWidth * (ii + ((2 * radius) % cellRowSize + (i - 1) * cellRowSize))
                     // width * (row number of the value)
                     ] = new IntWritable(inputStreams[i * groupColSize + j].readInt());
               }
@@ -174,8 +252,8 @@ public class SpatialRecordReaderGroup extends RecordReader<LongWritable, InputSp
           } else {
             if (j == 0) {
               for (int ii = 0; ii < cellRowSize; ii++) {
-                inputStreams[i * groupColSize + j].skip((cellColSize - (radius * 2)%cellColSize) * 4);
-                for (int jj = 0; jj < (radius * 2)%cellColSize; jj++) {
+                inputStreams[i * groupColSize + j].skip((cellColSize - (radius * 2) % cellColSize) * 4);
+                for (int jj = 0; jj < (radius * 2) % cellColSize; jj++) {
                   dataValue[jj + // col number of the value
                       valueWidth * (ii + cellRowSize * i)  // width * (row number of the value)
                       ] = new IntWritable(inputStreams[i * groupColSize + j].readInt());
@@ -196,7 +274,11 @@ public class SpatialRecordReaderGroup extends RecordReader<LongWritable, InputSp
 
     }
 
-    value = new InputSplitWritable(new IntWritable(valueWidth), new IntWritable(valueHeight), dataValue);
+    value = new
+
+        InputSplitWritable(new IntWritable(valueWidth), new
+
+        IntWritable(valueHeight), dataValue);
 
     return true;
 
@@ -217,8 +299,11 @@ public class SpatialRecordReaderGroup extends RecordReader<LongWritable, InputSp
    */
   @Override
   public float getProgress() {
-    if (key == null) return 0.0f;
-    else return 1.0f;
+    if (key == null) {
+      return 0.0f;
+    } else {
+      return 1.0f;
+    }
   }
 
   @Override
