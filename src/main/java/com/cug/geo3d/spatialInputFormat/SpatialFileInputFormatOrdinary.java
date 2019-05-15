@@ -18,8 +18,6 @@ package com.cug.geo3d.spatialInputFormat;
  * limitations under the License.
  */
 
-import com.cug.geo3d.util.GridCellInfo;
-import com.cug.geo3d.util.GroupCellInfo;
 import com.cug.geo3d.util.GroupInfo;
 import com.cug.geo3d.util.SpatialConstant;
 import org.apache.commons.io.FilenameUtils;
@@ -28,7 +26,6 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.fs.BlockLocation;
-import org.apache.hadoop.fs.FileStatus;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.LongWritable;
@@ -37,42 +34,36 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
 import org.apache.hadoop.util.StopWatch;
 
 import java.io.IOException;
-import java.security.acl.Group;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
 
 
 /**
- * TODO  change name, remove text
- * An {@link InputFormat} for plain text files.  Files are broken into lines.
- * Either linefeed or carriage-return are used to signal end of line.  Keys are
- * the position in the file, and data are the line of text..
+ * An {@link InputFormat} for spatial raster data processing.
+ *
+ * key is the file number in row order
+ * value is the file content with right and bottom area in the width of 2 * radius
+ *
  */
 @InterfaceAudience.Public
 @InterfaceStability.Stable
-public class SpatialFileInputFormatGroup extends FileInputFormat<LongWritable, InputSplitWritable> {
+public class SpatialFileInputFormatOrdinary extends FileInputFormat<LongWritable, InputSplitWritable> {
 
   private static final Log LOG = LogFactory.getLog(SpatialFileInputFormatGroup.class);
   private int cellRowNum;
   private int cellColNum;
   private int cellRowSize;
   private int cellColSize;
-  private String spatialFilepath;
+  private String spatialFilePath;
   private String spatialFilename;
-  private GroupInfo groupInfo = GroupInfo.getDefaultGroupInfo();
+//  private GroupInfo groupInfo = GroupInfo.getDefaultGroupInfo();
   private int radius;
 
-  //  public void setGridSize(long cellRowNum, long cellColNum, String spatialFilepath){
-  //    this.cellRowNum = cellRowNum;
-  //    this.cellColNum = cellColNum;
-  //    this.spatialFilepath = spatialFilepath;
-  //
-  //  }
 
   @Override
   public RecordReader<LongWritable, InputSplitWritable> createRecordReader(InputSplit split,
                                                                            TaskAttemptContext context) {
-    return new SpatialRecordReaderGroup();
+    return new SpatialRecordReaderOrdinary();
   }
 
 
@@ -112,90 +103,58 @@ public class SpatialFileInputFormatGroup extends FileInputFormat<LongWritable, I
     cellRowSize = Integer.parseInt(infoFilename.split("_")[3]);
     cellColSize = Integer.parseInt(infoFilename.split("_")[4]);
 
-    int groupRowNum = (int) Math.ceil((double) cellRowNum / groupInfo.rowSize);
-    int groupColNum = cellColNum <= groupInfo.colSize ? 1 :
-        1 + (int) Math.ceil((double) (cellColNum - groupInfo.colSize) / (groupInfo.colSize - groupInfo.colOverlapSize));
-
     int fileNum = cellRowNum * cellColNum;  // number of all files
 
     // ..../filename/
-    spatialFilepath = FilenameUtils.getPath(dir);
+    spatialFilePath = FilenameUtils.getPath(dir);
 
     // filename
-    spatialFilename = FilenameUtils.getName(spatialFilepath.substring(0, spatialFilepath.length() - 1));
+    spatialFilename = FilenameUtils.getName(spatialFilePath.substring(0, spatialFilePath.length() - 1));
 
     FileSystem fs = new Path(dir).getFileSystem(job.getConfiguration());
 
-    // 前一列的groupFirstRowCell + groupInfo.colSize < cellColNum 然后化简 ， 行同理
-    //    for (int groupFirstRowId = 0; groupFirstRowId < cellRowNum; groupFirstRowId += groupInfo.rowSize) {
-    //      for (int groupFirstColId = 0; groupFirstColId + groupInfo.colOverlapSize < cellColNum;
-    //           groupFirstColId += groupInfo.colSize - groupInfo.colOverlapSize) {
-    //
-
-    for (int groupRowId = 0; groupRowId < groupRowNum; groupRowId++) {
-      for (int groupColId = -1; groupColId < groupColNum; groupColId++) {
-
-        int groupFirstColId;
-        int groupFirstRowId;
-        int groupRowSize;
-        int groupColSize;
-        int splitId;
-        boolean isFirstGroup;
-
-        if (groupColId == -1) { // for overlapped row group
-          if (groupRowId == groupRowNum - 1) {
-            continue;
+    for (int i = 0; i < cellRowNum; i++) {
+      for (int j = 0; j < cellColNum; j++) {
+        Path[] groupFilePaths;
+        if (i == cellRowNum - 1 && j != cellColNum - 1) { // bottom most
+          groupFilePaths = new Path[2];
+          groupFilePaths[0] = new Path(spatialFilePath + SpatialConstant.GRID_INDEX_PREFIX + "_" + spatialFilename +
+              "_" + (i) + "_" + (j));
+          groupFilePaths[1] = new Path(spatialFilePath + SpatialConstant.GRID_INDEX_PREFIX + "_" + spatialFilename +
+              "_" + (i) + "_" + (j + 1));
+        } else if (i != cellRowNum - 1 && j == cellColNum - 1) {  // right most
+          groupFilePaths = new Path[2];
+          groupFilePaths[0] = new Path(spatialFilePath + SpatialConstant.GRID_INDEX_PREFIX + "_" + spatialFilename +
+              "_" + (i) + "_" + (j));
+          groupFilePaths[1] = new Path(spatialFilePath + SpatialConstant.GRID_INDEX_PREFIX + "_" + spatialFilename +
+              "_" + (i + 1) + "_" + (j));
+        } else if (i == cellRowNum - 1 && j == cellColNum - 1) {  // right bottom most
+          groupFilePaths = new Path[1];
+          groupFilePaths[0] = new Path(spatialFilePath + SpatialConstant.GRID_INDEX_PREFIX + "_" + spatialFilename +
+              "_" + (i) + "_" + (j));
+        } else {
+          groupFilePaths = new Path[4];
+          for (int ii = 0; ii < 2; ii++) {
+            for (int jj = 0; jj < 2; jj++) {
+              groupFilePaths[ii * 2 + jj] = new Path( spatialFilePath + SpatialConstant.GRID_INDEX_PREFIX + "_"
+                  + spatialFilename + "_" + (i + ii) + "_" + (j + jj));
+            }
           }
-
-          int usedCellRowNum = (int) Math.ceil((double) radius / cellRowSize); // how many cells the radius will cover
-          if (usedCellRowNum > groupInfo.rowOverlapSize)  // 半径太大而文件太少
-          {
-            LOG.error("the radius is too large for overlapped row group");
-            return null;
-          }
-
-          groupFirstRowId = groupInfo.rowSize * (groupRowId + 1) - usedCellRowNum;
-          groupRowSize = usedCellRowNum * 2;
-          groupFirstColId = 0;
-          groupColSize = cellColNum;
-          splitId = groupRowId + SpatialConstant.ROW_OVERLAPPED_GROUP_SPLIT_ID_BEGIN;
-          isFirstGroup = true;
-        } else { // for normal group
-          groupFirstColId = groupColId * (groupInfo.colSize - groupInfo.colOverlapSize);
-          groupFirstRowId = groupRowId * groupInfo.rowSize;
-
-          // maybe the row size of most bottom group is less than the groupInfo.rowSize
-          groupRowSize = groupFirstRowId + groupInfo.rowSize > cellRowNum ? cellRowNum - groupFirstRowId :
-              groupInfo.rowSize;
-          groupColSize = (groupFirstColId + groupInfo.colSize > cellColNum) ? cellColNum - groupFirstColId :
-              groupInfo.colSize;
-          splitId = groupColId + groupRowId * groupRowNum;
-          isFirstGroup = (groupColId == 0);
-        }
-
-
-        HashMap<String, Integer> nodeCount = new HashMap<>();
-        Path[] groupFilePaths = new Path[groupRowSize * groupColSize];
-
-        // get the file path and information of file block locations
-        for (int i = 0; i < groupRowSize; i++) {
-          for (int j = 0; j < groupColSize; j++) {
-            String cellName = spatialFilepath + SpatialConstant.GRID_INDEX_PREFIX + "_" + spatialFilename + "_" +
-                (groupFirstRowId + i) + "_" + (groupFirstColId + j);
-            groupFilePaths[j + i * groupColSize] = new Path(cellName);
-            //            FileStatus fileStatus = new FileStatus();//fs.getFileStatus(new Path(cellName));
-         }
         }
 
         String[] hosts = getHostsFromPaths(groupFilePaths, fs);
+        int splitId = i*cellColNum +j;
+
 
         splits.add(new FileSplitGroup(groupFilePaths, 1, hosts, splitId, cellRowSize,
-            cellColSize, groupRowSize, groupColSize, isFirstGroup, radius));
+            cellColSize, 1, 1, false, radius));
       }
     }
 
     // Save the number of input files for metrics/loadgen
-    job.getConfiguration().setLong(NUM_INPUT_FILES, fileNum);
+    job.getConfiguration().
+
+        setLong(NUM_INPUT_FILES, fileNum);
 
 
     sw.stop();
@@ -207,8 +166,15 @@ public class SpatialFileInputFormatGroup extends FileInputFormat<LongWritable, I
   }
 
   /**
-   * 哪个host中包含的文件多就选哪个host
+   * given the paths of computing files, get the block location in hdfs, and sort the host of the first path
+   * according to the block number
    *
+   * to find the most proper host for the paths
+   *
+   * @param paths
+   * @param fs
+   * @return
+   * @throws IOException
    */
   private String[] getHostsFromPaths(Path[] paths, FileSystem fs) throws IOException {
     // count file block locations
@@ -253,8 +219,6 @@ public class SpatialFileInputFormatGroup extends FileInputFormat<LongWritable, I
     return hosts.toArray(new String[0]);
   }
 
-  //  InputSplit makeEdgeSplit(Path[] files, long length, String[] hosts) {
-  //    return new EdgeFileSplit(files, length, hosts);
-  //  }
 
 }
+

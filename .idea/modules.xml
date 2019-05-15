@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/spatialStorage.iml" filepath="$PROJECT_DIR$/spatialStorage.iml" />
+      <module fileurl="file://$PROJECT_DIR$/rpp4volume.iml" filepath="$PROJECT_DIR$/rpp4volume.iml" />
     </modules>
   </component>
 </project>

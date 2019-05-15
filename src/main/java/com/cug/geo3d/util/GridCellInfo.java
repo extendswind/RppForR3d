@@ -39,7 +39,7 @@ public class GridCellInfo {
    * @param srcFile 带路径的文件名
    * @return grid index时返回对象 否则null
    */
-  public static GridCellInfo getGridIndexFromFilename(String srcFile) {
+  public static GridCellInfo getGridCellInfoFromFilename(String srcFile) {
     String[] filenameSplit = FilenameUtils.getName(srcFile).split("_");
     if (filenameSplit.length != 4 || !filenameSplit[0].equals(SpatialConstant.GRID_INDEX_PREFIX)) {
       return null;

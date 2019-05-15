@@ -148,7 +148,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
                                             final BlockStoragePolicy storagePolicy) {
     String filename = FilenameUtils.getName(srcPath);
     // 通过文件名判断是否为空间索引，并取索引中的位置
-    GridCellInfo gridCellInfo = GridCellInfo.getGridIndexFromFilename(filename);
+    GridCellInfo gridCellInfo = GridCellInfo.getGridCellInfoFromFilename(filename);
     if (gridCellInfo != null) { // 对于网格索引
       DatanodeStorageInfo[] results = chooseTargetSpatial(gridCellInfo, numOfReplicas, writer, chosenNodes,
           returnChosenNodes, excludedNodes, blocksize, storagePolicy);

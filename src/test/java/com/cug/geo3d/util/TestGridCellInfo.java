@@ -9,7 +9,7 @@ public class TestGridCellInfo {
 
   @Test
   public void testGetGridIndexFromFilename(){
-    GridCellInfo pos = GridCellInfo.getGridIndexFromFilename("test/grid_test.dat_2_3");
+    GridCellInfo pos = GridCellInfo.getGridCellInfoFromFilename("test/grid_test.dat_2_3");
     assertTrue( pos != null);
     assertEquals(pos.rowId, 2);
     assertEquals(pos.colId, 3);

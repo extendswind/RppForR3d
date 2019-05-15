@@ -17,95 +17,95 @@ import static com.cug.geo3d.upload.SpatialDataGeneratorAndUploader.uploadSpatial
 public class TestSpatialDataGeneratorAndUploader {
 
 
-    public TestSpatialDataGeneratorAndUploader() {
-    }
+  public TestSpatialDataGeneratorAndUploader() {
+  }
 
-    @Test //(timeout = 5000)
-    public void generateBinaryTestDataTest() throws IOException {
-        generateBinaryTestData("test/test.dat", 1000, 10000);
-        DataInputStream inputStream = new DataInputStream(new BufferedInputStream(new FileInputStream("test/test.dat")));
-        Assert.assertEquals(inputStream.readInt(), 0);
-        inputStream.skip(4);
-        Assert.assertEquals(inputStream.readInt(), 2);
-        inputStream.skip(40);
-        Assert.assertEquals(inputStream.readInt(), 13);
-    }
+  @Test //(timeout = 5000)
+  public void generateBinaryTestDataTest() throws IOException {
+    generateBinaryTestData("test/test.dat", 1000, 10000);
+    DataInputStream inputStream = new DataInputStream(new BufferedInputStream(new FileInputStream("test/test.dat")));
+    Assert.assertEquals(inputStream.readInt(), 0);
+    inputStream.skip(4);
+    Assert.assertEquals(inputStream.readInt(), 2);
+    inputStream.skip(40);
+    Assert.assertEquals(inputStream.readInt(), 13);
+  }
 
-    @Test
-    public void splitSpatialDataBinaryTest() throws IOException {
-        splitSpatialDataBinary("test/test.dat", 1000, 10000, 5, 5);
-    }
+  @Test
+  public void splitSpatialDataBinaryTest() throws IOException {
+    splitSpatialDataBinary("test/test.dat", 1000, 10000, 5, 5);
+  }
 
-//  不需要自动化运行，需要用的时候再调，或者改个名字加备注....
-//  @Test(timeout = 5000)
-//  public void generateTestDataTest() throws IOException {
-//    SpatialDataGeneratorAndUploader.generateTextTestData("test/test.dat", 1000, 10000);
-//  }
-//
-//  @Test
-//  public void splitSpatialDataTest() throws IOException {
-//    SpatialDataGeneratorAndUploader.splitSpatialData("test/test.dat", 1000, 10000, 5, 5);
-//  }
+  //  不需要自动化运行，需要用的时候再调，或者改个名字加备注....
+  //  @Test(timeout = 5000)
+  //  public void generateTestDataTest() throws IOException {
+  //    SpatialDataGeneratorAndUploader.generateTextTestData("test/test.dat", 1000, 10000);
+  //  }
+  //
+  //  @Test
+  //  public void splitSpatialDataTest() throws IOException {
+  //    SpatialDataGeneratorAndUploader.splitSpatialData("test/test.dat", 1000, 10000, 5, 5);
+  //  }
 
-    //@Test
-    public void justTest() throws IOException {
-        System.setProperty("HADOOP_USER_NAME", "sparkl");
+  //@Test
+  public void justTest() throws IOException {
+    System.setProperty("HADOOP_USER_NAME", "sparkl");
 
-        // grid size 25000*25000, with four bytes a pixel, totally about 2.5G
-        int gridRowSize = 25000;
-        int gridColSize = 25000;
-        //generateBinaryTestData("test/big2.dat", gridRowSize, gridColSize);
-        System.out.println("data generate done!");
+    // grid size 25000*25000, with four bytes a pixel, totally about 2.5G
+    int gridRowSize = 25000;
+    int gridColSize = 25000;
+    //generateBinaryTestData("test/big2.dat", gridRowSize, gridColSize);
+    System.out.println("data generate done!");
 
-        // split into 5*5 file, every file 1000*5000, about 20M
-        int cellRowSize = 5000;
-        int cellColSize = 1000;
-        //splitSpatialDataBinary("test/big2.dat", gridRowSize, gridColSize, gridRowSize / cellRowSize,
-        //        gridColSize / cellColSize);
-        System.out.println("data split done!");
+    // split into 5*5 file, every file 1000*5000, about 20M
+    int cellRowSize = 5000;
+    int cellColSize = 1000;
+    //splitSpatialDataBinary("test/big2.dat", gridRowSize, gridColSize, gridRowSize / cellRowSize,
+    //        gridColSize / cellColSize);
+    System.out.println("data split done!");
 
-        uploadSpatialFile("test/big2.dat_upload",
-                "hdfs://kvmmaster:9000/user/sparkl/big2.dat",
-                gridRowSize / cellRowSize, gridColSize / cellColSize, cellRowSize, cellColSize);
-        System.out.println("data upload done!");
-//    System.setProperty("HADOOP_USER_NAME", "sparkl");
-//      // get block location
-//    Configuration conf = new Configuration();
-//    FileSystem fs = FileSystem.get(URI.create("hdfs://kvmmaster:9000/"), conf);
-//    fs.create(new Path("/test"));
-//
-//    fs.close();
+    uploadSpatialFile("test/big2.dat_upload",
+        "hdfs://kvmmaster:9000/user/sparkl/big2.dat",
+        gridRowSize / cellRowSize, gridColSize / cellColSize, cellRowSize, cellColSize);
+    System.out.println("data upload done!");
+    //    System.setProperty("HADOOP_USER_NAME", "sparkl");
+    //      // get block location
+    //    Configuration conf = new Configuration();
+    //    FileSystem fs = FileSystem.get(URI.create("hdfs://kvmmaster:9000/"), conf);
+    //    fs.create(new Path("/test"));
+    //
+    //    fs.close();
 
-    }
-
-
-    // for data upload test
-    @Test
-    public void testUpload() throws IOException {
-        System.setProperty("HADOOP_USER_NAME", "sparkl");
-
-        String filename = "spatial3GNew.dat";
-//         String filename = "bigTestFile.dat";
-
-        // grid size 30000*25000, with four bytes a pixel, totally about 3G
-        int gridRowSize = 30000;
-        int gridColSize = 25000;
-        //generateBinaryTestData("test/" + filename, gridRowSize, gridColSize);
-        System.out.println("data generate done!");
+  }
 
 
-        // split into 5*5 file, every file 1000*5000, about 20M
-        int cellRowSize = 10000;
-        int cellColSize = 500;
-        //splitSpatialDataBinary("test/" + filename, gridRowSize, gridColSize, gridRowSize / cellRowSize,
-        //        gridColSize / cellColSize);
-        System.out.println("data split done!");
+  // for data upload test
+  @Test
+  public void testUpload() throws IOException {
+    System.setProperty("HADOOP_USER_NAME", "sparkl");
+
+    String filename = "spatial3GNew.dat";
+    //         String filename = "bigTestFile.dat";
+
+    // grid size 30000*25000, with four bytes a pixel, totally about 3G
+    int gridRowSize = 30000;
+    int gridColSize = 25000;
+    //generateBinaryTestData("test/" + filename, gridRowSize, gridColSize);
+    System.out.println("data generate done!");
 
 
-        uploadSpatialFile("test/" + filename + "_upload",
-                "hdfs://kvmmaster:9000/notSpatial/" + filename,
-                gridRowSize / cellRowSize, gridColSize / cellColSize, cellRowSize, cellColSize);
-        System.out.println("data upload done!");
-    }
+    // split into 5*5 file, every file 1000*5000, about 20M
+    int cellRowSize = 10000;
+    int cellColSize = 500;
+    //splitSpatialDataBinary("test/" + filename, gridRowSize, gridColSize, gridRowSize / cellRowSize,
+    //        gridColSize / cellColSize);
+    System.out.println("data split done!");
+
+
+    uploadSpatialFile("test/" + filename + "_upload",
+        "hdfs://kvmmaster:9000/notSpatial/" + filename,
+        gridRowSize / cellRowSize, gridColSize / cellColSize, cellRowSize, cellColSize);
+    System.out.println("data upload done!");
+  }
 
 }

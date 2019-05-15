@@ -94,7 +94,7 @@ public class SpatialRecordReaderGroup extends RecordReader<LongWritable, InputSp
 
 
 //    GridCellInfo leftTop = new GridCellInfo();
-//    GridCellInfo.getGridIndexFromFilename(paths[0].getName(), leftTop);
+//    GridCellInfo.getGridCellInfoFromFilename(paths[0].getName(), leftTop);
 
 //    radius = context.getConfiguration().getInt("geo3d.spatial.radius", 5);
 
@@ -225,6 +225,7 @@ public class SpatialRecordReaderGroup extends RecordReader<LongWritable, InputSp
   public synchronized void close() {
     try {
       if (inputStreams != null) {
+
         for (int i = 0; i < inputStreams.length; i++) {
           inputStreams[i].close();
         }

@@ -31,7 +31,6 @@ import org.apache.hadoop.hdfs.DFSUtil;
 import org.apache.hadoop.hdfs.protocol.BlockStoragePolicy;
 import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants;
-import org.apache.hadoop.hdfs.server.protocol.DatanodeStorage;
 import org.apache.hadoop.hdfs.server.protocol.DatanodeStorage.State;
 import org.apache.hadoop.net.NetworkTopology;
 import org.apache.hadoop.net.Node;
@@ -153,7 +152,7 @@ public class BlockPlacementPolicySpatialGroup extends BlockPlacementPolicy {
                                             final BlockStoragePolicy storagePolicy) {
     String filename = FilenameUtils.getName(srcPath);
     // 通过文件名判断是否为空间索引，并取索引中的位置
-    GridCellInfo gridCellInfo = GridCellInfo.getGridIndexFromFilename(filename);
+    GridCellInfo gridCellInfo = GridCellInfo.getGridCellInfoFromFilename(filename);
     if (gridCellInfo != null) { // 对于网格索引的文件
       DatanodeStorageInfo[] results = chooseTargetSpatial(gridCellInfo, numOfReplicas, writer, chosenNodes, returnChosenNodes,
           excludedNodes, blocksize, storagePolicy);

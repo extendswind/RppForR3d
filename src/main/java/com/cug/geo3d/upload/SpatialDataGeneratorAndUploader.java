@@ -234,27 +234,15 @@ public class SpatialDataGeneratorAndUploader {
 
     System.setProperty("HADOOP_USER_NAME", "sparkl");
 
-//    // grid size 25000*25000, with four bytes a pixel, totally about 2.5G
-//    int gridRowSize = 25000;
-//    int gridColSize = 25000;
-//    String localFile = "test_data/test-2-5G-5-25.dat";
-//
-//    // split into 5*25 file, every file 1000*5000, about 20M
-//    int cellRowSize = 5000;
-//    int cellColSize = 1000;
-
-
     // grid size 27000*27000, with four bytes a pixel, totally about 2.78G
     int gridRowSize = 27000;
     int gridColSize = 27000;
     String localFile = "test_data/test-3G-9-9.dat";
 
-    // split into 9*9 file, every file 4000*5000, about 20M
-    // 3*4 groups
+    // split into 9*9 file, every file 3000*3000, about 35M
+    // 3*3 groups
     int cellRowSize = 3000;
     int cellColSize = 3000;
-
-
 
     // upload directory
     String hdfsDir = "hdfs://kvmmaster:9000/user/sparkl/" + FilenameUtils.getName(localFile);

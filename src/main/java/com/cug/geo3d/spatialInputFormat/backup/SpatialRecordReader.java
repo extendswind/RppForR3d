@@ -79,7 +79,7 @@ public class SpatialRecordReader extends RecordReader<LongWritable, InputSplitWr
       inputStreams[i] = fs.open(paths[i]);
     }
 
-    GridCellInfo leftTop = GridCellInfo.getGridIndexFromFilename(paths[0].getName());
+    GridCellInfo leftTop = GridCellInfo.getGridCellInfoFromFilename(paths[0].getName());
     splitColId = leftTop.colId;
     splitRowId = leftTop.rowId;
 

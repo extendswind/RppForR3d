@@ -24,6 +24,8 @@ TODO GroupInfo类暂时设为3 3 1 1，后面考虑从数据库或者专门的�
 在InputFormat和BlockPlacementPolicy中
 
 
+将之前针对2d代码改到3d上
+
 
 
 # File Input
