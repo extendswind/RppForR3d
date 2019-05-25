@@ -18,7 +18,6 @@
 
 package org.apache.hadoop.hdfs.server.blockmanagement;
 
-import com.cug.geo3d.util.GridCellInfo;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.impl.Log4JLogger;
 import org.apache.hadoop.conf.Configuration;

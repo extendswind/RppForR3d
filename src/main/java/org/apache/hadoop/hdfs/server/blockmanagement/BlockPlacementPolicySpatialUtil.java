@@ -1,7 +1,6 @@
 package org.apache.hadoop.hdfs.server.blockmanagement;
 
-import com.cug.geo3d.util.GridCellInfo;
-import com.cug.geo3d.util.GroupCellInfo;
+import com.cug.rpp4raster2d.util.CellIndexInfo;
 
 import java.io.*;
 
@@ -14,7 +13,7 @@ public class BlockPlacementPolicySpatialUtil {
    * @param info     grid cell info
    * @param filepath file path
    */
-  public static void saveGridIndexToFile(DatanodeStorageInfo[] results, GridCellInfo info, String filepath) {
+  public static void saveGridIndexToFile(DatanodeStorageInfo[] results, CellIndexInfo info, String filepath) {
     if (info.rowId == 0 && info.colId == 0)
       new File(filepath).delete();
     if (results.length == 0)
@@ -56,7 +55,7 @@ public class BlockPlacementPolicySpatialUtil {
    * input file and info
    * get corresponding datanodeLocations of infos from file
    */
-  public static String[][] readGridIndexFromFile(String file, GridCellInfo[] infos) {
+  public static String[][] readGridIndexFromFile(String file, CellIndexInfo[] infos) {
 
     String[][] datanodeLocs = new String[infos.length][];
     try (BufferedReader br = new BufferedReader(new FileReader(file))) {
