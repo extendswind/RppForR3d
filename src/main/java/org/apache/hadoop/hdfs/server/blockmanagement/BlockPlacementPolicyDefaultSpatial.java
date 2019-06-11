@@ -48,9 +48,12 @@ import static org.apache.hadoop.util.Time.monotonicNow;
  * <p>
  * gridRowId and gridColId is -1 represent the split id which will be got in InputFormat, used for datanode balance.
  *
+ *
  * 修改的BlockPlacementPolicyDefault类，主要对空间数据进行按列分组存储
  * 第1/2列放在同一节点，第2/3列放在第二节点....
  * 此时会使用两个副本，第三副本在集群上根据机架信息随机放置
+ *
+ * 纯粹的基于列放置，最开始的空间数据放置优化的第一版
  *
  *
  * 网格索引的文件会被命名为 grid_filename_rowId_colId，根据rowId和colId决定文件的存储位置

@@ -116,7 +116,12 @@ public class Raster3dGeneratorAndUploader {
           String localFilename = "/" + SpatialConstant.RASTER_3D_INDEX_PREFIX + "_" + filename + "_" + x + "_" + y +
               "_" + z;
           Path localPath = new Path(localDirectory + "/" + localFilename);
-          hdfs.copyFromLocalFile(localPath, hdfsPath);
+          try {
+            hdfs.copyFromLocalFile(localPath, hdfsPath);
+          } catch (IOException e){
+            e.printStackTrace();
+            throw e;
+          }
         }
       }
     }
@@ -160,19 +165,19 @@ public class Raster3dGeneratorAndUploader {
     // for every cell use 1 Byte, totally 2.4G
     int modelXDim = 2000;
     int modelYDim = 2000;
-    int modelZDim = 600;
+    int modelZDim = 500;
 
     // for every cell use 1 byte, totally 12.5M
+    // 8*8*3
     int cellXDim = 250;
     int cellYDim = 250;
-    int cellZDim = 200;
+    int cellZDim = 250;
 
     String localFile = "test_data/raster3d-2.4G.dat";
 
     // upload directory
-    String hdfsDir = "hdfs://kvmmaster:9000/user/sparkl/" + FilenameUtils.getName(localFile);
-
-    if (true) {
+    String hdfsDir = "hdfs://kvmmaster:9000/user/sparkl/" + FilenameUtils.getName(localFile) + "_optimize";
+    if (false) {
       generateBinaryTestData(localFile, modelXDim, modelYDim, modelZDim);
       System.out.println("data generate done!");
 
@@ -181,7 +186,8 @@ public class Raster3dGeneratorAndUploader {
       System.out.println("data split done!");
     }
 
-    if(false) {
+    if(true) {
+
       uploadSpatialFile(localFile + "_upload", hdfsDir, cellXDim, cellYDim, cellZDim, modelXDim / cellXDim,
           modelYDim / cellYDim, modelZDim / cellZDim);
       System.out.println("data upload done!");

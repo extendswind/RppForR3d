@@ -2,6 +2,7 @@
   <dictionary name="fly">
     <words>
       <w>datanode</w>
+      <w>filepath</w>
     </words>
   </dictionary>
 </component>

@@ -20,6 +20,7 @@ package com.cug.rpp4raster3d.spatialInputFormat;
 
 import com.cug.rpp4raster2d.inputFormat.InputSplitWritable;
 import com.cug.rpp4raster2d.util.CellIndexInfo;
+import com.cug.rpp4raster2d.util.GroupInfo;
 import com.cug.rpp4raster3d.raster3d.CellAttrs;
 import com.cug.rpp4raster3d.raster3d.CellAttrsSimple;
 import com.cug.rpp4raster2d.util.SpatialConstant;
@@ -31,13 +32,17 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hdfs.client.HdfsDataInputStream;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 
-import java.io.IOException;
+import java.io.*;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 
 // input : EdgeInputSplit
@@ -68,6 +73,10 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
   private int groupXSize; // number of groups in x dimension
   private int groupYSize;
   private int groupZSize;
+
+  private int groupInfoZSize; // zSize of GroupInfo
+  // 顶层和底层时 groupZSize=groupInfoSize+1
+  // 中间时，groupZSize=groupInfoSize+2
 
   //  int cellRowSize = 1000;
   //  int cellColSize = 1000;
@@ -106,7 +115,11 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
     CellIndexInfo cellIndexInfo = CellIndexInfo.getGridCellInfoFromFilename(paths[0].toString());
     //    assert cellIndexInfo != null;
     isFirstColGroup = cellIndexInfo.colId == 0;
-    isFirstZGroup = cellIndexInfo.zId == 0 && groupZSize == 2;
+
+    // z 方向由于需要考虑上下radius内的数据，因此较为特殊，考虑需要传入GroupInfo.zSize
+
+    groupInfoZSize = GroupInfo.getDefaultGroupInfo().zSize;
+    isFirstZGroup = cellIndexInfo.zId == 0 && groupZSize == groupInfoZSize + 1;
 
     splitId = inputSplit.splitId;
   }
@@ -115,6 +128,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
   public boolean nextKeyValue() throws IOException {
     if (key == null) {
       key = new LongWritable(inputSplit.splitId);
+      LOG.debug("splitId of currrent RecordReader is : " + key);
     } else {
       return false;
     }
@@ -127,10 +141,11 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
     if (isFirstColGroup) {
       valueXDim = cellXDim * groupXSize;
     } else {
-      valueXDim = cellXDim * (groupXSize - 1) + (2 * radius) % cellXDim;
+      valueXDim = (2 * radius) % cellXDim + cellXDim * (groupXSize - 1);
     }
 
-    if (isFirstZGroup) {
+    // TODO 不考虑半径超过一个文件的情况 因此groupZSize在顶层和底层时为2，其它层为3
+    if (groupZSize == groupInfoZSize + 1) { // 顶底两层
       valueZDim = cellZDim * (groupZSize - 1) + radius;
     } else {
       valueZDim = cellZDim * (groupZSize - 2) + radius * 2;
@@ -142,8 +157,6 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
       valueYDim = radius * 4;
       dataValue = new CellAttrsSimple[valueXDim * valueYDim * valueZDim];
 
-
-      // TODO 不考虑半径超过一个文件的情况 因此groupYSize为2  groupZSize在isFirstGroup为true时为2，false时为3
       for (int zz = 0; zz < groupZSize; zz++) {
         for (int yy = 0; yy < groupYSize; yy++) {
           for (int xx = 0; xx < groupXSize; xx++) {
@@ -205,10 +218,11 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
             startX = 0;
             lengthX = cellXDim;
             toValueX = xx * cellXDim;
+            int cellSize = new CellAttrsSimple().getSize();
 
             readPartFromStream(inputStreams[zz * groupXSize * groupYSize + yy * groupXSize + xx], cellXDim,
                 cellYDim, startX, startY, startZ, lengthX, lengthY, lengthZ,
-                CellAttrsSimple.getSize(), dataValue, valueXDim, valueYDim,
+                cellSize, dataValue, valueXDim, valueYDim,
                 toValueX, toValueY, toValueZ);
           }
         }
@@ -221,7 +235,6 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
       for (int zz = 0; zz < groupZSize; zz++) {
         for (int yy = 0; yy < groupYSize; yy++) {
           for (int xx = 0; xx < groupXSize; xx++) {
-
             int startX;
             int startY;
             int startZ;
@@ -289,9 +302,10 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
               }
             }
 
+            int cellSize = new CellAttrsSimple().getSize();
             readPartFromStream(inputStreams[zz * groupXSize * groupYSize + yy * groupXSize + xx], cellXDim,
                 cellYDim, startX, startY, startZ, lengthX, lengthY, lengthZ,
-                CellAttrsSimple.getSize(), dataValue, valueXDim, valueYDim,
+                cellSize, dataValue, valueXDim, valueYDim,
                 toValueX, toValueY, toValueZ);
 
           }
@@ -359,16 +373,39 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
 
   @Override
   public synchronized void close() {
-    try {
+        try {
+      LOG.debug("Record reader close and write IO statistics to HDFS");
       if (inputStreams != null) {
-
+        long remoteReading = 0;
+        long totalReading = 0;
         for (int i = 0; i < inputStreams.length; i++) {
+          if(inputStreams[i] instanceof HdfsDataInputStream){
+            remoteReading += ((HdfsDataInputStream) inputStreams[i]).getReadStatistics().getRemoteBytesRead();
+            totalReading += ((HdfsDataInputStream) inputStreams[i]).getReadStatistics().getTotalBytesRead();
+          }
           inputStreams[i].close();
         }
+
+         // write to a local file
+        File file = new File("/tmp/rpp_iostats");
+        if(!file.isFile())
+          file.createNewFile();
+        FileOutputStream fileOutputStream = new FileOutputStream(file, true);
+        BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fileOutputStream));
+
+        Date date = new Date();
+        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd|HH:mm");
+        bufferedWriter.write(dateFormat.format(date) + " " + splitId + " " + totalReading/1024 + " " +
+            remoteReading/1024 + "\n");
+        bufferedWriter.close();
+
+        LOG.info(dateFormat.format(date) + " " + splitId + " " + totalReading/1024 + " " + remoteReading/1024 + "\n");
+
       }
     } catch (IOException e) {
       e.printStackTrace();
     }
+
 
   }
 }

@@ -99,6 +99,7 @@ public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWri
       throw new IOException("no input directory");
     }
     radius = job.getConfiguration().getInt("rpp4raster3d.spatial.radius", 10);
+    LOG.info("spatial radius is set to " + radius);
 
     String infoFilename = FilenameUtils.getName(dir);
 
@@ -128,7 +129,7 @@ public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWri
     //    for (int groupFirstRowId = 0; groupFirstRowId < cellRowNum; groupFirstRowId += groupInfo.rowSize) {
     //      for (int groupFirstColId = 0; groupFirstColId + groupInfo.colOverlapSize < cellColNum;
     //           groupFirstColId += groupInfo.colSize - groupInfo.colOverlapSize) {
-    //
+
 
     for (int groupZ = 0; groupZ < groupZNum; groupZ++) {
       for (int groupRowId = 0; groupRowId < groupRowNum; groupRowId++) {
@@ -141,6 +142,7 @@ public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWri
           int groupColSize;
           int groupZSize;
           int splitId;
+
 
           if(groupZ == 0 ){
             groupFirstZId = 0;
@@ -186,6 +188,7 @@ public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWri
           }
 
           Path[] groupFilePaths = new Path[groupRowSize * groupColSize * groupZSize];
+          Path[] mainFilePaths = new Path[groupRowSize * groupColSize]; // used for get the right host
 
           for(int zz = 0; zz < groupZSize; zz++) {
             // get the file path and information of file block locations
@@ -193,12 +196,16 @@ public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWri
               for (int xx = 0; xx < groupColSize; xx++) {
                 String cellName = spatialFilepath  + "/" + SpatialConstant.RASTER_3D_INDEX_PREFIX + "_" +
                     spatialFilename + "_" + (groupFirstColId + xx) + "_" + (groupFirstRowId + yy) + "_" + (groupFirstZId + zz);
-                groupFilePaths[xx + yy * groupColSize + zz * groupColSize * groupRowSize] = new Path(cellName);
+                int fileIndex = xx + yy * groupColSize + zz * groupColSize * groupRowSize;
+                groupFilePaths[fileIndex] = new Path(cellName);
+
+                if(groupFirstZId + zz == groupZ)
+                  mainFilePaths[xx + yy * groupColSize] = new Path(cellName);
               }
             }
           }
 
-          String[] hosts = getHostsFromPaths(groupFilePaths, fs);
+          String[] hosts = getHostsFromPaths(mainFilePaths, fs);
           splits.add(new FileSplitGroupRaster3D(groupFilePaths, 1, hosts, splitId, cellXDim, cellYDim, cellZDim,
               groupColSize, groupRowSize, groupZSize, radius));
         }

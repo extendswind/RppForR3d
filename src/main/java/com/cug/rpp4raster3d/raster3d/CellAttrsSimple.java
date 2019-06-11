@@ -31,7 +31,7 @@ public class CellAttrsSimple extends CellAttrsBase {
     attr = dataInput.readByte();
   }
 
-  public static int getSize(){
+  public int getSize(){
     return 1;
   }
 }

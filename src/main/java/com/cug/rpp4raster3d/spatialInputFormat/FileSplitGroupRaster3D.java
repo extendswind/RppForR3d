@@ -23,6 +23,7 @@ import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.io.Text;
 import org.apache.hadoop.io.Writable;
+import org.apache.hadoop.mapred.SplitLocationInfo;
 import org.apache.hadoop.mapreduce.InputFormat;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.JobContext;
@@ -185,12 +186,11 @@ public class FileSplitGroupRaster3D extends InputSplit implements Writable {
     groupYSize = in.readInt();
     groupZSize = in.readInt();
     radius = in.readInt();
-//    isFirstColGroup = in.readBoolean();
   }
 
-//  default value return null, represent no memory location considered
-// @Override
-//  @Evolving
+//  this method is useless if data in hdfs all storing in disk
+  // @Override
+//  @InterfaceStability.Evolving
 //  public SplitLocationInfo[] getLocationInfo() throws IOException {
 //    return hostInfos;
 //  }

@@ -18,9 +18,6 @@ package com.cug.rpp4raster3d.spatialInputFormat;
  * limitations under the License.
  */
 
-import com.cug.rpp4raster2d.inputFormat.InputSplitWritable;
-import com.cug.rpp4raster2d.inputFormat.SpatialRecordReaderGroup;
-import com.cug.rpp4raster2d.util.GroupInfo;
 import com.cug.rpp4raster2d.util.SpatialConstant;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
@@ -47,13 +44,13 @@ import java.util.concurrent.TimeUnit;
  */
 @InterfaceAudience.Public
 @InterfaceStability.Stable
-public class SpatialFileInputFormatGroupRaster3DSimple extends FileInputFormat<LongWritable, InputSplitWritableRaster3D> {
-  private static final Log LOG = LogFactory.getLog(SpatialFileInputFormatGroupRaster3DSimple.class);
+public class SpatialFileInputFormatSimpleRaster3D extends FileInputFormat<LongWritable, InputSplitWritableRaster3D> {
+  private static final Log LOG = LogFactory.getLog(SpatialFileInputFormatSimpleRaster3D.class);
 
   @Override
   public RecordReader<LongWritable, InputSplitWritableRaster3D> createRecordReader(InputSplit split,
                                                                            TaskAttemptContext context) {
-    return new SpatialRecordReaderGroupRaster3DSimple();
+    return new SpatialRecordReaderSimpleRaster3D();
   }
 
 
@@ -80,6 +77,7 @@ public class SpatialFileInputFormatGroupRaster3DSimple extends FileInputFormat<L
       throw new IOException("no input directory");
     }
     int radius = job.getConfiguration().getInt("rpp4raster3d.spatial.radius", 5);
+    LOG.info("spatial radius is set to " + radius);
 
     String infoFilename = FilenameUtils.getName(dir);
 
@@ -106,9 +104,9 @@ public class SpatialFileInputFormatGroupRaster3DSimple extends FileInputFormat<L
           int leftX = x - 1 < 0 ? 0 : x - 1;
           int leftY = y - 1 < 0 ? 0 : y - 1;
           int leftZ = z - 1 < 0 ? 0 : z - 1;
-          int rightX = x + 1 > cellXNum ? cellXNum : x + 1;
-          int rightY = y + 1 > cellYNum ? cellYNum : y + 1;
-          int rightZ = z + 1 > cellZNum ? cellZNum : z + 1;
+          int rightX = x + 2 > cellXNum ? cellXNum : x + 2;
+          int rightY = y + 2 > cellYNum ? cellYNum : y + 2;
+          int rightZ = z + 2 > cellZNum ? cellZNum : z + 2;
 
           Path[] groupFilePaths = new Path[(rightX - leftX) * (rightY - leftY) * (rightZ - leftZ)];
           for (int zz = leftZ; zz < rightZ; zz++) {
@@ -130,7 +128,6 @@ public class SpatialFileInputFormatGroupRaster3DSimple extends FileInputFormat<L
 
           splits.add(new FileSplitGroupRaster3D(groupFilePaths, 1, blkHosts, splitId, cellXDim, cellYDim, cellZDim,
               rightX - leftX, rightY - leftY, rightZ - leftZ, radius));
-
         }
       }
     }
@@ -145,11 +142,5 @@ public class SpatialFileInputFormatGroupRaster3DSimple extends FileInputFormat<L
     }
     return splits;
   }
-
-
-
-  //  InputSplit makeEdgeSplit(Path[] files, long length, String[] hosts) {
-  //    return new EdgeFileSplit(files, length, hosts);
-  //  }
 
 }

@@ -8,5 +8,5 @@ import java.io.IOException;
 public abstract class CellAttrsBase{
   public abstract void write(DataOutput dataOutput) throws IOException;
   public abstract void read(DataInput dataInput) throws IOException;
-//  public abstract int getSize();
+  public abstract int getSize();
 }

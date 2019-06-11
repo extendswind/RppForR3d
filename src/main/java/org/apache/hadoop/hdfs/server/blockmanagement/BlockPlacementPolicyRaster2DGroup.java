@@ -31,6 +31,7 @@ import org.apache.hadoop.hdfs.DFSUtil;
 import org.apache.hadoop.hdfs.protocol.BlockStoragePolicy;
 import org.apache.hadoop.hdfs.protocol.DatanodeInfo;
 import org.apache.hadoop.hdfs.protocol.HdfsConstants;
+import org.apache.hadoop.hdfs.server.protocol.DatanodeStorage;
 import org.apache.hadoop.hdfs.server.protocol.DatanodeStorage.State;
 import org.apache.hadoop.net.NetworkTopology;
 import org.apache.hadoop.net.Node;
@@ -56,7 +57,7 @@ import static org.apache.hadoop.util.Time.monotonicNow;
 
 /**
  * The class is responsible for choosing the desired targets for placing block replicas.
- *
+ * <p>
  * 3D 数据会被视为多层 2D 数据处理
  */
 @InterfaceAudience.Private
@@ -81,7 +82,7 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
   private FSClusterStats stats;
   protected long heartbeatInterval;   // interval for DataNode heartbeats
   private long staleInterval;   // interval used to identify stale DataNodes
-  private Configuration conf;
+  //  private Configuration conf;
 
 
   /////////////////////////////////////////////
@@ -96,7 +97,7 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
   private GroupInfo groupInfo;
 
 
-//  private final String SPATIAL_STORAGE_PATH = "/user/sparkl/spatial_data";
+  //  private final String SPATIAL_STORAGE_PATH = "/user/sparkl/spatial_data";
   //////////////////////////////////////////
 
   /**
@@ -132,7 +133,7 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
             DFS_NAMENODE_BLOCKPLACEMENTPOLICY_DEFAULT_PREFER_LOCAL_NODE_KEY,
         DFSConfigKeys.
             DFS_NAMENODE_BLOCKPLACEMENTPOLICY_DEFAULT_PREFER_LOCAL_NODE_DEFAULT);
-    this.conf = conf;
+    //    this.conf = conf;
   }
 
 
@@ -150,11 +151,18 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
     // 通过文件名判断是否为空间索引，并取索引中的位置
     CellIndexInfo cellIndexInfo = CellIndexInfo.getGridCellInfoFromFilename(filename);
     if (cellIndexInfo != null) { // 对于网格索引的文件
-      DatanodeStorageInfo[] results = chooseTargetSpatial(cellIndexInfo, numOfReplicas, writer, chosenNodes, returnChosenNodes,
+      DatanodeStorageInfo[] result = chooseTargetSpatial(cellIndexInfo, numOfReplicas, writer, chosenNodes,
+          returnChosenNodes,
           excludedNodes, blocksize, storagePolicy);
-//      if (results != null)  TODO  whether move to the inner method?
-//        BlockPlacementPolicySpatialUtil.saveGridIndexToFile(results, cellIndexInfo, GROUP_INFO_FILE_PATH);
-      return results;
+
+      StringBuilder resultStr = new StringBuilder();
+      for (DatanodeStorageInfo info : result) {
+        resultStr.append(info.getDatanodeDescriptor().toString());
+        resultStr.append(" ");
+      }
+      LOG.debug("chooseTarget result: " + resultStr.toString());
+
+      return result;
 
     } else {  // 对于普通文件
       return chooseTarget(numOfReplicas, writer, chosenNodes, returnChosenNodes,
@@ -197,8 +205,9 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
     //Set<Node> softExcludedNodes = new TreeSet<Node>();
     Set<Node> softExcludedNodes = new LinkedHashSet<>();
 
-    if (excludedNodes == null)
+    if (excludedNodes == null) {
       excludedNodes = new TreeSet<>();
+    }
 
     for (DatanodeStorageInfo storage : chosenNodes) {
       // add localMachine and related nodes to excludedNodes
@@ -206,32 +215,46 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
     }
 
 
-    // ----------  core algorithm for spatial optimization  ----------------
     String groupInfoFile = GROUP_INFO_FILE_PATH + "/GROUP_" + cellIndexInfo.filename;
-    if (cellIndexInfo.rowId == 0 && cellIndexInfo.colId == 0)
+    if (cellIndexInfo.rowId == 0 && cellIndexInfo.colId == 0 && (cellIndexInfo.zId % groupInfo.zSize == 0)) {
       new File(groupInfoFile).delete();
+    }
 
     GroupCellInfo groupCellInfo = GroupCellInfo.getFromGridCellInfo(cellIndexInfo, groupInfo);
 
-//    if(info.rowId == 0)
+    //    if(info.rowId == 0)
 
     // left-top grid node will get a random place, the same to default block placement
-//    if (cellIndexInfo.rowId == 0 && cellIndexInfo.colId == 0) {
-//      DatanodeStorageInfo[] resultNodes = chooseTarget(numOfReplicas, writer, chosenNodes, returnChosenNodes,
-//          excludedNodes, blocksize, storagePolicy);
-//      if (resultNodes != null) {
-//        saveGroupReplicaPosToFile(resultNodes[0].getDatanodeDescriptor(), groupCellInfo, MG_PREFIX, groupInfoFile);
-//      }
-//      return resultNodes;
-//    }
+    //    if (cellIndexInfo.rowId == 0 && cellIndexInfo.colId == 0) {
+    //      DatanodeStorageInfo[] resultNodes = chooseTarget(numOfReplicas, writer, chosenNodes, returnChosenNodes,
+    //          excludedNodes, blocksize, storagePolicy);
+    //      if (resultNodes != null) {
+    //        saveGroupReplicaPosToFile(resultNodes[0].getDatanodeDescriptor(), groupCellInfo, MG_PREFIX,
+    //        groupInfoFile);
+    //      }
+    //      return resultNodes;
+    //    }
 
+
+    // 首先给所有的overlapped group分配位置，但当前文件没有用到
+    if (groupCellInfo.colId == 0) {
+      // choose a random node for overlapped row group (0,0)
+      List<DatanodeStorageInfo> ORNodeResult = new ArrayList<>();
+      DatanodeStorageInfo ORNode = chooseRandomSpatial(NodeBase.ROOT, excludedNodes, blocksize, maxNodesPerRack,
+          ORNodeResult, avoidStaleNodes, storageTypes, softExcludedNodes);
+      saveGroupReplicaPosToFile(ORNode.getDatanodeDescriptor(), groupCellInfo, OR_PREFIX, groupInfoFile);
+      excludedNodes.clear();
+      softExcludedNodes.clear();
+    }
+
+    // ----------  core algorithm for spatial optimization  ----------------
     // 读取当前group所在的位置放置第一个副本
     String currentGroupReplicaPos = readGroupReplicaPosFromFile(groupInfoFile, groupCellInfo, MG_PREFIX);
-    if (currentGroupReplicaPos != null) {  //
+    if (currentGroupReplicaPos != null) {
       DatanodeDescriptor firstReplicaNode = (DatanodeDescriptor) clusterMap.getNode(currentGroupReplicaPos);
       results.add(getDatanodeStorageInfo(firstReplicaNode));
       excludedNodes.add(firstReplicaNode);
-    } else {  // 每个row group的第一个副本
+    } else {  // 当前group的第一个副本
       String OR_ReplicaPos = readGroupReplicaPosFromFile(groupInfoFile, new Coord(groupCellInfo.rowId - 1,
           0), OR_PREFIX);
       if (OR_ReplicaPos != null) {
@@ -256,17 +279,16 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
         int currentResultNum = results.size();
         chooseTargetSpatial(currentResultNum + 1, excludedNodes, softExcludedNodes, results,
             avoidStaleNodes, maxNodesPerRack, storageTypes, blocksize, cellIndexInfo.filename);
-//        DatanodeStorageInfo otherRackReplica = chooseRandomInOtherRackSpatial(
-//            results.get(0).getDatanodeDescriptor(), excludedNodes, softExcludedNodes, results,
-//            avoidStaleNodes, maxNodesPerRack, storageTypes, blocksize);
         saveGroupReplicaPosToFile(results.get(currentResultNum).getDatanodeDescriptor(), rightGroupCellInfo,
             MG_PREFIX, groupInfoFile);
       } else { // overlapped column 的其它文件  读取第一个文件写入的位置作为第二个副本
         DatanodeDescriptor node = (DatanodeDescriptor) clusterMap.getNode(rightGroupReplicaPos);
         results.add(getDatanodeStorageInfo(node));
+        excludedNodes.add(node);
       }
     }
 
+    // overlapped row
     if (groupCellInfo.ORCoord != null) {
       String replicaPos = readGroupReplicaPosFromFile(groupInfoFile, groupCellInfo.ORCoord, OR_PREFIX);
       if (replicaPos == null) { // first overlapped row file
@@ -281,10 +303,12 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
       }
     }
 
-
     chooseTargetSpatial(3, excludedNodes, softExcludedNodes, results, avoidStaleNodes,
         maxNodesPerRack, storageTypes, blocksize, cellIndexInfo.filename);
-    return results.toArray(new DatanodeStorageInfo[0]);
+
+    LinkedHashSet<DatanodeStorageInfo> resultSet = new LinkedHashSet<>(results);
+
+    return resultSet.toArray(new DatanodeStorageInfo[0]);
 
   }
 
@@ -292,7 +316,6 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
   /**
    * choose a random datanode in the other rack of first replica
    * load balan
-   *
    */
   DatanodeStorageInfo chooseRandomInOtherRackSpatial(
       DatanodeDescriptor firstReplicaNode,
@@ -332,7 +355,7 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
                                                     boolean avoidStaleNodes,
                                                     EnumMap<StorageType, Integer> storageTypes,
                                                     Set<Node> softExcludedNodes) {
-//          throws NotEnoughReplicasException {
+    //          throws NotEnoughReplicasException {
 
     LinkedHashSet<Node> tmpSoftExcludedNodes = new LinkedHashSet<>(softExcludedNodes);
     DatanodeStorageInfo result = null;
@@ -352,21 +375,24 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
         if (isBalanceUpload && scope.startsWith("~")) {
           break;
         }
-        if (!tmpSoftExcludedNodes.isEmpty())
+        if (!tmpSoftExcludedNodes.isEmpty()) {
           tmpSoftExcludedNodes.remove(tmpSoftExcludedNodes.toArray(new Node[0])[tmpSoftExcludedNodes.size() - 1]);
+        }
       }
 
     } while (!tmpSoftExcludedNodes.isEmpty());
 
-    if (result != null)
+    if (result != null) {
       excludedNodes.add(result.getDatanodeDescriptor());
+    }
 
     return result;
   }
 
 
   // writer 的问题暂不考虑
-  // excludedNodes contain choosenNodes and other unwanted nodes(maybe a node not contain proper storage, not consider now)
+  // excludedNodes contain choosenNodes and other unwanted nodes(maybe a node not contain proper storage, not
+  // consider now)
   // softExcludedNodes contain block positions of previous grid node, may be removed if cluster condition restricts.
   // writer is not considered for load balancing
   // 第一个副本直接传入(左方点的第二个副本）
@@ -384,17 +410,21 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
   ) {
     int resultNumber = results.size();
     int additionalNumOfReplicas = numOfReplicas - resultNumber;
-    if (additionalNumOfReplicas <= 0)
+    if (additionalNumOfReplicas <= 0) {
       return true;
+    }
+
 
     if (resultNumber == 0) {
       // 与第一个副本不同的rack
       DatanodeStorageInfo info = chooseRandomSpatial(NodeBase.ROOT, excludedNodes, blocksize, maxNodesPerRack,
           results, avoidStaleNodes, storageTypes, softExcludedNodes);
-      if(info == null)
+      if (info == null) {
         return false;
-      if (--additionalNumOfReplicas <= 0)
+      }
+      if (--additionalNumOfReplicas <= 0) {
         return true;
+      }
     }
 
 
@@ -434,41 +464,49 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
             break;
           }
         }
-
       }
 
       // 与第一个副本不同的rack
       DatanodeStorageInfo info = chooseRandomSpatial("~" + firstReplicaNode.getNetworkLocation(),
           excludedNodes, blocksize, maxNodesPerRack, results, avoidStaleNodes, storageTypes, softExcludedNodes);
-      if (info == null)
+      if (info == null) {
         info = chooseRandomSpatial(NodeBase.ROOT, excludedNodes, blocksize, maxNodesPerRack,
             results, avoidStaleNodes, storageTypes, softExcludedNodes);
-      if (info == null)
+      }
+      if (info == null) {
         return false;
-      if (--additionalNumOfReplicas <= 0)
+      }
+      if (--additionalNumOfReplicas <= 0) {
         return true;
+      }
     }
 
     // 第三个副本
     if (resultNumber <= 2) {
       String secondReplicaRack = results.get(1).getDatanodeDescriptor().getNetworkLocation();
-      DatanodeStorageInfo info = chooseRandomSpatial(secondReplicaRack, excludedNodes, blocksize, maxNodesPerRack, results, avoidStaleNodes,
+      DatanodeStorageInfo info = chooseRandomSpatial(secondReplicaRack, excludedNodes, blocksize, maxNodesPerRack,
+          results, avoidStaleNodes,
           storageTypes, softExcludedNodes);
-      if (info == null)
+      if (info == null) {
         info = chooseRandomSpatial(NodeBase.ROOT, excludedNodes, blocksize, maxNodesPerRack, results, avoidStaleNodes,
             storageTypes, softExcludedNodes);
-      if (info == null)
+      }
+      if (info == null) {
         return false;
-      if (--additionalNumOfReplicas <= 0)
+      }
+      if (--additionalNumOfReplicas <= 0) {
         return true;
+      }
     }
 
 
     while (additionalNumOfReplicas != 0) {
-      DatanodeStorageInfo info = chooseRandomSpatial(NodeBase.ROOT, excludedNodes, blocksize, maxNodesPerRack, results, avoidStaleNodes,
+      DatanodeStorageInfo info = chooseRandomSpatial(NodeBase.ROOT, excludedNodes, blocksize, maxNodesPerRack, results,
+          avoidStaleNodes,
           storageTypes, softExcludedNodes);
-      if (info == null)
+      if (info == null) {
         return false;
+      }
       additionalNumOfReplicas--;
     }
 
@@ -488,106 +526,109 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
     return dd.getStorageInfos()[0];
   }
 
-//  // to be delete
-//  // excludedNodes contain choosenNodes and other unwanted nodes(maybe a node not contain proper storage, not consider now)
-//  // softExcludedNodes contain block positions of previous grid node, may be removed if cluster condition restricts.
-//  // writer is not considered for load balancing
-//  // 第一个副本直接传入(左方点的第二个副本）
-//  // 第二个副本放在不同于第一个副本rack的节点 （左方两个grid node所在的副本加入到excludedNodes内，如果节点数量不足，使用set最右边的节点）
-//  // 第三个副本放在第二个副本同rack的节点
-//  boolean chooseTargetSpatial(int numOfReplicas,
-//                              //                   Node writer,
-//                              final Set<Node> excludedNodes,
-//                              final Set<Node> softExcludedNodes,
-//                              final List<DatanodeStorageInfo> results
-////                              final boolean avoidStaleNodes,
-////                              final int maxNodesPerRack,
-////                              final BlockStoragePolicy storagePolicy,
-////                              final EnumSet<StorageType> unavailableStorages
-//  ) {
-//    int resultNumber = results.size();
-//    if (numOfReplicas == resultNumber)
-//      return true;
-//    // 第一个直接传入  to be deleted
-//    if (resultNumber == 0) {
-//    }
-//    Node firstReplicaNode = results.get(0).getDatanodeDescriptor();
-//    Set<Node> allExcludedNodes = new TreeSet<Node>();
-//    allExcludedNodes.addAll(excludedNodes);
-//    allExcludedNodes.addAll(softExcludedNodes);
-//
-//    int numOfAvailableNodes = 0;
-//    // 第二个副本
-//    if (resultNumber == 1) {
-//      DatanodeDescriptor secondReplicaNode = (DatanodeDescriptor) chooseDataNode("~" + firstReplicaNode.getNetworkLocation(), allExcludedNodes);
-//      if (secondReplicaNode != null) {
-//        DatanodeStorageInfo secondReplicaStorage = getDatanodeStorageInfo(secondReplicaNode);
-//        if (secondReplicaStorage != null) {
-//          results.add(secondReplicaStorage);
-//          excludedNodes.add(secondReplicaNode);
-//          return chooseTargetSpatial(numOfReplicas, excludedNodes, softExcludedNodes, results);
-//        }
-//      }
-//      // 当没有合适的datanode，可以考虑两种情况：1.放宽rack的要求；2.使用softExcludedNodes
-//      secondReplicaNode = (DatanodeDescriptor) chooseDataNode(NodeBase.ROOT, allExcludedNodes);
-//      if (secondReplicaNode != null) {
-//        DatanodeStorageInfo secondReplicaStorage = getDatanodeStorageInfo(secondReplicaNode);
-//        if (secondReplicaStorage != null) {
-//          results.add(secondReplicaStorage);
-//          excludedNodes.add(secondReplicaNode);
-//          return chooseTargetSpatial(numOfReplicas, excludedNodes, softExcludedNodes, results);
-//        }
-//      }
-//      while (softExcludedNodes.isEmpty()) {
-//        Node lastNode = ((TreeSet<Node>) softExcludedNodes).last();
-//        softExcludedNodes.remove(lastNode);
-//        return chooseTargetSpatial(numOfReplicas, excludedNodes, softExcludedNodes, results);
-//      }
-//
-//      // return bad value if the code go there
-//      return false;
-//    } else if (resultNumber == 2) {
-//
-//      DatanodeDescriptor secondReplicaNode = results.get(1).getDatanodeDescriptor();
-//      DatanodeDescriptor thirdReplicaNode = (DatanodeDescriptor) chooseDataNode(secondReplicaNode.getNetworkLocation(), allExcludedNodes);
-//      if (thirdReplicaNode != null) {
-//        DatanodeStorageInfo secondReplicaStorage = getDatanodeStorageInfo(thirdReplicaNode);
-//        if (secondReplicaStorage != null) {
-//          results.add(secondReplicaStorage);
-//          excludedNodes.add(thirdReplicaNode);
-//          return chooseTargetSpatial(numOfReplicas, excludedNodes, softExcludedNodes, results);
-//        }
-//      }
-//      // 当没有合适的datanode，可以考虑两种情况：1.放宽rack的要求；2.使用softExcludedNodes
-//      thirdReplicaNode = (DatanodeDescriptor) chooseDataNode(NodeBase.ROOT, allExcludedNodes);
-//      if (thirdReplicaNode != null) {
-//        DatanodeStorageInfo secondReplicaStorage = getDatanodeStorageInfo(thirdReplicaNode);
-//        if (secondReplicaStorage != null) {
-//          results.add(secondReplicaStorage);
-//          excludedNodes.add(thirdReplicaNode);
-//          return chooseTargetSpatial(numOfReplicas, excludedNodes, softExcludedNodes, results);
-//        }
-//      }
-//      while (softExcludedNodes.isEmpty()) {
-//        Node lastNode = ((TreeSet<Node>) softExcludedNodes).last();
-//        softExcludedNodes.remove(lastNode);
-//        return chooseTargetSpatial(numOfReplicas, excludedNodes, softExcludedNodes, results);
-//      }
-//    }
-//    if (resultNumber >= 3) { // TODO
-//      DatanodeDescriptor randomNode = (DatanodeDescriptor) chooseDataNode(NodeBase.ROOT, allExcludedNodes);
-//      if (randomNode != null) {
-//        DatanodeStorageInfo secondReplicaStorage = getDatanodeStorageInfo(randomNode);
-//        if (secondReplicaStorage != null) {
-//          results.add(secondReplicaStorage);
-//          excludedNodes.add(randomNode);
-//          return chooseTargetSpatial(numOfReplicas, excludedNodes, softExcludedNodes, results);
-//        }
-//      }
-//      chooseDataNode(NodeBase.ROOT);
-//    }
-//    return false;
-//  }
+  //  // to be delete
+  //  // excludedNodes contain choosenNodes and other unwanted nodes(maybe a node not contain proper storage, not
+  //  consider now)
+  //  // softExcludedNodes contain block positions of previous grid node, may be removed if cluster condition restricts.
+  //  // writer is not considered for load balancing
+  //  // 第一个副本直接传入(左方点的第二个副本）
+  //  // 第二个副本放在不同于第一个副本rack的节点 （左方两个grid node所在的副本加入到excludedNodes内，如果节点数量不足，使用set最右边的节点）
+  //  // 第三个副本放在第二个副本同rack的节点
+  //  boolean chooseTargetSpatial(int numOfReplicas,
+  //                              //                   Node writer,
+  //                              final Set<Node> excludedNodes,
+  //                              final Set<Node> softExcludedNodes,
+  //                              final List<DatanodeStorageInfo> results
+  ////                              final boolean avoidStaleNodes,
+  ////                              final int maxNodesPerRack,
+  ////                              final BlockStoragePolicy storagePolicy,
+  ////                              final EnumSet<StorageType> unavailableStorages
+  //  ) {
+  //    int resultNumber = results.size();
+  //    if (numOfReplicas == resultNumber)
+  //      return true;
+  //    // 第一个直接传入  to be deleted
+  //    if (resultNumber == 0) {
+  //    }
+  //    Node firstReplicaNode = results.get(0).getDatanodeDescriptor();
+  //    Set<Node> allExcludedNodes = new TreeSet<Node>();
+  //    allExcludedNodes.addAll(excludedNodes);
+  //    allExcludedNodes.addAll(softExcludedNodes);
+  //
+  //    int numOfAvailableNodes = 0;
+  //    // 第二个副本
+  //    if (resultNumber == 1) {
+  //      DatanodeDescriptor secondReplicaNode = (DatanodeDescriptor) chooseDataNode("~" + firstReplicaNode
+  //      .getNetworkLocation(), allExcludedNodes);
+  //      if (secondReplicaNode != null) {
+  //        DatanodeStorageInfo secondReplicaStorage = getDatanodeStorageInfo(secondReplicaNode);
+  //        if (secondReplicaStorage != null) {
+  //          results.add(secondReplicaStorage);
+  //          excludedNodes.add(secondReplicaNode);
+  //          return chooseTargetSpatial(numOfReplicas, excludedNodes, softExcludedNodes, results);
+  //        }
+  //      }
+  //      // 当没有合适的datanode，可以考虑两种情况：1.放宽rack的要求；2.使用softExcludedNodes
+  //      secondReplicaNode = (DatanodeDescriptor) chooseDataNode(NodeBase.ROOT, allExcludedNodes);
+  //      if (secondReplicaNode != null) {
+  //        DatanodeStorageInfo secondReplicaStorage = getDatanodeStorageInfo(secondReplicaNode);
+  //        if (secondReplicaStorage != null) {
+  //          results.add(secondReplicaStorage);
+  //          excludedNodes.add(secondReplicaNode);
+  //          return chooseTargetSpatial(numOfReplicas, excludedNodes, softExcludedNodes, results);
+  //        }
+  //      }
+  //      while (softExcludedNodes.isEmpty()) {
+  //        Node lastNode = ((TreeSet<Node>) softExcludedNodes).last();
+  //        softExcludedNodes.remove(lastNode);
+  //        return chooseTargetSpatial(numOfReplicas, excludedNodes, softExcludedNodes, results);
+  //      }
+  //
+  //      // return bad value if the code go there
+  //      return false;
+  //    } else if (resultNumber == 2) {
+  //
+  //      DatanodeDescriptor secondReplicaNode = results.get(1).getDatanodeDescriptor();
+  //      DatanodeDescriptor thirdReplicaNode = (DatanodeDescriptor) chooseDataNode(secondReplicaNode
+  //      .getNetworkLocation(), allExcludedNodes);
+  //      if (thirdReplicaNode != null) {
+  //        DatanodeStorageInfo secondReplicaStorage = getDatanodeStorageInfo(thirdReplicaNode);
+  //        if (secondReplicaStorage != null) {
+  //          results.add(secondReplicaStorage);
+  //          excludedNodes.add(thirdReplicaNode);
+  //          return chooseTargetSpatial(numOfReplicas, excludedNodes, softExcludedNodes, results);
+  //        }
+  //      }
+  //      // 当没有合适的datanode，可以考虑两种情况：1.放宽rack的要求；2.使用softExcludedNodes
+  //      thirdReplicaNode = (DatanodeDescriptor) chooseDataNode(NodeBase.ROOT, allExcludedNodes);
+  //      if (thirdReplicaNode != null) {
+  //        DatanodeStorageInfo secondReplicaStorage = getDatanodeStorageInfo(thirdReplicaNode);
+  //        if (secondReplicaStorage != null) {
+  //          results.add(secondReplicaStorage);
+  //          excludedNodes.add(thirdReplicaNode);
+  //          return chooseTargetSpatial(numOfReplicas, excludedNodes, softExcludedNodes, results);
+  //        }
+  //      }
+  //      while (softExcludedNodes.isEmpty()) {
+  //        Node lastNode = ((TreeSet<Node>) softExcludedNodes).last();
+  //        softExcludedNodes.remove(lastNode);
+  //        return chooseTargetSpatial(numOfReplicas, excludedNodes, softExcludedNodes, results);
+  //      }
+  //    }
+  //    if (resultNumber >= 3) { // TODO
+  //      DatanodeDescriptor randomNode = (DatanodeDescriptor) chooseDataNode(NodeBase.ROOT, allExcludedNodes);
+  //      if (randomNode != null) {
+  //        DatanodeStorageInfo secondReplicaStorage = getDatanodeStorageInfo(randomNode);
+  //        if (secondReplicaStorage != null) {
+  //          results.add(secondReplicaStorage);
+  //          excludedNodes.add(randomNode);
+  //          return chooseTargetSpatial(numOfReplicas, excludedNodes, softExcludedNodes, results);
+  //        }
+  //      }
+  //      chooseDataNode(NodeBase.ROOT);
+  //    }
+  //    return false;
+  //  }
 
 
   /**
@@ -943,7 +984,8 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
   protected DatanodeStorageInfo chooseLocalStorage(Node localMachine,
                                                    Set<Node> excludedNodes, long blocksize, int maxNodesPerRack,
                                                    List<DatanodeStorageInfo> results, boolean avoidStaleNodes,
-                                                   EnumMap<StorageType, Integer> storageTypes, boolean fallbackToLocalRack)
+                                                   EnumMap<StorageType, Integer> storageTypes,
+                                                   boolean fallbackToLocalRack)
       throws NotEnoughReplicasException {
     // if no local machine, randomly choose one node
     if (localMachine == null) {
@@ -1397,8 +1439,9 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
   @Override
   public BlockPlacementStatus verifyBlockPlacement(DatanodeInfo[] locs,
                                                    int numberOfReplicas) {
-    if (locs == null)
+    if (locs == null) {
       locs = DatanodeDescriptor.EMPTY_ARRAY;
+    }
     if (!clusterMap.hasClusterEverBeenMultiRack()) {
       // only one rack
       return new BlockPlacementStatusDefault(1, 1);
@@ -1540,7 +1583,9 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
       // the added node adds a new rack
       if (moreThan1Racks.contains(delHint)) {
         return true; // delHint and some other nodes are under the same rack
-      } else return added != null && !moreThan1Racks.contains(added);
+      } else {
+        return added != null && !moreThan1Racks.contains(added);
+      }
     }
   }
 
@@ -1592,7 +1637,8 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
    * @param info               grid cell info
    * @param filepath           file path
    */
-  public static void saveGroupReplicaPosToFile(DatanodeDescriptor datanodeDescriptor, GroupCellInfo info, String groupType,
+  public static void saveGroupReplicaPosToFile(DatanodeDescriptor datanodeDescriptor, GroupCellInfo info,
+                                               String groupType,
                                                String filepath) {
 
     FileOutputStream fileOutputStream;
@@ -1605,7 +1651,7 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
       bufferedWriter.write(datanodeDescriptor.getNetworkLocation() + "/" +
           datanodeDescriptor.getName());
       bufferedWriter.newLine();
-//      bufferedWriter.write("\n");
+      //      bufferedWriter.write("\n");
 
       bufferedWriter.flush();
       bufferedWriter.close();
@@ -1634,7 +1680,7 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
         line = br.readLine();
       }
     } catch (IOException e) {
-//      e.printStackTrace();
+      //      e.printStackTrace();
       return null;
     }
     return null;
