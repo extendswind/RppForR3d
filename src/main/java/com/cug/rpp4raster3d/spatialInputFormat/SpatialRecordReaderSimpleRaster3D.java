@@ -23,7 +23,6 @@ package com.cug.rpp4raster3d.spatialInputFormat;
 
 import com.cug.rpp4raster2d.inputFormat.InputSplitWritable;
 import com.cug.rpp4raster2d.util.CellIndexInfo;
-import com.cug.rpp4raster2d.util.SpatialConstant;
 import com.cug.rpp4raster3d.raster3d.CellAttrsSimple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -31,8 +30,6 @@ import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
-import org.apache.hadoop.fs.permission.FsAction;
-import org.apache.hadoop.fs.permission.FsPermission;
 import org.apache.hadoop.hdfs.client.HdfsDataInputStream;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
@@ -80,12 +77,6 @@ public class SpatialRecordReaderSimpleRaster3D extends RecordReader<LongWritable
   private int groupZSize;
   CellIndexInfo cellIndexInfo;
 
-  //  int cellRowSize = 1000;
-  //  int cellColSize = 1000;
-  //  int groupRowSize = 10;
-  //  int groupColSize = 10;
-  private boolean isFirstColGroup; // mark the first column group, the overlapped row is also FirstColGroup !
-  private boolean isFirstZGroup; // mark the first column group, the overlapped row is also FirstColGroup !
   private int splitId;
 
 
@@ -116,8 +107,6 @@ public class SpatialRecordReaderSimpleRaster3D extends RecordReader<LongWritable
     //    isFirstColGroup = inputSplit.isFirstColGroup; // mark the first column group, the overlapped row is also
     cellIndexInfo = CellIndexInfo.getGridCellInfoFromFilename(paths[0].toString());
     //    assert cellIndexInfo != null;
-    isFirstColGroup = cellIndexInfo.colId == 0;
-    isFirstZGroup = cellIndexInfo.zId == 0 && groupZSize == 2;
 
     splitId = inputSplit.splitId;
   }
@@ -202,12 +191,7 @@ public class SpatialRecordReaderSimpleRaster3D extends RecordReader<LongWritable
                     (filePos[1] - groupStart[1]) * groupXSize + (filePos[0] - groupStart[0])],
                 cellXDim, cellYDim, startPos[0], startPos[1], startPos[2], lengths[0], lengths[1], lengths[2],
                 cellSize, dataValue, valueXDim, valueYDim, toValuePos[0], toValuePos[1], toValuePos[2]);
-          } catch(EOFException e){
-             LOG.error("file reading error! key: " + splitId + ", error file number: " +
-                ((filePos[2] - groupStart[2]) * groupXSize * groupYSize +
-                    (filePos[1] - groupStart[1]) * groupXSize + (filePos[0] - groupStart[0])));
           } catch (IOException e) {
-            LOG.debug("File reading error");
 //            e.printStackTrace();
             System.err.println("File Reading Error!!!");
             LOG.error("file reading error! key: " + splitId + ", error file number: " +

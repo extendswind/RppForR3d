@@ -171,12 +171,12 @@ public class Raster3dGeneratorAndUploader {
     // 8*8*3
     int cellXDim = 250;
     int cellYDim = 250;
-    int cellZDim = 250;
+    int cellZDim = 200;
 
     String localFile = "test_data/raster3d-2.4G.dat";
 
     // upload directory
-    String hdfsDir = "hdfs://kvmmaster:9000/user/sparkl/" + FilenameUtils.getName(localFile) + "_optimize";
+    String hdfsDir = "hdfs://kvmmaster:9000/user/sparkl/rppO" + FilenameUtils.getName(localFile) + "_optimize";
     if (false) {
       generateBinaryTestData(localFile, modelXDim, modelYDim, modelZDim);
       System.out.println("data generate done!");

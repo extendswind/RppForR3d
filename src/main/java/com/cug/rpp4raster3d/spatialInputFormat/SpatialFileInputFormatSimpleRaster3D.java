@@ -126,8 +126,9 @@ public class SpatialFileInputFormatSimpleRaster3D extends FileInputFormat<LongWr
           String[] blkHosts = blkLocations[0].getHosts();
           int splitId = x + y * cellXNum + z * cellXNum * cellYNum;
 
+          // isFirstZGroup is useless
           splits.add(new FileSplitGroupRaster3D(groupFilePaths, 1, blkHosts, splitId, cellXDim, cellYDim, cellZDim,
-              rightX - leftX, rightY - leftY, rightZ - leftZ, radius));
+              rightX - leftX, rightY - leftY, rightZ - leftZ, false, radius));
         }
       }
     }

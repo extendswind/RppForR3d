@@ -10,7 +10,7 @@ public class GroupInfo {
     public int rowOverlapSize; // overlap *rowOverlapSize* rows between two row group  暂时只考虑为1的情况
     public int colOverlapSize;
 
-    public int zSize = 1; // TODO only 1 z layer is considered
+    public int zSize = 2; // TODO only 1 z layer is considered
 
     public GroupInfo(GroupInfo info){
         rowSize = info.rowSize;

@@ -21,9 +21,8 @@ package com.cug.rpp4raster3d.spatialInputFormat;
 import com.cug.rpp4raster2d.inputFormat.InputSplitWritable;
 import com.cug.rpp4raster2d.util.CellIndexInfo;
 import com.cug.rpp4raster2d.util.GroupInfo;
-import com.cug.rpp4raster3d.raster3d.CellAttrs;
-import com.cug.rpp4raster3d.raster3d.CellAttrsSimple;
 import com.cug.rpp4raster2d.util.SpatialConstant;
+import com.cug.rpp4raster3d.raster3d.CellAttrsSimple;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -55,8 +54,8 @@ import java.util.Date;
  */
 @InterfaceAudience.LimitedPrivate({"MapReduce", "Pig"})
 @InterfaceStability.Evolving
-public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable, InputSplitWritableRaster3D> {
-  private static final Log LOG = LogFactory.getLog(SpatialRecordReaderGroupRaster3D.class);
+public class SpatialRecordReaderGroupRaster3D_bak extends RecordReader<LongWritable, InputSplitWritableRaster3D> {
+  private static final Log LOG = LogFactory.getLog(SpatialRecordReaderGroupRaster3D_bak.class);
 
   public int radius = 5; // analysis radius
 
@@ -87,7 +86,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
   private int splitId;
 
 
-  public SpatialRecordReaderGroupRaster3D() {
+  public SpatialRecordReaderGroupRaster3D_bak() {
 
   }
 
@@ -148,7 +147,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
 
     // TODO 不考虑半径超过一个文件的情况 因此groupZSize在顶层和底层时为2，其它层为3
     // TODO BUG 当数据不是groupZSize的整数倍时
-    if (groupZSize == groupInfoZSize + 2) {  // 中间层
+    if(groupZSize == groupInfoZSize + 2) {  // 中间层
       valueZDim = cellZDim * (groupZSize - 2) + radius * 2;
     } else { // 当最后一组不满时  以及 顶底两层
       valueZDim = cellZDim * (groupZSize - 1) + radius;
@@ -159,61 +158,53 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
     if (splitId >= SpatialConstant.ROW_OVERLAPPED_GROUP_SPLIT_ID_BEGIN) { // overlapped row
       valueYDim = radius * 4;
       dataValue = new CellAttrsSimple[valueXDim * valueYDim * valueZDim];
-    } else {  // normal group
 
-      valueYDim = cellYDim * groupYSize;
-      dataValue = new CellAttrsSimple[valueXDim * valueYDim * valueZDim];
-    }
+      for (int zz = 0; zz < groupZSize; zz++) {
+        for (int yy = 0; yy < groupYSize; yy++) {
+          for (int xx = 0; xx < groupXSize; xx++) {
+            int startX;
+            int startY;
+            int startZ;
+            int lengthX;
+            int lengthY;
+            int lengthZ;
+            int toValueX;
+            int toValueY;
+            int toValueZ;
 
-    for (int zz = 0; zz < groupZSize; zz++) {
-      for (int yy = 0; yy < groupYSize; yy++) {
-        for (int xx = 0; xx < groupXSize; xx++) {
-          int startX;
-          int startY;
-          int startZ;
-          int lengthX;
-          int lengthY;
-          int lengthZ;
-          int toValueX;
-          int toValueY;
-          int toValueZ;
-
-          if (isFirstZGroup) {
-            startZ = 0;
-            toValueZ = zz * cellZDim;
-            if (zz == groupZSize - 1) { // (zz == 1)
-              lengthZ = radius;
+            if (isFirstZGroup) {
+              startZ = 0;
+              toValueZ = zz * cellZDim;
+              if (zz == groupZSize - 1){ // (zz == 1)
+                lengthZ = radius;
+              } else {
+                lengthZ = cellZDim;
+              }
+            } else if (groupZSize == groupInfoZSize + 1) {  // bottom z group  TODO 最后一个分组不完整时未不考虑
+              if (zz == 0) {
+                startZ = cellZDim - radius;
+                lengthZ = radius;
+                toValueZ = 0;
+              } else {
+                startZ = 0;
+                lengthZ = cellZDim;
+                toValueZ = radius;
+              }
             } else {
-              lengthZ = cellZDim;
+              if (zz == 0) {
+                startZ = cellZDim - radius;
+                lengthZ = radius;
+                toValueZ = 0;
+              } else if (zz == 1) {
+                startZ = 0;
+                lengthZ = cellZDim;
+                toValueZ = radius;
+              } else { // zz == 2
+                startZ = 0;
+                lengthZ = radius;
+                toValueZ = radius + cellZDim;
+              }
             }
-          } else if (groupZSize == groupInfoZSize + 1) {  // bottom z group  TODO 最后一个分组不完整时未不考虑
-            if (zz == 0) {
-              startZ = cellZDim - radius;
-              lengthZ = radius;
-              toValueZ = 0;
-            } else {
-              startZ = 0;
-              lengthZ = cellZDim;
-              toValueZ = radius + cellZDim * (zz - 1);
-            }
-          } else {
-            if (zz == 0) {
-              startZ = cellZDim - radius;
-              lengthZ = radius;
-              toValueZ = 0;
-            } else if (zz == groupZSize - 1) { // last z group
-              startZ = 0;
-              lengthZ = radius;
-              toValueZ = radius + cellZDim * (zz - 1);
-            } else {  // main z group
-              startZ = 0;
-              lengthZ = cellZDim;
-              toValueZ = radius + cellZDim * (zz - 1);
-            }
-
-          }
-
-          if (splitId >= SpatialConstant.ROW_OVERLAPPED_GROUP_SPLIT_ID_BEGIN) { // overlapped row
 
             if (yy == 0) {
               startY = cellYDim - 2 * radius;
@@ -228,8 +219,67 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
             startX = 0;
             lengthX = cellXDim;
             toValueX = xx * cellXDim;
+            int cellSize = new CellAttrsSimple().getSize();
 
-          } else {  // normal group
+            readPartFromStream(inputStreams[zz * groupXSize * groupYSize + yy * groupXSize + xx], cellXDim,
+                cellYDim, startX, startY, startZ, lengthX, lengthY, lengthZ,
+                cellSize, dataValue, valueXDim, valueYDim,
+                toValueX, toValueY, toValueZ);
+          }
+        }
+      }
+    } else {  // normal group
+
+      valueYDim = cellYDim * groupYSize;
+      dataValue = new CellAttrsSimple[valueXDim * valueYDim * valueZDim];
+
+      for (int zz = 0; zz < groupZSize; zz++) {
+        for (int yy = 0; yy < groupYSize; yy++) {
+          for (int xx = 0; xx < groupXSize; xx++) {
+            int startX;
+            int startY;
+            int startZ;
+            int lengthX;
+            int lengthY;
+            int lengthZ;
+            int toValueX;
+            int toValueY;
+            int toValueZ;
+
+            if (isFirstZGroup) {
+              startZ = 0;
+              if (zz == 0) {
+                lengthZ = cellZDim;
+                toValueZ = 0;
+              } else {
+                lengthZ = radius;
+                toValueZ = cellZDim;
+              }
+            } else if (groupZSize == 2) { // bottom group of Z
+              if (zz == 0) {
+                startZ = cellZDim - radius;
+                lengthZ = radius;
+                toValueZ = 0;
+              } else {
+                startZ = 0;
+                lengthZ = cellZDim;
+                toValueZ = radius;
+              }
+            } else {
+              if (zz == 0) {
+                startZ = cellZDim - radius;
+                lengthZ = radius;
+                toValueZ = 0;
+              } else if (zz == 1) {
+                startZ = 0;
+                lengthZ = cellZDim;
+                toValueZ = radius;
+              } else {
+                startZ = 0;
+                lengthZ = radius;
+                toValueZ = radius + cellZDim;
+              }
+            }
 
             if (isFirstColGroup) {
               startX = 0;
@@ -252,15 +302,17 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
                 toValueX = radius * 2 + (xx - 1) * cellXDim;
               }
             }
-          }
 
-          int cellSize = new CellAttrsSimple().getSize();
-          readPartFromStream(inputStreams[zz * groupXSize * groupYSize + yy * groupXSize + xx], cellXDim,
-              cellYDim, startX, startY, startZ, lengthX, lengthY, lengthZ,
-              cellSize, dataValue, valueXDim, valueYDim,
-              toValueX, toValueY, toValueZ);
+            int cellSize = new CellAttrsSimple().getSize();
+            readPartFromStream(inputStreams[zz * groupXSize * groupYSize + yy * groupXSize + xx], cellXDim,
+                cellYDim, startX, startY, startZ, lengthX, lengthY, lengthZ,
+                cellSize, dataValue, valueXDim, valueYDim,
+                toValueX, toValueY, toValueZ);
+
+          }
         }
       }
+
     }
 
     value = new InputSplitWritableRaster3D(new IntWritable(valueXDim), new IntWritable(valueYDim),
@@ -328,29 +380,27 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
         long remoteReading = 0;
         long totalReading = 0;
         for (int i = 0; i < inputStreams.length; i++) {
-          if (inputStreams[i] instanceof HdfsDataInputStream) {
+          if(inputStreams[i] instanceof HdfsDataInputStream){
             remoteReading += ((HdfsDataInputStream) inputStreams[i]).getReadStatistics().getRemoteBytesRead();
             totalReading += ((HdfsDataInputStream) inputStreams[i]).getReadStatistics().getTotalBytesRead();
           }
           inputStreams[i].close();
         }
 
-        // write to a local file
+         // write to a local file
         File file = new File("/tmp/rpp_iostats");
-        if (!file.isFile()) {
+        if(!file.isFile())
           file.createNewFile();
-        }
         FileOutputStream fileOutputStream = new FileOutputStream(file, true);
         BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fileOutputStream));
 
         Date date = new Date();
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd|HH:mm");
-        bufferedWriter.write(dateFormat.format(date) + " " + splitId + " " + totalReading / 1024 + " " +
-            remoteReading / 1024 + "\n");
+        bufferedWriter.write(dateFormat.format(date) + " " + splitId + " " + totalReading/1024 + " " +
+            remoteReading/1024 + "\n");
         bufferedWriter.close();
 
-        LOG.info(
-            dateFormat.format(date) + " " + splitId + " " + totalReading / 1024 + " " + remoteReading / 1024 + "\n");
+        LOG.info(dateFormat.format(date) + " " + splitId + " " + totalReading/1024 + " " + remoteReading/1024 + "\n");
 
       }
     } catch (IOException e) {

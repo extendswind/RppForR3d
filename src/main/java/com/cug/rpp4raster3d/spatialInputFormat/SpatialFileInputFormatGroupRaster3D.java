@@ -86,9 +86,10 @@ public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWri
    * @throws IOException when INPUT_DIR is not set
    */
   public List<InputSplit> getSplits(JobContext job) throws IOException {
+
+    LOG.info("using groupInfo:  " + groupInfo.rowSize + " " + groupInfo.colSize + " " + groupInfo.zSize);
+
     StopWatch sw = new StopWatch().start();
-    //    long minSize = Math.max(getFormatMinSplitSize(), getMinSplitSize(job));
-    //    long maxSize = getMaxSplitSize(job);
 
     // generate splits
     List<InputSplit> splits = new ArrayList<>();
@@ -143,7 +144,6 @@ public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWri
           int groupZSize;
           int splitId;
 
-
           if(groupZ == 0 ){
             groupFirstZId = 0;
             groupZSize = groupInfo.zSize + 1;
@@ -184,11 +184,19 @@ public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWri
                 groupInfo.rowSize;
             groupColSize = (groupFirstColId + groupInfo.colSize > cellXNum) ? cellXNum - groupFirstColId :
                 groupInfo.colSize;
-            splitId = groupColId + groupRowId * groupRowNum + groupZ * groupRowNum * groupColNum;
+            splitId = groupColId + groupRowId * groupColNum + groupZ * groupRowNum * groupColNum;
           }
 
           Path[] groupFilePaths = new Path[groupRowSize * groupColSize * groupZSize];
-          Path[] mainFilePaths = new Path[groupRowSize * groupColSize]; // used for get the right host
+
+
+          int mainFileZSize = groupInfo.zSize;
+          if(groupInfo.zSize > groupZSize)
+            mainFileZSize = groupZSize;  // 当groupInfo.zSize > groupZSize的情况
+          if(groupFirstZId != 0 && groupFirstZId + groupInfo.zSize >= cellZNum){
+            mainFileZSize = cellZNum - groupFirstZId - 1;
+          }
+          Path[] mainFilePaths = new Path[groupRowSize * groupColSize * mainFileZSize]; // used for get the right host
 
           for(int zz = 0; zz < groupZSize; zz++) {
             // get the file path and information of file block locations
@@ -199,22 +207,27 @@ public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWri
                 int fileIndex = xx + yy * groupColSize + zz * groupColSize * groupRowSize;
                 groupFilePaths[fileIndex] = new Path(cellName);
 
-                if(groupFirstZId + zz == groupZ)
-                  mainFilePaths[xx + yy * groupColSize] = new Path(cellName);
+
+                if(groupFirstZId + zz >= groupZ * groupInfo.zSize && groupFirstZId + zz < (groupZ+1)* groupInfo.zSize)
+                  mainFilePaths[xx + yy * groupColSize + (groupFirstZId +zz - groupZ* groupInfo.zSize) * groupRowSize * groupColSize] =
+                      new Path(cellName);
               }
             }
           }
+          if(mainFilePaths[0] == null)
+            System.out.println("DEBUG error");
 
           String[] hosts = getHostsFromPaths(mainFilePaths, fs);
+
+          boolean isFirstZGroup = (groupZ == 0);
           splits.add(new FileSplitGroupRaster3D(groupFilePaths, 1, hosts, splitId, cellXDim, cellYDim, cellZDim,
-              groupColSize, groupRowSize, groupZSize, radius));
+              groupColSize, groupRowSize, groupZSize, isFirstZGroup, radius));
         }
       }
     }
 
     // Save the number of input files for metrics/loadgen
     job.getConfiguration().setLong(NUM_INPUT_FILES, fileNum);
-
 
     sw.stop();
     if (LOG.isDebugEnabled()) {

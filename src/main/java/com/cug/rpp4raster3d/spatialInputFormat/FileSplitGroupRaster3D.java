@@ -18,6 +18,7 @@
 
 package com.cug.rpp4raster3d.spatialInputFormat;
 
+import com.cug.rpp4raster2d.inputFormat.FileSplitGroup;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.fs.Path;
@@ -63,6 +64,7 @@ public class FileSplitGroupRaster3D extends InputSplit implements Writable {
   public int groupXSize;
   public int groupYSize;
   public int groupZSize;
+  public boolean isFristZGroup;
 
 //  public boolean isFirstColGroup; // mark the first column group, the overlapped row is also FirstColGroup
 
@@ -71,6 +73,18 @@ public class FileSplitGroupRaster3D extends InputSplit implements Writable {
 
   public FileSplitGroupRaster3D() {
   }
+
+
+  /**
+   *  used for simple SpatialRecordReaderRaster3DSimple
+   *  isFirstZGroup is not necessary and is assigned false
+   */
+  public FileSplitGroupRaster3D(Path[] files, long length, String[] hosts, int splitId, int cellXDim, int cellYDim,
+                                int cellZDim, int groupXSize, int groupYSize, int groupZSize, int radius) {
+    this(files, length, hosts, splitId, cellXDim, cellYDim, cellZDim, groupXSize, groupYSize, groupZSize, false,
+        radius);
+  }
+
 
   /**
    * Constructs a split with host information
@@ -81,7 +95,7 @@ public class FileSplitGroupRaster3D extends InputSplit implements Writable {
    * @param hosts  the list of hosts containing the block, possibly null
    */
   public FileSplitGroupRaster3D(Path[] files, long length, String[] hosts, int splitId, int cellXDim, int cellYDim,
-                                int cellZDim, int groupXSize, int groupYSize, int groupZSize, //boolean isFirstColGroup,
+                                int cellZDim, int groupXSize, int groupYSize, int groupZSize, boolean isFirstZGroup,
                                 int radius) {
     this.files = files;
     this.length = length;
@@ -95,6 +109,7 @@ public class FileSplitGroupRaster3D extends InputSplit implements Writable {
     this.groupYSize = groupYSize;
     this.groupZSize = groupZSize;
     this.radius = radius;
+    this.isFristZGroup = isFirstZGroup;
 //    this.isFirstColGroup = isFirstColGroup;
   }
 
@@ -151,6 +166,7 @@ public class FileSplitGroupRaster3D extends InputSplit implements Writable {
     out.writeInt(groupYSize);
     out.writeInt(groupZSize);
     out.writeInt(radius);
+    out.writeBoolean(isFristZGroup);
 //    out.writeBoolean(isFirstColGroup);
   }
 
@@ -186,6 +202,7 @@ public class FileSplitGroupRaster3D extends InputSplit implements Writable {
     groupYSize = in.readInt();
     groupZSize = in.readInt();
     radius = in.readInt();
+    isFristZGroup = in.readBoolean();
   }
 
 //  this method is useless if data in hdfs all storing in disk
