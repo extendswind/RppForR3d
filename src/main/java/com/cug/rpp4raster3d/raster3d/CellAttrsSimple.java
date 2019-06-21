@@ -7,6 +7,7 @@ import java.io.IOException;
 /**
  * a test cell attrs, only a byte attribute used
  */
+@Deprecated
 public class CellAttrsSimple extends CellAttrsBase {
 
   public byte attr;  // 1 byte

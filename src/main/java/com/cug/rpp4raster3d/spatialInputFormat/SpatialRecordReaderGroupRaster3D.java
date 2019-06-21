@@ -24,6 +24,7 @@ import com.cug.rpp4raster2d.util.GroupInfo;
 import com.cug.rpp4raster3d.raster3d.CellAttrs;
 import com.cug.rpp4raster3d.raster3d.CellAttrsSimple;
 import com.cug.rpp4raster2d.util.SpatialConstant;
+import com.cug.rpp4raster3d.raster3d.Raster3D;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -55,7 +56,7 @@ import java.util.Date;
  */
 @InterfaceAudience.LimitedPrivate({"MapReduce", "Pig"})
 @InterfaceStability.Evolving
-public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable, InputSplitWritableRaster3D> {
+public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable, Raster3D> {
   private static final Log LOG = LogFactory.getLog(SpatialRecordReaderGroupRaster3D.class);
 
   public int radius = 5; // analysis radius
@@ -64,7 +65,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
   //  private int splitColId;
   //  private int splitRowId;
   private LongWritable key;
-  private InputSplitWritableRaster3D value;
+  private Raster3D value;
   private FileSplitGroupRaster3D inputSplit;
 
   private int cellXDim;
@@ -154,15 +155,18 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
       valueZDim = cellZDim * (groupZSize - 1) + radius;
     }
 
-    CellAttrsSimple[] dataValue;
+//    CellAttrsSimple[] dataValue;
+    Raster3D raster3D;
 
     if (splitId >= SpatialConstant.ROW_OVERLAPPED_GROUP_SPLIT_ID_BEGIN) { // overlapped row
       valueYDim = radius * 4;
-      dataValue = new CellAttrsSimple[valueXDim * valueYDim * valueZDim];
+      raster3D = new Raster3D(valueXDim, valueYDim, valueZDim);
+//      dataValue = new CellAttrsSimple[valueXDim * valueYDim * valueZDim];
     } else {  // normal group
 
       valueYDim = cellYDim * groupYSize;
-      dataValue = new CellAttrsSimple[valueXDim * valueYDim * valueZDim];
+      raster3D = new Raster3D(valueXDim, valueYDim, valueZDim);
+//      dataValue = new CellAttrsSimple[valueXDim * valueYDim * valueZDim];
     }
 
     for (int zz = 0; zz < groupZSize; zz++) {
@@ -254,18 +258,16 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
             }
           }
 
-          int cellSize = new CellAttrsSimple().getSize();
+          int cellSize = raster3D.getCellSize();
           readPartFromStream(inputStreams[zz * groupXSize * groupYSize + yy * groupXSize + xx], cellXDim,
               cellYDim, startX, startY, startZ, lengthX, lengthY, lengthZ,
-              cellSize, dataValue, valueXDim, valueYDim,
-              toValueX, toValueY, toValueZ);
+              cellSize, raster3D, valueXDim, valueYDim, toValueX, toValueY, toValueZ
+          );
         }
       }
     }
 
-    value = new InputSplitWritableRaster3D(new IntWritable(valueXDim), new IntWritable(valueYDim),
-        new IntWritable(valueZDim), dataValue);
-
+    value = raster3D;
     return true;
 
   }
@@ -278,19 +280,19 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
   void readPartFromStream(FSDataInputStream inputStream, int cellXDim, int cellYDim,
                           int startX, int startY, int startZ, int lengthX, int lengthY, int lengthZ,
                           int cellAttrSize,
-                          CellAttrsSimple[] value, int valueXDim, int valueYDim,
+                          Raster3D raster3D, int valueXDim, int valueYDim,
                           int toValueX, int toValueY, int toValueZ) throws IOException {
-
     inputStream.skip(cellXDim * cellYDim * startZ * cellAttrSize);
     for (int zz = 0; zz < lengthZ; zz++) {
       inputStream.skip(cellXDim * startY * cellAttrSize);
       for (int yy = 0; yy < lengthY; yy++) {
         inputStream.skip(startX * cellAttrSize);
         for (int xx = 0; xx < lengthX; xx++) {
-          value[toValueX + xx +
+          raster3D.readAttr(toValueX + xx +
               (toValueY + yy) * valueXDim
-              + (toValueZ + zz) * valueXDim * valueYDim]
-              = new CellAttrsSimple(inputStream);
+              + (toValueZ + zz) * valueXDim * valueYDim,
+              inputStream
+          );
         }
         inputStream.skip((cellXDim - lengthX - startX) * cellAttrSize);
       }
@@ -304,7 +306,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
   }
 
   @Override
-  public InputSplitWritableRaster3D getCurrentValue() {
+  public Raster3D getCurrentValue() {
     return value;
   }
 

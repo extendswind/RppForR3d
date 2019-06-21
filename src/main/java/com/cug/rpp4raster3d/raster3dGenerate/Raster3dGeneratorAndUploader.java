@@ -1,7 +1,6 @@
 package com.cug.rpp4raster3d.raster3dGenerate;
 
 
-import com.cug.rpp4raster3d.raster3d.CellAttrsSimple;
 import com.cug.rpp4raster2d.util.SpatialConstant;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
@@ -15,24 +14,53 @@ import java.net.URI;
 
 public class Raster3dGeneratorAndUploader {
 
+
+  static CellWriter cellWriter = new CellWriterByte();
+
+  static abstract class CellWriter {
+    abstract void write(DataOutput out, long count) throws IOException;
+    abstract void write(DataOutput out) throws IOException;
+    abstract void read(DataInput in) throws IOException;
+  }
+
+  static class CellWriterByte extends CellWriter{
+    byte attr1;
+
+    @Override
+    void write(DataOutput out, long count) throws IOException {
+      out.writeByte((byte)(count % 128));
+    }
+
+    @Override
+    void write(DataOutput out) throws IOException {
+      out.writeByte(attr1);
+    }
+
+    @Override
+    void read(DataInput in) throws IOException {
+      attr1 = in.readByte();
+    }
+  }
+
   public Raster3dGeneratorAndUploader() {
 
   }
+
 
   /**
    * generate test data in binary format
    * a sizeRow * sizeCol file whose pixel is represented by an Integer of four bytes
    * pixel values are counted from 0
    */
-  public static void generateBinaryTestData(String filepath, int xDim, int yDim, int zDim) throws IOException {
+  public static void generateBinaryTestData(String filepath, int xDim, int yDim, int zDim)
+      throws IOException {
     DataOutputStream outputStream = new DataOutputStream(new BufferedOutputStream(
         new FileOutputStream(new File(filepath))));
-    int count = 0;
+    long count = 0;
     for (int z = 0; z < zDim; z++) {
       for (int y = 0; y < yDim; y++) {
         for (int x = 0; x < xDim; x++) {
-          CellAttrsSimple cell = new CellAttrsSimple((byte) ((count) % 128));
-          cell.write(outputStream);
+          cellWriter.write(outputStream, count);
           count++;
         }
       }
@@ -73,12 +101,11 @@ public class Raster3dGeneratorAndUploader {
       }
     }
 
-    CellAttrsSimple tmpCell = new CellAttrsSimple();
     for (int z = 0; z < fileZDim; z++) {
       for (int y = 0; y < fileYDim; y++) {
         for (int x = 0; x < fileXDim; x++) {
-          tmpCell.read(inputStream);
-          tmpCell.write(
+          cellWriter.read(inputStream);
+          cellWriter.write(
               resultWriters[(z / cellZDim) * xSplitSize * ySplitSize + (y / cellYDim) * xSplitSize + x / cellXDim]);
         }
       }
@@ -133,8 +160,7 @@ public class Raster3dGeneratorAndUploader {
     hdfs.close();
   }
 
-  //  public static void createInfoFileInHDFS(String hdfsDirectory,
-  //                                          int cellRowNum, int cellColNum, int cellRowSize, int cellColSize,
+  //  public static void createInfoFileInHDFS(String hdfsDirectory, //                                          int cellRowNum, int cellColNum, int cellRowSize, int cellColSize,
   //                                          int groupRowSize, int groupColSize, int groupRowOverlap, int
   //                                          groupColOverlap)
   //      throws IOException {
@@ -163,21 +189,24 @@ public class Raster3dGeneratorAndUploader {
     System.setProperty("HADOOP_USER_NAME", "sparkl");
 
     // for every cell use 1 Byte, totally 2.4G
-    int modelXDim = 2000;
-    int modelYDim = 2000;
-    int modelZDim = 500;
 
-    // for every cell use 1 byte, totally 12.5M
-    // 8*8*3
+    int cellXNum = 7;
+    int cellYNum = 6;
+    int cellZNum = 4;
+
     int cellXDim = 250;
     int cellYDim = 250;
     int cellZDim = 200;
 
-    String localFile = "test_data/raster3d-2.4G.dat";
+    int modelXDim = cellXDim*cellXNum;
+    int modelYDim = cellYDim*cellYNum;
+    int modelZDim = cellZDim*cellZNum;
+
+    String localFile = "test_data/raster3d-2.dat";
 
     // upload directory
-    String hdfsDir = "hdfs://kvmmaster:9000/user/sparkl/rppO" + FilenameUtils.getName(localFile) + "_optimize";
-    if (false) {
+    String hdfsDir = "hdfs://kvmmaster:9000/user/sparkl/rppO/" + FilenameUtils.getName(localFile); // + "_optimize";
+    if (true) {
       generateBinaryTestData(localFile, modelXDim, modelYDim, modelZDim);
       System.out.println("data generate done!");
 
@@ -187,7 +216,6 @@ public class Raster3dGeneratorAndUploader {
     }
 
     if(true) {
-
       uploadSpatialFile(localFile + "_upload", hdfsDir, cellXDim, cellYDim, cellZDim, modelXDim / cellXDim,
           modelYDim / cellYDim, modelZDim / cellZDim);
       System.out.println("data upload done!");
@@ -232,3 +260,6 @@ public class Raster3dGeneratorAndUploader {
   }
 
 }
+
+
+

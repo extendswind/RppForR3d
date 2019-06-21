@@ -303,8 +303,8 @@ public class SpatialRecordReaderSimpleRaster3D extends RecordReader<LongWritable
 
         Date date = new Date();
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd|HH:mm");
-        bufferedWriter.write(dateFormat.format(date) + " " + splitId + " " + totalReading/1024 + " " +
-            remoteReading/1024 + "\n");
+        bufferedWriter.write(dateFormat.format(date) + " " + splitId + " " + totalReading/1024.0/1024.0 + " " +
+            remoteReading/1024.0/1024.0 + "\n");
         bufferedWriter.close();
 
         LOG.info(dateFormat.format(date) + " " + splitId + " " + totalReading/1024 + " " + remoteReading/1024 + "\n");

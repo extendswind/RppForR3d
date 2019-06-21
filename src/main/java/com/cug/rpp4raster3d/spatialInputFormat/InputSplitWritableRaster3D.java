@@ -9,6 +9,7 @@ import java.io.DataOutput;
 import java.io.IOException;
 
 /**
+ * TODO not used now
  * 用于SpatialInputFormat得到的value类型   TODO 最好改个带value的名字
  * 由{@link SpatialRecordReaderGroupRaster3D} 生成
  *
