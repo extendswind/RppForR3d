@@ -19,6 +19,7 @@ package com.cug.rpp4raster3d.spatialInputFormat;
  */
 
 import com.cug.rpp4raster2d.util.SpatialConstant;
+import com.cug.rpp4raster3d.raster3d.Raster3D;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -44,12 +45,12 @@ import java.util.concurrent.TimeUnit;
  */
 @InterfaceAudience.Public
 @InterfaceStability.Stable
-public class SpatialFileInputFormatSimpleRaster3D extends FileInputFormat<LongWritable, InputSplitWritableRaster3D> {
+public class SpatialFileInputFormatSimpleRaster3D extends FileInputFormat<LongWritable, Raster3D> {
   private static final Log LOG = LogFactory.getLog(SpatialFileInputFormatSimpleRaster3D.class);
 
   @Override
-  public RecordReader<LongWritable, InputSplitWritableRaster3D> createRecordReader(InputSplit split,
-                                                                           TaskAttemptContext context) {
+  public RecordReader<LongWritable, Raster3D> createRecordReader(InputSplit split,
+                                                                 TaskAttemptContext context) {
     return new SpatialRecordReaderSimpleRaster3D();
   }
 

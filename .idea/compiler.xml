@@ -10,7 +10,7 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="rpp4volume" target="1.7" />
+      <module name="rpp4volume" target="8" />
     </bytecodeTargetLevel>
   </component>
 </project>

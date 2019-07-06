@@ -20,7 +20,7 @@ package com.cug.rpp4raster3d.spatialInputFormat;
 
 import com.cug.rpp4raster2d.util.GroupInfo;
 import com.cug.rpp4raster2d.util.SpatialConstant;
-import com.cug.rpp4raster3d.raster3d.Raster3D;
+import com.cug.rpp4raster3d.raster3d.SimpleRaster3D;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
  */
 @InterfaceAudience.Public
 @InterfaceStability.Stable
-public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWritable, Raster3D> {
+public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWritable, SimpleRaster3D> {
   private static final Log LOG = LogFactory.getLog(SpatialFileInputFormatGroupRaster3D.class);
   private int cellXNum;  // number of cells in x direction
   private int cellYNum;
@@ -66,8 +66,8 @@ public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWri
   //  }
 
   @Override
-  public RecordReader<LongWritable, Raster3D> createRecordReader(InputSplit split,
-                                                                 TaskAttemptContext context) {
+  public RecordReader<LongWritable, SimpleRaster3D> createRecordReader(InputSplit split,
+                                                                       TaskAttemptContext context) {
     return new SpatialRecordReaderGroupRaster3D();
   }
 

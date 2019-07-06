@@ -21,10 +21,8 @@ package com.cug.rpp4raster3d.spatialInputFormat;
 import com.cug.rpp4raster2d.inputFormat.InputSplitWritable;
 import com.cug.rpp4raster2d.util.CellIndexInfo;
 import com.cug.rpp4raster2d.util.GroupInfo;
-import com.cug.rpp4raster3d.raster3d.CellAttrs;
-import com.cug.rpp4raster3d.raster3d.CellAttrsSimple;
 import com.cug.rpp4raster2d.util.SpatialConstant;
-import com.cug.rpp4raster3d.raster3d.Raster3D;
+import com.cug.rpp4raster3d.raster3d.SimpleRaster3D;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -34,11 +32,11 @@ import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.client.HdfsDataInputStream;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
+import org.apache.hadoop.util.StopWatch;
 
 import java.io.*;
 import java.text.DateFormat;
@@ -56,7 +54,7 @@ import java.util.Date;
  */
 @InterfaceAudience.LimitedPrivate({"MapReduce", "Pig"})
 @InterfaceStability.Evolving
-public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable, Raster3D> {
+public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable, SimpleRaster3D> {
   private static final Log LOG = LogFactory.getLog(SpatialRecordReaderGroupRaster3D.class);
 
   public int radius = 5; // analysis radius
@@ -65,7 +63,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
   //  private int splitColId;
   //  private int splitRowId;
   private LongWritable key;
-  private Raster3D value;
+  private SimpleRaster3D value;
   private FileSplitGroupRaster3D inputSplit;
 
   private int cellXDim;
@@ -136,6 +134,8 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
       return false;
     }
 
+    StopWatch sw = new StopWatch().start();
+
     // the width of first col group is different from other right col group
 
     int valueXDim;
@@ -156,16 +156,16 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
     }
 
 //    CellAttrsSimple[] dataValue;
-    Raster3D raster3D;
+    SimpleRaster3D raster3D;
 
     if (splitId >= SpatialConstant.ROW_OVERLAPPED_GROUP_SPLIT_ID_BEGIN) { // overlapped row
       valueYDim = radius * 4;
-      raster3D = new Raster3D(valueXDim, valueYDim, valueZDim);
+      raster3D = new SimpleRaster3D(valueXDim, valueYDim, valueZDim);
 //      dataValue = new CellAttrsSimple[valueXDim * valueYDim * valueZDim];
     } else {  // normal group
 
       valueYDim = cellYDim * groupYSize;
-      raster3D = new Raster3D(valueXDim, valueYDim, valueZDim);
+      raster3D = new SimpleRaster3D(valueXDim, valueYDim, valueZDim);
 //      dataValue = new CellAttrsSimple[valueXDim * valueYDim * valueZDim];
     }
 
@@ -268,6 +268,11 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
     }
 
     value = raster3D;
+
+    sw.stop();
+    LOG.debug("data reading time of RecordReader is " + sw.now());
+
+
     return true;
 
   }
@@ -280,7 +285,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
   void readPartFromStream(FSDataInputStream inputStream, int cellXDim, int cellYDim,
                           int startX, int startY, int startZ, int lengthX, int lengthY, int lengthZ,
                           int cellAttrSize,
-                          Raster3D raster3D, int valueXDim, int valueYDim,
+                          SimpleRaster3D raster3D, int valueXDim, int valueYDim,
                           int toValueX, int toValueY, int toValueZ) throws IOException {
     inputStream.skip(cellXDim * cellYDim * startZ * cellAttrSize);
     for (int zz = 0; zz < lengthZ; zz++) {
@@ -306,7 +311,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
   }
 
   @Override
-  public Raster3D getCurrentValue() {
+  public SimpleRaster3D getCurrentValue() {
     return value;
   }
 

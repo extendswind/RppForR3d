@@ -60,6 +60,7 @@ import static org.apache.hadoop.util.Time.monotonicNow;
  *
  */
 @InterfaceAudience.Private
+@Deprecated
 public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
 
   private static final String enableDebugLogging =

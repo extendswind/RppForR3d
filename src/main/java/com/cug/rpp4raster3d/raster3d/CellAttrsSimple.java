@@ -6,6 +6,8 @@ import java.io.IOException;
 
 /**
  * a test cell attrs, only a byte attribute used
+ *
+ * efficiency problem, using SimpleRaster3D instead
  */
 @Deprecated
 public class CellAttrsSimple extends CellAttrsBase {
