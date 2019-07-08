@@ -21,11 +21,7 @@ package com.cug.rpp4raster3d.spatialInputFormat;
 
 import com.cug.rpp4raster2d.inputFormat.InputSplitWritable;
 import com.cug.rpp4raster2d.util.CellIndexInfo;
-import com.cug.rpp4raster3d.raster3d.CellAttrsSimple;
-import com.cug.rpp4raster3d.raster3d.NormalRaster3D;
-import com.cug.rpp4raster3d.raster3d.Raster3D;
-import com.cug.rpp4raster3d.raster3d.SimpleRaster3D;
-import com.cug.rpp4raster3d.raster3dGenerate.Raster3dGeneratorAndUploader;
+import com.cug.rpp4raster3d.raster3d.*;
 import com.google.gson.annotations.Since;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -36,9 +32,7 @@ import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.*;
 import org.apache.hadoop.hdfs.DFSClient;
 import org.apache.hadoop.hdfs.DFSInputStream;
-import org.apache.hadoop.hdfs.client.HdfsDataInputStream;
 import org.apache.hadoop.hdfs.server.namenode.NameNode;
-import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.LongWritable;
 import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
@@ -46,19 +40,10 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.util.StopWatch;
 
 import java.io.*;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.charset.StandardCharsets;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
-import java.util.Arrays;
-import java.util.Calendar;
 import java.util.Date;
-import java.util.GregorianCalendar;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 import static org.apache.hadoop.fs.FileSystem.DEFAULT_FS;
 import static org.apache.hadoop.fs.FileSystem.FS_DEFAULT_NAME_KEY;
@@ -97,7 +82,9 @@ public class SpatialRecordReaderSimpleRaster3D extends RecordReader<LongWritable
   CellIndexInfo cellIndexInfo;
 
   private int splitId;
+  private boolean isTest;
 
+  public static final String RECORD_READER_IS_TEST_KEY = "r3d.simple.recordreader.test.boolean";
 
   public SpatialRecordReaderSimpleRaster3D() {
 
@@ -120,7 +107,7 @@ public class SpatialRecordReaderSimpleRaster3D extends RecordReader<LongWritable
       DFSClient dfsClient = new DFSClient(NameNode.getAddress(conf), conf);
       for (int i = 0; i < paths.length; i++) {
         dfsInputStreams[i] = dfsClient.open(paths[i].toUri().getRawPath());
-//        inputStreams[i] = new FSDataInputStream(new BufferedFSInputStream(dfsInputStreams[i], 40000));
+        //        inputStreams[i] = new FSDataInputStream(new BufferedFSInputStream(dfsInputStreams[i], 40000));
         inputStreams[i] = new FSDataInputStream(dfsInputStreams[i]);
       }
     }
@@ -147,7 +134,7 @@ public class SpatialRecordReaderSimpleRaster3D extends RecordReader<LongWritable
     //    assert cellIndexInfo != null;
 
     splitId = inputSplit.splitId;
-
+    isTest = conf.getBoolean(RECORD_READER_IS_TEST_KEY, false);
 
   }
 
@@ -159,37 +146,81 @@ public class SpatialRecordReaderSimpleRaster3D extends RecordReader<LongWritable
       return false;
     }
 
-
     StopWatch sw = new StopWatch().start();
 
-
-    
     int valueXDim = (groupXSize - 1) * radius + cellXDim;
     int valueYDim = (groupYSize - 1) * radius + cellYDim;
     int valueZDim = (groupZSize - 1) * radius + cellZDim;
 
-    //    CellAttrsSimple[] dataValue = new CellAttrsSimple[valueXDim * valueYDim * valueZDim];
 
-    // Raster3D
-    String r3dName = conf.get("r3d.class.name", "com.cug.rpp4raster3d.raster3d.NormalRaster3D");
-    Raster3D raster3D = null;
-    try {
-      Constructor constructor = Class.forName(r3dName).getConstructor(new Class[]{int.class, int.class, int.class});
-      raster3D = (Raster3D) constructor.newInstance(valueXDim, valueYDim, valueZDim);
-    } catch (InstantiationException e) {
-      e.printStackTrace();
-    } catch (IllegalAccessException e) {
-      e.printStackTrace();
-    } catch (ClassNotFoundException e) {
-      e.printStackTrace();
-    } catch (NoSuchMethodException e) {
-      e.printStackTrace();
-    } catch (InvocationTargetException e) {
-      e.printStackTrace();
+    // divided to multiple layers to avoid memory not enough
+    int layerZHeight = radius * 2;  // TODO  parameter  注意设置为偶数
+    if (layerZHeight % 2 != 0) {
+      LOG.error("LayerZHeight error!");
+      return false;
+    }
+    Raster3D raster3D = Raster3dFactory.getRaster3D(conf, valueXDim, valueYDim, layerZHeight);
+
+
+    int layerNum = (int) Math.ceil((double) valueZDim / (layerZHeight / 2)) - 1;
+
+    Raster3D[] valueArray;
+    if (isTest) {
+      valueArray = new Raster3D[layerNum + 1];
+    } else {
+      valueArray = new Raster3D[layerNum];
     }
 
-    //    Raster3D raster3D = new NormalRaster3D(valueXDim, valueYDim, valueZDim);
+    for (int layerId = 0; layerId < layerNum; layerId++) {
+      int layerZStart;
+      if (layerId == 0) {
+        layerZStart = 0;
+      } else {
+        layerZStart = (layerId - 1) * (layerZHeight / 2) + layerZHeight;
+      }
+      int layerReadZHeight = layerZHeight / 2;
+      if (layerZStart + layerReadZHeight > valueZDim) {
+        layerReadZHeight = valueZDim - layerZStart;
+      }
+      if (layerId == 0) {
+        readLayerFromStreams(raster3D, 0, layerZHeight, 0);
+      } else {
+        raster3D.upMoveLayerData(layerZHeight / 2);
+        readLayerFromStreams(raster3D, layerZStart, layerReadZHeight, layerZHeight / 2);
+        // TODO System.arraycopy之后还需要将原位置清零，否则最后一列可能会出问题
+      }
 
+      // -- processing
+      if (isTest) { // 测试中直接将整个数组读入到value，不作处理
+        valueArray[layerId] = raster3D.getZRegion(0, layerZHeight / 2);
+      } else {
+        valueArray[layerId] = raster3D.averageSampling(radius);
+      }
+
+    } // layerEnd
+
+    if (isTest) {
+      valueArray[layerNum] = raster3D.getZRegion(layerZHeight / 2, layerZHeight);
+    }
+    value = Raster3dFactory.getRaster3D(conf, valueArray);
+    //    new InputSplitWritableRaster3D(new IntWritable(valueXDim), new IntWritable(valueYDim), new IntWritable
+    //    (valueZDim), );
+
+    sw.stop();
+    LOG.debug("data reading time of RecordReader lsakdjfl is " + sw.now(TimeUnit.SECONDS));
+
+    if (LOG instanceof Log4JLogger) {
+      LOG.debug(((Log4JLogger) LOG).getLogger().getAllAppenders().toString());
+    }
+    return true;
+  }
+
+
+  // TODO 一个函数的测试
+  // 读出一个layer，存入raster3D的toValueZ开始的部分，z方向长度为lengthz
+  // 第一次读出的layer z方向长度为3R，之后每次读出R，计算时每次只计算中的R部分
+  void readLayerFromStreams(Raster3D raster3D, int layerZStart, int layerReadZHeight, int toLayerRasterZ) {
+    // for every file -------------
     int groupXEnd = 1;
     int groupYEnd = 1;
     int groupZEnd = 1;
@@ -227,11 +258,11 @@ public class SpatialRecordReaderSimpleRaster3D extends RecordReader<LongWritable
     int[] filePos = new int[3];
     int[] cellDims = new int[]{cellXDim, cellYDim, cellZDim};
 
-
     for (filePos[2] = groupStart[2]; filePos[2] <= groupZEnd; filePos[2]++) {
       for (filePos[1] = groupStart[1]; filePos[1] <= groupYEnd; filePos[1]++) {
         for (filePos[0] = groupStart[0]; filePos[0] <= groupXEnd; filePos[0]++) {
 
+          // calculate startPos, lengths, toValuePos
           // x y z
           for (int i = 0; i < 3; i++) {
             if (filePos[i] == -1) {
@@ -257,40 +288,37 @@ public class SpatialRecordReaderSimpleRaster3D extends RecordReader<LongWritable
             }
           }
 
+          // considering value layer ---
+          int zLength = Math.min(toValuePos[2] + lengths[2], layerZStart + layerReadZHeight) - Math.max(toValuePos[2],
+              layerZStart);
+          if (zLength < 0) {
+            continue;
+          }
+          int layeFileStartZ = startPos[2] + layerZStart - toValuePos[2];
+          int layerToValueZ = Math.max(toValuePos[2], layerZStart) - layerZStart + toLayerRasterZ;
           int cellSize = raster3D.getCellSize();
+
           try {
+            for (FSDataInputStream inputStream : inputStreams) {
+              inputStream.seek(0);
+            }
             readPartFromStream(inputStreams[(filePos[2] - groupStart[2]) * groupXSize * groupYSize +
                     (filePos[1] - groupStart[1]) * groupXSize + (filePos[0] - groupStart[0])],
-                cellXDim, cellYDim, startPos[0], startPos[1], startPos[2], lengths[0], lengths[1], lengths[2],
-                cellSize, raster3D, valueXDim, valueYDim, toValuePos[0], toValuePos[1], toValuePos[2]);
+                cellXDim, cellYDim, startPos[0], startPos[1], layeFileStartZ, lengths[0], lengths[1], zLength,
+                cellSize, raster3D, raster3D.getXDim(), raster3D.getYDim(), toValuePos[0], toValuePos[1],
+                layerToValueZ);
           } catch (IOException e) {
             //            e.printStackTrace();
             //            System.err.println("File Reading Error!!!");
             LOG.error("file reading error! key: " + splitId + ", error file number: " +
                 ((filePos[2] - groupStart[2]) * groupXSize * groupYSize +
                     (filePos[1] - groupStart[1]) * groupXSize + (filePos[0] - groupStart[0])));
+          } catch (ArrayIndexOutOfBoundsException e) {
+            e.printStackTrace();
           }
         }
       }
-
     }
-
-    value = raster3D;
-    //    new InputSplitWritableRaster3D(new IntWritable(valueXDim), new IntWritable(valueYDim), new IntWritable
-    //    (valueZDim), );
-
-
-    sw.stop();
-    LOG.debug("data reading time of RecordReader lsakdjfl is " + sw.now(TimeUnit.SECONDS));
-
-    if (LOG instanceof Log4JLogger) {
-      LOG.debug(((Log4JLogger) LOG).getLogger().getAllAppenders().toString());
-    }
-
-
-    return true;
-
-
   }
 
   /**
@@ -395,7 +423,6 @@ public class SpatialRecordReaderSimpleRaster3D extends RecordReader<LongWritable
         LOG.info(
             dateFormat.format(date) + " " + splitId + " " + totalReading / 1024.0 / 1024.0 + " " +
                 remoteReading / 1024.0 / 1024.0 + "\n");
-
       }
     } catch (IOException e) {
       e.printStackTrace();

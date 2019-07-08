@@ -155,18 +155,18 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
       valueZDim = cellZDim * (groupZSize - 1) + radius;
     }
 
-//    CellAttrsSimple[] dataValue;
+//    SimpleCellAttrs[] dataValue;
     SimpleRaster3D raster3D;
 
     if (splitId >= SpatialConstant.ROW_OVERLAPPED_GROUP_SPLIT_ID_BEGIN) { // overlapped row
       valueYDim = radius * 4;
       raster3D = new SimpleRaster3D(valueXDim, valueYDim, valueZDim);
-//      dataValue = new CellAttrsSimple[valueXDim * valueYDim * valueZDim];
+//      dataValue = new SimpleCellAttrs[valueXDim * valueYDim * valueZDim];
     } else {  // normal group
 
       valueYDim = cellYDim * groupYSize;
       raster3D = new SimpleRaster3D(valueXDim, valueYDim, valueZDim);
-//      dataValue = new CellAttrsSimple[valueXDim * valueYDim * valueZDim];
+//      dataValue = new SimpleCellAttrs[valueXDim * valueYDim * valueZDim];
     }
 
     for (int zz = 0; zz < groupZSize; zz++) {

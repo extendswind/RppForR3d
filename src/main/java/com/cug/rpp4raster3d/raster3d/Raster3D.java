@@ -13,19 +13,14 @@ public abstract class Raster3D {
 
 //  public abstract Raster3D(int xDim, int yDim, int zDim);
 
+
   public abstract int getXDim();
   public abstract int getYDim();
   public abstract int getZDim();
 
-  public void setAttr(int index){
-
-  }
 
   public abstract byte[] getAttr0();
 
-//  public CellAttrsSimple getAttr(int index){
-//    return new CellAttrsSimple(attr1[index]);
-//  }
 
   public abstract int getCellSize();
 
@@ -35,8 +30,30 @@ public abstract class Raster3D {
   public abstract void readAttr(int index, DataInput dataInput) throws IOException;
 
 
+  public abstract void setAttr(int index, CellAttrsBase cellattrs);
+
+  public abstract CellAttrsBase getAttr(int index);
+
+
+
+
+  // ----- operation -----
+
+  // used for simple sampling
+  public abstract Raster3D averageSampling(int radius);
+
+  public abstract Raster3D getZRegion(int zStart, int zEnd);
+
+  public abstract void upMoveLayerData(int startLayerZ);
+
+
+
+
+
+
+
   //  public void writeAttr(int index, DataOutput dataOutput) throws IOException {
-//    dataOutput.writeByte(attr1[index]);
+//    dataOutput.writeByte(attr[index]);
 //  }
 
   /**
@@ -48,7 +65,7 @@ public abstract class Raster3D {
 //    dataOutput.writeInt(yDim);
 //    dataOutput.writeInt(zDim);
 //    for(int i=0; i<xDim*yDim*zDim; i++){
-//      dataOutput.writeByte(attr1[i]);
+//      dataOutput.writeByte(attr[i]);
 //    }
 //  }
 
@@ -61,7 +78,7 @@ public abstract class Raster3D {
 //    yDim = in.readInt();
 //    zDim = in.readInt();
 //    for(int i=0; i<xDim*yDim*zDim; i++){
-//      attr1[i] = in.readByte();
+//      attr[i] = in.readByte();
 //    }
 //  }
 

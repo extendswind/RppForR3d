@@ -1,6 +1,6 @@
 package com.cug.rpp4raster3d.spatialInputFormat;
 
-import com.cug.rpp4raster3d.raster3d.CellAttrsSimple;
+import com.cug.rpp4raster3d.raster3d.SimpleCellAttrs;
 import org.apache.hadoop.io.IntWritable;
 import org.apache.hadoop.io.Writable;
 
@@ -21,17 +21,17 @@ public class InputSplitWritableRaster3D implements Writable{
   IntWritable xDim;
   IntWritable yDim;
   IntWritable zDim;
-  CellAttrsSimple[] data;
+  SimpleCellAttrs[] data;
 
   public InputSplitWritableRaster3D(){
 
   }
 
-  public InputSplitWritableRaster3D(IntWritable xDim, IntWritable yDim, IntWritable zDim, CellAttrsSimple[] data){
+  public InputSplitWritableRaster3D(IntWritable xDim, IntWritable yDim, IntWritable zDim, SimpleCellAttrs[] data){
     setAttributes(xDim, yDim, zDim, data);
   }
 
-  public void setAttributes(IntWritable xDim, IntWritable yDim, IntWritable zDim, CellAttrsSimple[] data){
+  public void setAttributes(IntWritable xDim, IntWritable yDim, IntWritable zDim, SimpleCellAttrs[] data){
     this.xDim = xDim;
     this.yDim = yDim;
     this.zDim = zDim;
@@ -41,7 +41,7 @@ public class InputSplitWritableRaster3D implements Writable{
   public IntWritable getXDim(){return xDim; }
   public IntWritable getYDim(){return yDim; }
   public IntWritable getZDim(){return zDim;}
-  public CellAttrsSimple[] getData() { return data; }
+  public SimpleCellAttrs[] getData() { return data; }
 
   @Override
   public void readFields(DataInput in) throws IOException {
@@ -49,9 +49,9 @@ public class InputSplitWritableRaster3D implements Writable{
     yDim = new IntWritable(in.readInt());
     zDim = new IntWritable(in.readInt());
 
-    data = new CellAttrsSimple[xDim.get() * yDim.get() * zDim.get()];// construct data
+    data = new SimpleCellAttrs[xDim.get() * yDim.get() * zDim.get()];// construct data
     for (int i = 0; i < data.length; i++) {
-      data[i] = new CellAttrsSimple();
+      data[i] = new SimpleCellAttrs();
       data[i].read(in);
     }
   }

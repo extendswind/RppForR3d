@@ -15,10 +15,25 @@ public class NormalRaster3D extends Raster3D {
   private int zDim;
 
   private int attrNum = 10;
-  private byte[][] attrs;
-//  private byte[] attr1;
+  private byte[][] attrArrays;
+//  private byte[] attr;
 
-  public NormalRaster3D(){
+//  public NormalRaster3D(){
+//
+//  }
+
+  public NormalRaster3D(NormalRaster3D[]  raster3ds){
+    xDim = raster3ds[0].getXDim();
+    yDim = raster3ds[0].getYDim();
+    zDim = raster3ds[0].getZDim() * raster3ds.length;
+    attrArrays = new byte[attrNum][];
+    for(int attrId = 0; attrId < attrNum; attrId++){
+      attrArrays[attrId] = new byte[xDim*yDim*zDim];
+      for(int i=0; i<raster3ds.length; i++){
+        System.arraycopy((raster3ds[i]).attrArrays[attrId], 0, attrArrays[attrId], i*xDim*yDim*raster3ds[0].getZDim(),
+            xDim*yDim*raster3ds[0].getZDim());
+      }
+    }
 
   }
 
@@ -26,9 +41,9 @@ public class NormalRaster3D extends Raster3D {
     this.xDim = xDim;
     this.yDim = yDim;
     this.zDim = zDim;
-    attrs = new byte[attrNum][];
+    attrArrays = new byte[attrNum][];
     for(int i = 0; i < attrNum; i++){
-      attrs[i] = new byte[xDim*yDim*zDim];
+      attrArrays[i] = new byte[xDim*yDim*zDim];
     }
   }
 
@@ -41,11 +56,11 @@ public class NormalRaster3D extends Raster3D {
   }
 
   public byte[] getAttr0(){
-    return attrs[0];
+    return attrArrays[0];
   }
 
-//  public CellAttrsSimple getAttr(int index){
-//    return new CellAttrsSimple(attr1[index]);
+//  public SimpleCellAttrs getAttr(int index){
+//    return new SimpleCellAttrs(attr[index]);
 //  }
 
   public int getCellSize(){
@@ -61,7 +76,7 @@ public class NormalRaster3D extends Raster3D {
 //    dataOutput.writeInt(yDim);
 //    dataOutput.writeInt(zDim);
 //    for(int i=0; i<xDim*yDim*zDim; i++){
-//      dataOutput.writeByte(attr1[i]);
+//      dataOutput.writeByte(attr[i]);
 //    }
 //  }
 
@@ -74,20 +89,84 @@ public class NormalRaster3D extends Raster3D {
 //    yDim = in.readInt();
 //    zDim = in.readInt();
 //    for(int i=0; i<xDim*yDim*zDim; i++){
-//      attr1[i] = in.readByte();
+//      attr[i] = in.readByte();
 //    }
 //  }
+
+  @Override
+  public void upMoveLayerData(int startLayerZ) {
+    int startPos = startLayerZ * xDim * yDim;
+    int length = xDim*yDim*zDim - startPos;
+    for(int i=0; i<attrNum; i++) {
+      System.arraycopy(attrArrays[i], startPos, attrArrays[i], 0, length);
+    }
+  }
+
+  @Override
+  public void setAttr(int index, CellAttrsBase cellattrs) {
+    for(int i=0; i<attrNum; i++) {
+      attrArrays[i][index] = ((NormalCellAttrs) cellattrs).attrs[i];
+    }
+  }
+
+  @Override
+  public CellAttrsBase getAttr(int index) {
+    return new NormalCellAttrs(attrArrays[index]);
+  }
+
+  @Override
+  public NormalRaster3D averageSampling(int radius) {
+    int resultXDim = xDim / radius / 2;
+    int resultYDim = yDim / radius / 2;
+    int resultZDim = zDim / radius / 2;
+
+    NormalRaster3D raster3D = new NormalRaster3D(resultXDim, resultYDim, resultZDim);
+    int xstart, ystart, zstart;
+    NormalCellAttrs cell = new NormalCellAttrs(attrArrays[0]);
+    for (int i = 0; i < resultZDim; i++) {
+      for (int j = 0; j < resultYDim; j++) {
+        for (int k = 0; k < resultXDim; k++) {
+          for(int attrId = 0; attrId < attrNum; attrId++) {
+            xstart = k * radius * 2 + radius;
+            ystart = j * radius * 2 + radius;
+            zstart = i * radius * 2 + radius;
+            long sum = 0;
+            for (int zz = zstart - radius; zz < zstart + radius; zz++) {
+              for (int yy = ystart - radius; yy < ystart + radius; yy++) {
+                for (int xx = xstart - radius; xx < xstart + radius; xx++) {
+                  sum += attrArrays[i][xx + yy * xDim + zz * xDim * yDim];
+                }
+              }
+            }
+            cell.attrs[attrId] = (byte) ((sum / (radius * 2) / (radius * 2) / (radius * 2)) % 128);
+          }
+          raster3D.setAttr(i * resultXDim * resultYDim + j * resultXDim + k, cell);
+        }
+      }
+    }
+    return raster3D;
+  }
+
+  @Override
+  public Raster3D getZRegion(int zStart, int zEnd) {
+    int zHeight = zEnd - zStart;
+    NormalRaster3D raster3D = new NormalRaster3D(xDim, yDim, zHeight);
+    for(int i=0; i<attrNum; i++) {
+      System.arraycopy(attrArrays[i], xDim * yDim * zStart, raster3D.attrArrays[i], 0, xDim * yDim * zHeight);
+    }
+    return raster3D;
+  }
 
   /**
    * read the index cell value from dataInput
    */
   public void readAttr(int index, DataInput dataInput) throws IOException {
     for(int i=0; i<attrNum; i++){
-      attrs[i][index] = dataInput.readByte();
+      attrArrays[i][index] = dataInput.readByte();
     }
   }
 
 //  public void writeAttr(int index, DataOutput dataOutput) throws IOException {
-//    dataOutput.writeByte(attr1[index]);
+//    dataOutput.writeByte(attr[index]);
 //  }
 }

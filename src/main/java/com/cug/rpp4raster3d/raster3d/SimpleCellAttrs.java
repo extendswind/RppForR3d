@@ -10,19 +10,19 @@ import java.io.IOException;
  * efficiency problem, using SimpleRaster3D instead
  */
 @Deprecated
-public class CellAttrsSimple extends CellAttrsBase {
+public class SimpleCellAttrs extends CellAttrsBase {
 
   public byte attr;  // 1 byte
 
-  public CellAttrsSimple(){
+  public SimpleCellAttrs(){
 
   }
 
-  public CellAttrsSimple(byte attr){
+  public SimpleCellAttrs(byte attr){
     this.attr = attr;
   }
 
-  public CellAttrsSimple(DataInput dataInput) throws IOException {
+  public SimpleCellAttrs(DataInput dataInput) throws IOException {
     read(dataInput);
   }
 
