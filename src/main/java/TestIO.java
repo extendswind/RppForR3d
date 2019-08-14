@@ -1,3 +1,4 @@
+import com.cug.rpp4raster2d.util.SpatialConstant;
 import com.cug.rpp4raster3d.raster3d.Raster3D;
 import com.cug.rpp4raster3d.spatialInputFormat.FileSplitGroupRaster3D;
 import com.cug.rpp4raster3d.spatialInputFormat.InputSplitWritableRaster3D;
@@ -8,6 +9,7 @@ import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.DFSClient;
+import org.apache.hadoop.hdfs.server.blockmanagement.DatanodeStorageInfo;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
@@ -17,6 +19,8 @@ import org.junit.Assert;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class TestIO {
@@ -125,4 +129,8 @@ public class TestIO {
 //    }
 
   }
+
+
+
+
 }

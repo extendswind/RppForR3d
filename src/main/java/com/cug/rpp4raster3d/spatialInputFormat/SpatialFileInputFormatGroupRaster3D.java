@@ -20,7 +20,7 @@ package com.cug.rpp4raster3d.spatialInputFormat;
 
 import com.cug.rpp4raster2d.util.GroupInfo;
 import com.cug.rpp4raster2d.util.SpatialConstant;
-import com.cug.rpp4raster3d.raster3d.SimpleRaster3D;
+import com.cug.rpp4raster3d.raster3d.Raster3D;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -44,7 +44,7 @@ import java.util.concurrent.TimeUnit;
  */
 @InterfaceAudience.Public
 @InterfaceStability.Stable
-public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWritable, SimpleRaster3D> {
+public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWritable, Raster3D> {
   private static final Log LOG = LogFactory.getLog(SpatialFileInputFormatGroupRaster3D.class);
   private int cellXNum;  // number of cells in x direction
   private int cellYNum;
@@ -66,7 +66,7 @@ public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWri
   //  }
 
   @Override
-  public RecordReader<LongWritable, SimpleRaster3D> createRecordReader(InputSplit split,
+  public RecordReader<LongWritable, Raster3D> createRecordReader(InputSplit split,
                                                                        TaskAttemptContext context) {
     return new SpatialRecordReaderGroupRaster3D();
   }
@@ -105,12 +105,12 @@ public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWri
 
     String infoFilename = FilenameUtils.getName(dir);
 
-    cellXNum = Integer.parseInt(infoFilename.split("_")[1]);
-    cellYNum = Integer.parseInt(infoFilename.split("_")[2]);
-    cellZNum = Integer.parseInt(infoFilename.split("_")[3]);
-    cellXDim = Integer.parseInt(infoFilename.split("_")[4]);
-    cellYDim = Integer.parseInt(infoFilename.split("_")[5]);
-    cellZDim = Integer.parseInt(infoFilename.split("_")[6]);
+    cellXNum = Integer.parseInt(infoFilename.split("_")[2]);
+    cellYNum = Integer.parseInt(infoFilename.split("_")[3]);
+    cellZNum = Integer.parseInt(infoFilename.split("_")[4]);
+    cellXDim = Integer.parseInt(infoFilename.split("_")[5]);
+    cellYDim = Integer.parseInt(infoFilename.split("_")[6]);
+    cellZDim = Integer.parseInt(infoFilename.split("_")[7]);
 
     // number of groups in x dimension
     int groupColNum = cellXNum <= groupInfo.colSize ? 1 :

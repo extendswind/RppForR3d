@@ -98,11 +98,6 @@ public class Raster3dGeneratorAndUploader {
     int cellYDim = fileYDim / ySplitSize;
     int cellZDim = fileZDim / zSplitSize;
 
-    //    FileOutputStream infoFileStream = new FileOutputStream(new File(uploadFilepath +
-    //        "/info_" + xSplitSize + "_" + ySplitSize + "_" + zSplitSize +
-    //        cellXDim + "_" + cellYDim + "_" + cellZDim));
-    //    infoFileStream.close();
-
     for (int z = 0; z < zSplitSize; z++) {
       for (int y = 0; y < ySplitSize; y++) {
         for (int x = 0; x < xSplitSize; x++) {
@@ -149,6 +144,10 @@ public class Raster3dGeneratorAndUploader {
 
     Path hdfsPath = new Path(hdfsDirectory);
     hdfs.mkdirs(hdfsPath);
+    hdfs.create(new Path(hdfsDirectory + "/" + SpatialConstant.RASTER_3D_INDEX_PREFIX + "_info_" +
+        xSplitSize + "_" + ySplitSize + "_" + zSplitSize + "_" + cellXDim + "_" + cellYDim+ "_" + cellZDim))
+        .close();
+
     for (int z = 0; z < zSplitSize; z++) {
       for (int y = 0; y < ySplitSize; y++) {
         for (int x = 0; x < xSplitSize; x++) {
@@ -165,12 +164,53 @@ public class Raster3dGeneratorAndUploader {
       }
     }
 
-    hdfs.create(new Path(hdfsDirectory + "/info_" +
-        xSplitSize + "_" + ySplitSize + "_" + zSplitSize + "_" + cellXDim + "_" + cellYDim + "_" + cellZDim))
-        .close();
-
     hdfs.close();
   }
+
+
+
+
+  public static void main(String[] args) throws IOException {
+
+    cellWriter = new CellWriter10Byte();
+
+    System.setProperty("HADOOP_USER_NAME", "sparkl");
+
+    // for every cell use 10 Byte, totally 24G
+    int cellXNum = 7;
+    int cellYNum = 6;
+    int cellZNum = 4;
+
+    int cellXDim = 250;
+    int cellYDim = 250;
+    int cellZDim = 200;
+
+    int modelXDim = cellXDim * cellXNum;
+    int modelYDim = cellYDim * cellYNum;
+    int modelZDim = cellZDim * cellZNum;
+
+    String localFile = "test_data/raster3d-3.dat";
+
+    // upload directory
+    String hdfsDir = "hdfs://kvmmaster:9000/user/sparkl/rppo/" + FilenameUtils.getName(localFile); // + "_optimize";
+    if (false) {
+      generateBinaryTestData(localFile, modelXDim, modelYDim, modelZDim);
+      System.out.println("data generate done!");
+
+      splitSpatialDataBinary(localFile, modelXDim, modelYDim, modelZDim, modelXDim / cellXDim,
+          modelYDim / cellYDim, modelZDim / cellZDim);
+      System.out.println("data split done!");
+    }
+
+    if (true) {
+      uploadSpatialFile(localFile + "_upload", hdfsDir, cellXDim, cellYDim, cellZDim, modelXDim / cellXDim,
+          modelYDim / cellYDim, modelZDim / cellZDim);
+      System.out.println("data upload done!");
+    }
+  }
+
+}
+
 
   //  public static void createInfoFileInHDFS(String hdfsDirectory, //                                          int
   //  cellRowNum, int cellColNum, int cellRowSize, int cellColSize,
@@ -195,86 +235,3 @@ public class Raster3dGeneratorAndUploader {
   //    hdfs.close();
   //
   //  }
-
-
-  public static void main(String[] args) throws IOException {
-
-    cellWriter = new CellWriter10Byte();
-
-    System.setProperty("HADOOP_USER_NAME", "sparkl");
-
-    // for every cell use 1 Byte, totally 2.4G
-
-    int cellXNum = 7;
-    int cellYNum = 6;
-    int cellZNum = 4;
-
-    int cellXDim = 250;
-    int cellYDim = 250;
-    int cellZDim = 200;
-
-    int modelXDim = cellXDim * cellXNum;
-    int modelYDim = cellYDim * cellYNum;
-    int modelZDim = cellZDim * cellZNum;
-
-    String localFile = "test_data/raster3d-3.dat";
-
-    // upload directory
-    String hdfsDir = "hdfs://kvmmaster:9000/user/sparkl/" + FilenameUtils.getName(localFile); // + "_optimize";
-    if (true) {
-      generateBinaryTestData(localFile, modelXDim, modelYDim, modelZDim);
-      System.out.println("data generate done!");
-
-      splitSpatialDataBinary(localFile, modelXDim, modelYDim, modelZDim, modelXDim / cellXDim,
-          modelYDim / cellYDim, modelZDim / cellZDim);
-      System.out.println("data split done!");
-    }
-
-    if (true) {
-      uploadSpatialFile(localFile + "_upload", hdfsDir, cellXDim, cellYDim, cellZDim, modelXDim / cellXDim,
-          modelYDim / cellYDim, modelZDim / cellZDim);
-      System.out.println("data upload done!");
-    }
-
-
-    // get block location
-    //    Configuration conf = new Configuration();
-    //    FileSystem fs = FileSystem.get(URI.create("hdfs://hadoopmaster:9000/"), conf);
-    //
-    //    for(int i=0; i<5; i++){
-    //      for(int j=0; j<5; j++){
-    //        Path p = new Path("hdfs://hadoopmaster:9000/user/sparkl/test.dat/grid_test.dat_" +
-    //                Integer.toString(i) + "_" + Integer.toString(j));
-    //        System.out.println(Arrays.toString(fs.getFileBlockLocations(p, 0, 1)));
-    //      }
-    //    }
-
-
-    //    Configuration conf = new Configuration();
-    //    conf.set("dfs.blocksize", "1048576");
-    //    FileSystem hdfs = FileSystem.get(URI.create("hdfs://hadoopmaster:9000/"), conf);
-    //
-    //    String uploadFile = "testfile.dat";
-    //    Path uploadFilePath = new Path(uploadFile);
-    //
-    //    Path spatialDataPath = new Path("/user/sparkl/spatial_data");
-    //    if (!hdfs.exists(spatialDataPath)) {
-    //      hdfs.mkdirs(spatialDataPath);
-    //    }
-
-    //        hdfs.mkdirs(new Path("hdfs://tdh1:9000/" + FilenameUtils.getBaseName(uploadFile)));
-    //
-    //        hdfs.delete(new Path("hdfs://tdh1:9000/testData"), true);
-    //        hdfs.copyFromLocalFile(false, true,
-    //                new Path("/mnt/data/liuzhipeng/test_data/test3mFile"),
-    //                new Path("hdfs://tdh1:9000/testData"));
-
-
-    //    hdfs.close();
-
-  }
-
-}
-
-
-

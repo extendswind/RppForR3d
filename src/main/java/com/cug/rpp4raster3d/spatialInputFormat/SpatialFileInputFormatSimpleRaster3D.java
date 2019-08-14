@@ -83,13 +83,13 @@ public class SpatialFileInputFormatSimpleRaster3D extends FileInputFormat<LongWr
     String infoFilename = FilenameUtils.getName(dir);
 
     // number of cells in x direction
-    int cellXNum = Integer.parseInt(infoFilename.split("_")[1]);
-    int cellYNum = Integer.parseInt(infoFilename.split("_")[2]);
-    int cellZNum = Integer.parseInt(infoFilename.split("_")[3]);
+    int cellXNum = Integer.parseInt(infoFilename.split("_")[2]);
+    int cellYNum = Integer.parseInt(infoFilename.split("_")[3]);
+    int cellZNum = Integer.parseInt(infoFilename.split("_")[4]);
     // dimension of a cell in x direction
-    int cellXDim = Integer.parseInt(infoFilename.split("_")[4]);
-    int cellYDim = Integer.parseInt(infoFilename.split("_")[5]);
-    int cellZDim = Integer.parseInt(infoFilename.split("_")[6]);
+    int cellXDim = Integer.parseInt(infoFilename.split("_")[5]);
+    int cellYDim = Integer.parseInt(infoFilename.split("_")[6]);
+    int cellZDim = Integer.parseInt(infoFilename.split("_")[7]);
         // ..../filename/
     String spatialFilepath = FilenameUtils.getPath(dir);
 

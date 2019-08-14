@@ -22,7 +22,8 @@ import com.cug.rpp4raster2d.inputFormat.InputSplitWritable;
 import com.cug.rpp4raster2d.util.CellIndexInfo;
 import com.cug.rpp4raster2d.util.GroupInfo;
 import com.cug.rpp4raster2d.util.SpatialConstant;
-import com.cug.rpp4raster3d.raster3d.SimpleRaster3D;
+import com.cug.rpp4raster3d.raster3d.Raster3D;
+import com.cug.rpp4raster3d.raster3d.Raster3dFactory;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -54,7 +55,7 @@ import java.util.Date;
  */
 @InterfaceAudience.LimitedPrivate({"MapReduce", "Pig"})
 @InterfaceStability.Evolving
-public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable, SimpleRaster3D> {
+public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable, Raster3D> {
   private static final Log LOG = LogFactory.getLog(SpatialRecordReaderGroupRaster3D.class);
 
   public int radius = 5; // analysis radius
@@ -63,7 +64,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
   //  private int splitColId;
   //  private int splitRowId;
   private LongWritable key;
-  private SimpleRaster3D value;
+  private Raster3D value;
   private FileSplitGroupRaster3D inputSplit;
 
   private int cellXDim;
@@ -85,6 +86,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
   private boolean isFirstZGroup; // mark the first column group, the overlapped row is also FirstColGroup !
   private int splitId;
 
+  private Configuration conf;
 
   public SpatialRecordReaderGroupRaster3D() {
 
@@ -93,7 +95,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
 
   public void initialize(InputSplit genericSplit, TaskAttemptContext context) throws IOException {
     inputSplit = (FileSplitGroupRaster3D) genericSplit;
-    Configuration conf = context.getConfiguration();
+    conf = context.getConfiguration();
     final Path[] paths = inputSplit.getPaths();
 
     // open the file and seek to the start of the inputSplit
@@ -118,11 +120,8 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
     // z 方向由于需要考虑上下radius内的数据，因此较为特殊，考虑需要传入GroupInfo.zSize
     // TODO 改为从inputSplit或者数据库传入
     groupInfoZSize = GroupInfo.getDefaultGroupInfo().zSize;
-
     splitId = inputSplit.splitId;
-
     isFirstZGroup = inputSplit.isFristZGroup;  // 顶层的zgroup
-
   }
 
 
@@ -148,7 +147,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
     }
 
     // TODO 不考虑半径超过一个文件的情况 因此groupZSize在顶层和底层时为2，其它层为3
-    // TODO BUG 当数据不是groupZSize的整数倍时
+    // TODO BUG 当数据不是groupZSize的整数倍时暂不考虑
     if (groupZSize == groupInfoZSize + 2) {  // 中间层
       valueZDim = cellZDim * (groupZSize - 2) + radius * 2;
     } else { // 当最后一组不满时  以及 顶底两层
@@ -156,18 +155,13 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
     }
 
 //    SimpleCellAttrs[] dataValue;
-    SimpleRaster3D raster3D;
 
     if (splitId >= SpatialConstant.ROW_OVERLAPPED_GROUP_SPLIT_ID_BEGIN) { // overlapped row
       valueYDim = radius * 4;
-      raster3D = new SimpleRaster3D(valueXDim, valueYDim, valueZDim);
-//      dataValue = new SimpleCellAttrs[valueXDim * valueYDim * valueZDim];
     } else {  // normal group
-
       valueYDim = cellYDim * groupYSize;
-      raster3D = new SimpleRaster3D(valueXDim, valueYDim, valueZDim);
-//      dataValue = new SimpleCellAttrs[valueXDim * valueYDim * valueZDim];
     }
+    Raster3D raster3D = Raster3dFactory.getRaster3D(conf, valueXDim, valueYDim, valueZDim);
 
     for (int zz = 0; zz < groupZSize; zz++) {
       for (int yy = 0; yy < groupYSize; yy++) {
@@ -272,9 +266,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
     sw.stop();
     LOG.debug("data reading time of RecordReader is " + sw.now());
 
-
     return true;
-
   }
 
   /**
@@ -285,7 +277,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
   void readPartFromStream(FSDataInputStream inputStream, int cellXDim, int cellYDim,
                           int startX, int startY, int startZ, int lengthX, int lengthY, int lengthZ,
                           int cellAttrSize,
-                          SimpleRaster3D raster3D, int valueXDim, int valueYDim,
+                          Raster3D raster3D, int valueXDim, int valueYDim,
                           int toValueX, int toValueY, int toValueZ) throws IOException {
     inputStream.skip(cellXDim * cellYDim * startZ * cellAttrSize);
     for (int zz = 0; zz < lengthZ; zz++) {
@@ -311,7 +303,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
   }
 
   @Override
-  public SimpleRaster3D getCurrentValue() {
+  public Raster3D getCurrentValue() {
     return value;
   }
 

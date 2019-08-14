@@ -232,7 +232,7 @@ public class TestReplicationPolicySpatial {
   @Test
   public void testChooseTargetSpatial() {
 
-    System.out.println("\n\n\n -------chooseTargetSpatial------------- \n");
+    System.out.println("\n\n\n -------chooseTargetSpatialGroup------------- \n");
 
 //    updateHeartbeatWithUsage(dataNodes[0],
 //            2 * HdfsConstants.MIN_BLOCKS_FOR_WRITE * BLOCK_SIZE, 0L,

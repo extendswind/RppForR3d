@@ -466,7 +466,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
 //  // 第一个副本直接传入(左方点的第二个副本）
 //  // 第二个副本放在不同于第一个副本rack的节点 （左方两个grid node所在的副本加入到excludedNodes内，如果节点数量不足，使用set最右边的节点）
 //  // 第三个副本放在第二个副本同rack的节点
-//  boolean chooseTargetSpatial(int numOfReplicas,
+//  boolean chooseTargetSpatialGroup(int numOfReplicas,
 //                              //                   Node writer,
 //                              final Set<Node> excludedNodes,
 //                              final Set<Node> softExcludedNodes,
@@ -496,7 +496,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
 //        if (secondReplicaStorage != null) {
 //          results.add(secondReplicaStorage);
 //          excludedNodes.add(secondReplicaNode);
-//          return chooseTargetSpatial(numOfReplicas, excludedNodes, softExcludedNodes, results);
+//          return chooseTargetSpatialGroup(numOfReplicas, excludedNodes, softExcludedNodes, results);
 //        }
 //      }
 //      // 当没有合适的datanode，可以考虑两种情况：1.放宽rack的要求；2.使用softExcludedNodes
@@ -506,13 +506,13 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
 //        if (secondReplicaStorage != null) {
 //          results.add(secondReplicaStorage);
 //          excludedNodes.add(secondReplicaNode);
-//          return chooseTargetSpatial(numOfReplicas, excludedNodes, softExcludedNodes, results);
+//          return chooseTargetSpatialGroup(numOfReplicas, excludedNodes, softExcludedNodes, results);
 //        }
 //      }
 //      while (softExcludedNodes.isEmpty()) {
 //        Node lastNode = ((TreeSet<Node>) softExcludedNodes).last();
 //        softExcludedNodes.remove(lastNode);
-//        return chooseTargetSpatial(numOfReplicas, excludedNodes, softExcludedNodes, results);
+//        return chooseTargetSpatialGroup(numOfReplicas, excludedNodes, softExcludedNodes, results);
 //      }
 //
 //      // return bad value if the code go there
@@ -526,7 +526,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
 //        if (secondReplicaStorage != null) {
 //          results.add(secondReplicaStorage);
 //          excludedNodes.add(thirdReplicaNode);
-//          return chooseTargetSpatial(numOfReplicas, excludedNodes, softExcludedNodes, results);
+//          return chooseTargetSpatialGroup(numOfReplicas, excludedNodes, softExcludedNodes, results);
 //        }
 //      }
 //      // 当没有合适的datanode，可以考虑两种情况：1.放宽rack的要求；2.使用softExcludedNodes
@@ -536,13 +536,13 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
 //        if (secondReplicaStorage != null) {
 //          results.add(secondReplicaStorage);
 //          excludedNodes.add(thirdReplicaNode);
-//          return chooseTargetSpatial(numOfReplicas, excludedNodes, softExcludedNodes, results);
+//          return chooseTargetSpatialGroup(numOfReplicas, excludedNodes, softExcludedNodes, results);
 //        }
 //      }
 //      while (softExcludedNodes.isEmpty()) {
 //        Node lastNode = ((TreeSet<Node>) softExcludedNodes).last();
 //        softExcludedNodes.remove(lastNode);
-//        return chooseTargetSpatial(numOfReplicas, excludedNodes, softExcludedNodes, results);
+//        return chooseTargetSpatialGroup(numOfReplicas, excludedNodes, softExcludedNodes, results);
 //      }
 //    }
 //    if (resultNumber >= 3) { // TODO
@@ -552,7 +552,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
 //        if (secondReplicaStorage != null) {
 //          results.add(secondReplicaStorage);
 //          excludedNodes.add(randomNode);
-//          return chooseTargetSpatial(numOfReplicas, excludedNodes, softExcludedNodes, results);
+//          return chooseTargetSpatialGroup(numOfReplicas, excludedNodes, softExcludedNodes, results);
 //        }
 //      }
 //      chooseDataNode(NodeBase.ROOT);
@@ -863,7 +863,7 @@ public class BlockPlacementPolicyDefaultSpatial extends BlockPlacementPolicy {
       }
 
       if (avoidStaleNodes) {
-        // Retry chooseTargetSpatial again, this time not avoiding stale nodes.
+        // Retry chooseTargetSpatialGroup again, this time not avoiding stale nodes.
 
         // excludedNodes contains the initial excludedNodes and nodes that were
         // not chosen because they were stale, decommissioned, etc.
