@@ -1,11 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="145dcc44-b88a-4f55-af2b-096b6ccffede" name="Default" comment="repairing storage balance problem in GroupBlockPlacementPolicy, but still bug">
-      <change afterPath="$PROJECT_DIR$/.idea/scala_settings.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
+    <list default="true" id="145dcc44-b88a-4f55-af2b-096b6ccffede" name="Default" comment="load balance optimization done, group balance well but block balance not.">
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicyRasterGroupRefactor.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/SpatialInfoTableOperator.java" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/SpatialInfoTableOperatorForFile.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicyRaster2DGroup.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicyRaster2DGroup.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicySpatialUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicySpatialUtil.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/test/java/org/apache/hadoop/hdfs/server/blockmanagement/TestReplicationPolicySpatial.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/org/apache/hadoop/hdfs/server/blockmanagement/TestReplicationPolicySpatial.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -108,9 +111,6 @@
     <property name="settings.editor.selected.configurable" value="reference.settingsdialog.IDE.editor.colors.General" />
   </component>
   <component name="RecentsManager">
-    <key name="CreateClassDialog.RecentsKey">
-      <recent name="com.cug.rpp4raster3d.raster3dGenerate" />
-    </key>
     <key name="CreateTestDialog.RecentsKey">
       <recent name="com.cug.geo3d.util" />
       <recent name="org.apache.hadoop.hdfs.server.blockmanagement" />
@@ -127,6 +127,13 @@
       <recent name="com.cug.rpp4volume.util" />
       <recent name="com.cug.geo3d.spatialInputFormat.backup" />
     </key>
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$" />
+      <recent name="$PROJECT_DIR$/src/main" />
+      <recent name="$PROJECT_DIR$/src/resource" />
+      <recent name="$PROJECT_DIR$/src" />
+      <recent name="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/inputFormat" />
+    </key>
     <key name="CopyFile.RECENT_KEYS">
       <recent name="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement" />
       <recent name="$PROJECT_DIR$/src/main/java/com/cug/geo3d" />
@@ -139,12 +146,8 @@
       <recent name="com.cug.rpp4raster3d" />
       <recent name="com.cug.rpp4raster3d.data" />
     </key>
-    <key name="MoveFile.RECENT_KEYS">
-      <recent name="$PROJECT_DIR$" />
-      <recent name="$PROJECT_DIR$/src/main" />
-      <recent name="$PROJECT_DIR$/src/resource" />
-      <recent name="$PROJECT_DIR$/src" />
-      <recent name="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/inputFormat" />
+    <key name="CreateClassDialog.RecentsKey">
+      <recent name="com.cug.rpp4raster3d.raster3dGenerate" />
     </key>
   </component>
   <component name="RunAnythingCache">
@@ -165,7 +168,7 @@
       </list>
     </option>
   </component>
-  <component name="RunManager" selected="JUnit.TestReplicationPolicySpatialGroup.testStatisticOfDatanodeBalance">
+  <component name="RunManager" selected="JUnit.TestReplicationPolicySpatialGroup.testChooseTargetSpatialGroup4Raster3D_ZGroup">
     <configuration default="true" type="Applet">
       <option name="HEIGHT" value="0" />
       <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
@@ -247,17 +250,18 @@
         <option name="Make" enabled="true" />
       </method>
     </configuration>
-    <configuration name="TestSpatialFileInputFormatSimple3D" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+    <configuration name="TestSpatialInfoTableOperationForFile.testSaveAndReadGridIndexToFile" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
       <module name="rpp4volume" />
       <extension name="coverage">
         <pattern>
-          <option name="PATTERN" value="com.cug.rpp4raster3d.spatialInputFormat.*" />
+          <option name="PATTERN" value="org.apache.hadoop.hdfs.server.blockmanagement.*" />
           <option name="ENABLED" value="true" />
         </pattern>
       </extension>
-      <option name="PACKAGE_NAME" value="com.cug.rpp4raster3d.spatialInputFormat" />
-      <option name="MAIN_CLASS_NAME" value="com.cug.rpp4raster3d.spatialInputFormat.TestSpatialFileInputFormatSimple3D" />
-      <option name="TEST_OBJECT" value="class" />
+      <option name="PACKAGE_NAME" value="org.apache.hadoop.hdfs.server.blockmanagement" />
+      <option name="MAIN_CLASS_NAME" value="org.apache.hadoop.hdfs.server.blockmanagement.TestSpatialInfoTableOperationForFile" />
+      <option name="METHOD_NAME" value="testSaveAndReadGridIndexToFile" />
+      <option name="TEST_OBJECT" value="method" />
       <option name="VM_PARAMETERS" />
       <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
       <method v="2">
@@ -314,17 +318,17 @@
       <item itemvalue="Application.DataDistributionVerify" />
       <item itemvalue="JUnit.TestSpatialRecordReaderGroup3dRaster" />
       <item itemvalue="JUnit.TestReplicationPolicySpatialGroup.testChooseTargetSpatialGroup4Raster3D_ZGroup" />
-      <item itemvalue="JUnit.TestSpatialFileInputFormatSimple3D" />
       <item itemvalue="JUnit.GroupCellIndexInfoTest" />
       <item itemvalue="JUnit.TestReplicationPolicySpatialGroup.testStatisticOfDatanodeBalance" />
+      <item itemvalue="JUnit.TestSpatialInfoTableOperationForFile.testSaveAndReadGridIndexToFile" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="JUnit.TestReplicationPolicySpatialGroup.testStatisticOfDatanodeBalance" />
         <item itemvalue="JUnit.TestReplicationPolicySpatialGroup.testChooseTargetSpatialGroup4Raster3D_ZGroup" />
+        <item itemvalue="JUnit.TestSpatialInfoTableOperationForFile.testSaveAndReadGridIndexToFile" />
+        <item itemvalue="JUnit.TestReplicationPolicySpatialGroup.testStatisticOfDatanodeBalance" />
         <item itemvalue="Application.DataDistributionVerify" />
         <item itemvalue="JUnit.GroupCellIndexInfoTest" />
-        <item itemvalue="JUnit.TestSpatialFileInputFormatSimple3D" />
       </list>
     </recent_temporary>
   </component>
@@ -451,7 +455,14 @@
       <option name="project" value="LOCAL" />
       <updated>1565766285322</updated>
     </task>
-    <option name="localTasksCounter" value="16" />
+    <task id="LOCAL-00016" summary="load balance optimization done, group balance well but block balance not.">
+      <created>1567304495673</created>
+      <option name="number" value="00016" />
+      <option name="presentableId" value="LOCAL-00016" />
+      <option name="project" value="LOCAL" />
+      <updated>1567304495673</updated>
+    </task>
+    <option name="localTasksCounter" value="17" />
     <servers />
   </component>
   <component name="TodoView">
@@ -494,7 +505,8 @@
     <MESSAGE value="a version can be used for small amount of data.&#10;&#10;todo: considering for larger data" />
     <MESSAGE value="optimize large data processing for simple record reader, mainly solve the memory problem." />
     <MESSAGE value="repairing storage balance problem in GroupBlockPlacementPolicy, but still bug" />
-    <option name="LAST_COMMIT_MESSAGE" value="repairing storage balance problem in GroupBlockPlacementPolicy, but still bug" />
+    <MESSAGE value="load balance optimization done, group balance well but block balance not." />
+    <option name="LAST_COMMIT_MESSAGE" value="load balance optimization done, group balance well but block balance not." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -531,7 +543,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/test/java/org/apache/hadoop/hdfs/server/blockmanagement/TestReplicationPolicySpatial.java</url>
-          <line>349</line>
+          <line>350</line>
           <option name="timeStamp" value="42" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
@@ -551,7 +563,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/test/java/org/apache/hadoop/hdfs/server/blockmanagement/TestBlockPlacementPolicySpatialUtil.java</url>
-          <line>40</line>
+          <line>41</line>
           <option name="timeStamp" value="52" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
@@ -666,7 +678,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/test/java/org/apache/hadoop/hdfs/server/blockmanagement/TestReplicationPolicySpatialGroup.java</url>
-          <line>346</line>
+          <line>326</line>
           <option name="timeStamp" value="213" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">

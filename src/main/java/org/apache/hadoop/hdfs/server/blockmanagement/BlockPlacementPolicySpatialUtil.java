@@ -4,6 +4,7 @@ import com.cug.rpp4raster2d.util.CellIndexInfo;
 
 import java.io.*;
 
+@Deprecated
 public class BlockPlacementPolicySpatialUtil {
 
   /**

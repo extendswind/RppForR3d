@@ -43,6 +43,7 @@ import java.util.*;
 
 import static org.junit.Assert.*;
 
+@Deprecated
 public class TestReplicationPolicySpatial {
   {
     ((Log4JLogger) BlockPlacementPolicy.LOG).getLogger().setLevel(Level.ALL);

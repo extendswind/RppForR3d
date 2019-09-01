@@ -58,7 +58,7 @@ import static org.apache.hadoop.util.Time.monotonicNow;
  * 3D 数据会被视为多层 2D 数据处理
  */
 @InterfaceAudience.Private
-public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
+public class BlockPlacementPolicyRasterGroupRefactor extends BlockPlacementPolicy {
 
   private static final String enableDebugLogging =
       "For more information, please enable DEBUG log level on "
@@ -117,7 +117,7 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
    */
   protected int tolerateHeartbeatMultiplier;
 
-  protected BlockPlacementPolicyRaster2DGroup() {
+  protected BlockPlacementPolicyRasterGroupRefactor() {
     isBalanceUpload = true;
     groupInfo = GroupInfo.getDefaultGroupInfo(); // TODO 从哪获取合适的信息，上传文件和配置？
   }
