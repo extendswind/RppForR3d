@@ -1,21 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="145dcc44-b88a-4f55-af2b-096b6ccffede" name="Default" comment="a version can be used for small amount of data.&#10;&#10;todo: considering for larger data">
-      <change afterPath="$PROJECT_DIR$/.idea/codeStyles/Project.xml" afterDir="false" />
-      <change afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/raster3dGenerate/DataDistributionVerify.java" afterDir="false" />
+    <list default="true" id="145dcc44-b88a-4f55-af2b-096b6ccffede" name="Default" comment="repairing storage balance problem in GroupBlockPlacementPolicy, but still bug">
+      <change afterPath="$PROJECT_DIR$/.idea/scala_settings.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/misc.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/misc.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/TestIO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/TestIO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/util/CellIndexInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/util/CellIndexInfo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/util/GroupCellInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/util/GroupCellInfo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/util/GroupInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/util/GroupInfo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/raster3dGenerate/Raster3dGeneratorAndUploader.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/raster3dGenerate/Raster3dGeneratorAndUploader.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/spatialInputFormat/SpatialFileInputFormatGroupRaster3D.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/spatialInputFormat/SpatialFileInputFormatGroupRaster3D.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/spatialInputFormat/SpatialFileInputFormatSimpleRaster3D.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/spatialInputFormat/SpatialFileInputFormatSimpleRaster3D.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/spatialInputFormat/SpatialRecordReaderGroupRaster3D.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/spatialInputFormat/SpatialRecordReaderGroupRaster3D.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicyDefaultSpatial.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicyDefaultSpatial.java" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicyRaster2DGroup.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicyRaster2DGroup.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/test/java/org/apache/hadoop/hdfs/server/blockmanagement/TestReplicationPolicySpatial.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/test/java/org/apache/hadoop/hdfs/server/blockmanagement/TestReplicationPolicySpatial.java" afterDir="false" />
     </list>
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
@@ -48,6 +38,9 @@
   </component>
   <component name="DefaultGradleProjectSettings">
     <option name="isMigrated" value="true" />
+  </component>
+  <component name="FavoritesManager">
+    <favorites_list name="rpp4volume" />
   </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
@@ -112,7 +105,7 @@
     <property name="project.structure.last.edited" value="SDKs" />
     <property name="project.structure.proportion" value="0.0" />
     <property name="project.structure.side.proportion" value="0.2" />
-    <property name="settings.editor.selected.configurable" value="preferences.lookFeel" />
+    <property name="settings.editor.selected.configurable" value="reference.settingsdialog.IDE.editor.colors.General" />
   </component>
   <component name="RecentsManager">
     <key name="CreateClassDialog.RecentsKey">
@@ -335,6 +328,13 @@
       </list>
     </recent_temporary>
   </component>
+  <component name="ScalaProjectSettings">
+    <option name="intInjectionMapping">
+      <map>
+        <entry key="xml" value="XML" />
+      </map>
+    </option>
+  </component>
   <component name="SvnConfiguration">
     <configuration>$USER_HOME$/.subversion</configuration>
   </component>
@@ -444,7 +444,14 @@
       <option name="project" value="LOCAL" />
       <updated>1562597702895</updated>
     </task>
-    <option name="localTasksCounter" value="15" />
+    <task id="LOCAL-00015" summary="repairing storage balance problem in GroupBlockPlacementPolicy, but still bug">
+      <created>1565766285322</created>
+      <option name="number" value="00015" />
+      <option name="presentableId" value="LOCAL-00015" />
+      <option name="project" value="LOCAL" />
+      <updated>1565766285322</updated>
+    </task>
+    <option name="localTasksCounter" value="16" />
     <servers />
   </component>
   <component name="TodoView">
@@ -486,7 +493,8 @@
     <MESSAGE value="using Raster3D to replace CellAttrsSimple" />
     <MESSAGE value="a version can be used for small amount of data.&#10;&#10;todo: considering for larger data" />
     <MESSAGE value="optimize large data processing for simple record reader, mainly solve the memory problem." />
-    <option name="LAST_COMMIT_MESSAGE" value="optimize large data processing for simple record reader, mainly solve the memory problem." />
+    <MESSAGE value="repairing storage balance problem in GroupBlockPlacementPolicy, but still bug" />
+    <option name="LAST_COMMIT_MESSAGE" value="repairing storage balance problem in GroupBlockPlacementPolicy, but still bug" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -658,24 +666,19 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/test/java/org/apache/hadoop/hdfs/server/blockmanagement/TestReplicationPolicySpatialGroup.java</url>
-          <line>327</line>
+          <line>346</line>
           <option name="timeStamp" value="213" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicyRaster2DGroup.java</url>
-          <line>364</line>
-          <option name="timeStamp" value="214" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="java-line">
-          <url>file://$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicyRaster2DGroup.java</url>
-          <line>405</line>
-          <option name="timeStamp" value="216" />
+          <line>391</line>
+          <option name="timeStamp" value="221" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
     <watches-manager>
       <configuration name="JUnit">
-        <watch expression="xSplitSize" language="JAVA" />
+        <watch expression="orderedList" language="JAVA" />
         <watch expression="nodeDataCount" language="JAVA" />
         <watch expression="nodeGroupCount" language="JAVA" />
       </configuration>
@@ -683,6 +686,10 @@
         <watch expression="z" />
       </configuration>
     </watches-manager>
+  </component>
+  <component name="XSLT-Support.FileAssociations.UIState">
+    <expand />
+    <select />
   </component>
   <component name="antWorkspaceConfiguration">
     <option name="IS_AUTOSCROLL_TO_SOURCE" value="false" />
@@ -701,105 +708,5 @@
     <SUITE FILE_PATH="coverage/rpp4volume$TestSpatialRecordReaderGroupRaster3D_recordReadTestForGroup_1_1_lastZ.ic" NAME="TestSpatialRecordReaderGroupRaster3D.recordReadTestForGroup_1_1_lastZ Coverage Results" MODIFIED="1559808649408" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
       <FILTER>com.cug.rpp4raster3d.spatialInputFormat.*</FILTER>
     </SUITE>
-  </component>
-  <component name="masterDetails">
-    <states>
-      <state key="ArtifactsStructureConfigurable.UI">
-        <settings>
-          <artifact-editor />
-          <splitter-proportions>
-            <option name="proportions">
-              <list>
-                <option value="0.2" />
-              </list>
-            </option>
-          </splitter-proportions>
-        </settings>
-      </state>
-      <state key="FacetStructureConfigurable.UI">
-        <settings>
-          <last-edited>No facets are configured</last-edited>
-          <splitter-proportions>
-            <option name="proportions">
-              <list>
-                <option value="0.2" />
-              </list>
-            </option>
-          </splitter-proportions>
-        </settings>
-      </state>
-      <state key="GlobalLibrariesConfigurable.UI">
-        <settings>
-          <last-edited>scala-sdk-2.10.7</last-edited>
-          <splitter-proportions>
-            <option name="proportions">
-              <list>
-                <option value="0.2" />
-              </list>
-            </option>
-          </splitter-proportions>
-        </settings>
-      </state>
-      <state key="JdkListConfigurable.UI">
-        <settings>
-          <last-edited>1.8</last-edited>
-          <splitter-proportions>
-            <option name="proportions">
-              <list>
-                <option value="0.2" />
-              </list>
-            </option>
-          </splitter-proportions>
-        </settings>
-      </state>
-      <state key="ModuleStructureConfigurable.UI">
-        <settings>
-          <last-edited>spatialStorage</last-edited>
-          <splitter-proportions>
-            <option name="proportions">
-              <list>
-                <option value="0.2" />
-                <option value="0.6" />
-              </list>
-            </option>
-          </splitter-proportions>
-        </settings>
-      </state>
-      <state key="ProjectJDKs.UI">
-        <settings>
-          <last-edited>1.8</last-edited>
-          <splitter-proportions>
-            <option name="proportions">
-              <list>
-                <option value="0.2" />
-              </list>
-            </option>
-          </splitter-proportions>
-        </settings>
-      </state>
-      <state key="ProjectLibrariesConfigurable.UI">
-        <settings>
-          <last-edited>Maven: aopalliance:aopalliance:1.0</last-edited>
-          <splitter-proportions>
-            <option name="proportions">
-              <list>
-                <option value="0.2" />
-              </list>
-            </option>
-          </splitter-proportions>
-        </settings>
-      </state>
-      <state key="ScopeChooserConfigurable.UI">
-        <settings>
-          <splitter-proportions>
-            <option name="proportions">
-              <list>
-                <option value="0.2" />
-              </list>
-            </option>
-          </splitter-proportions>
-        </settings>
-      </state>
-    </states>
   </component>
 </project>

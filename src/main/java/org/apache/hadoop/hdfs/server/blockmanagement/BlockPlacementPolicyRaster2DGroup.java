@@ -322,10 +322,10 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
 
     LinkedHashSet<DatanodeStorageInfo> resultSet = new LinkedHashSet<>(results);
 
-    for (DatanodeStorageInfo n : resultSet) {
-      String name = n.getDatanodeDescriptor().getNetworkLocation() + "/" + n.getDatanodeDescriptor().getName();
-      nodeDataCount.put(name, nodeDataCount.get(name) + 1);
-    }
+//    for (DatanodeStorageInfo n : resultSet) {
+//      String name = n.getDatanodeDescriptor().getNetworkLocation() + "/" + n.getDatanodeDescriptor().getName();
+//      nodeDataCount.put(name, nodeDataCount.get(name) + 1);
+//    }
 
     return resultSet.toArray(new DatanodeStorageInfo[0]);
   }
@@ -359,6 +359,10 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
                                                     int groupFileNum
                                                     // LinkedList<Map.Entry<String, Integer>> orderedList
   ) {
+
+    if(groupFileNum != 1){
+      scope = NodeBase.ROOT;
+    }
 
     // load balance for groups and blocks
     LinkedList<String> orderedList = new LinkedList<>(nodeGroupCount.keySet());
@@ -1569,8 +1573,8 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
                                         String groupType,
                                         String filepath) {
 
-    String nodePos = datanodeDescriptor.getNetworkLocation() + "/" + datanodeDescriptor.getName();
-    nodeGroupCount.put(nodePos, nodeGroupCount.get(nodePos) + 1);
+//    String nodePos = datanodeDescriptor.getNetworkLocation() + "/" + datanodeDescriptor.getName();
+//    nodeGroupCount.put(nodePos, nodeGroupCount.get(nodePos) + 1);
 
     FileOutputStream fileOutputStream;
     try {
