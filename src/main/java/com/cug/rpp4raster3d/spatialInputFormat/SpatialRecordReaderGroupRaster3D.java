@@ -19,9 +19,9 @@ package com.cug.rpp4raster3d.spatialInputFormat;
  */
 
 import com.cug.rpp4raster2d.inputFormat.InputSplitWritable;
-import com.cug.rpp4raster2d.util.CellIndexInfo;
-import com.cug.rpp4raster2d.util.GroupInfo;
-import com.cug.rpp4raster2d.util.SpatialConstant;
+import com.cug.rpp4raster3d.util.CellIndexInfo;
+import com.cug.rpp4raster3d.util.GroupInfo;
+import com.cug.rpp4raster3d.util.SpatialConstant;
 import com.cug.rpp4raster3d.raster3d.Raster3D;
 import com.cug.rpp4raster3d.raster3d.Raster3dFactory;
 import org.apache.commons.logging.Log;

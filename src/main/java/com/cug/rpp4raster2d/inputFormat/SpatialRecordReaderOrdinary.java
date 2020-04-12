@@ -18,7 +18,7 @@ package com.cug.rpp4raster2d.inputFormat;
   limitations under the License.
  */
 
-import com.cug.rpp4raster2d.util.CellIndexInfo;
+import com.cug.rpp4raster3d.util.CellIndexInfo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;

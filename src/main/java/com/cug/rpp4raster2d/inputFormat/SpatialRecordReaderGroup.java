@@ -18,7 +18,7 @@ package com.cug.rpp4raster2d.inputFormat;
   limitations under the License.
  */
 
-import com.cug.rpp4raster2d.util.SpatialConstant;
+import com.cug.rpp4raster3d.util.SpatialConstant;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;

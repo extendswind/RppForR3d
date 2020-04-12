@@ -20,7 +20,7 @@ package com.cug.rpp4raster3d.spatialInputFormat;
 
 
 import com.cug.rpp4raster2d.inputFormat.InputSplitWritable;
-import com.cug.rpp4raster2d.util.CellIndexInfo;
+import com.cug.rpp4raster3d.util.CellIndexInfo;
 import com.cug.rpp4raster3d.raster3d.*;
 import com.google.gson.annotations.Since;
 import org.apache.commons.logging.Log;
@@ -416,13 +416,13 @@ public class SpatialRecordReaderSimpleRaster3D extends RecordReader<LongWritable
 
         Date date = new Date();
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd|HH:mm");
-        bufferedWriter.write(dateFormat.format(date) + " " + splitId + " " + totalReading / 1024.0 / 1024.0 + " " +
-            remoteReading / 1024.0 / 1024.0 + "\n");
+        bufferedWriter.write(dateFormat.format(date) + " " + splitId + " " + totalReading / 1024.0 + " " +
+            remoteReading / 1024.0 + "\n");
         bufferedWriter.close();
 
         LOG.info(
-            dateFormat.format(date) + " " + splitId + " " + totalReading / 1024.0 / 1024.0 + " " +
-                remoteReading / 1024.0 / 1024.0 + "\n");
+            dateFormat.format(date) + " " + splitId + " " + totalReading / 1024.0 + " " +
+                remoteReading / 1024.0 + "\n");
       }
     } catch (IOException e) {
       e.printStackTrace();

@@ -6,6 +6,7 @@ import java.io.IOException;
 
 /**
  * 注意体元数量限制在一个int的数值范围内
+ * 由于java对象需要占用额外的十几个字节，因此使用对象作为体元会浪费大量的空间
  *
  * TODO 作为value值的序列化
  */

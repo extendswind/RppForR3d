@@ -1,4 +1,4 @@
-package com.cug.rpp4raster2d.util;
+package com.cug.rpp4raster3d.util;
 
 import org.apache.commons.io.FilenameUtils;
 
@@ -46,17 +46,17 @@ public class CellIndexInfo {
     if (filenameSplit.length == 4 && filenameSplit[0].equals(SpatialConstant.GRID_INDEX_PREFIX)){
       pos.rowId = Integer.parseInt(filenameSplit[2]);
       pos.colId = Integer.parseInt(filenameSplit[3]);
-      pos.filename = filenameSplit[0] + "_" + filenameSplit[1];
+      pos.filename = filenameSplit[1];
       pos.filepath = FilenameUtils.getPath(srcFile);
       pos.zId = 0;
       return pos;
     }
     else if(filenameSplit.length == 5 && filenameSplit[0].equals(SpatialConstant.RASTER_3D_INDEX_PREFIX)) {
-      pos.rowId = Integer.parseInt(filenameSplit[3]);
       pos.colId = Integer.parseInt(filenameSplit[2]);
-      pos.filename = filenameSplit[0] + "_" + filenameSplit[1];
-      pos.filepath = FilenameUtils.getPath(srcFile);
+      pos.rowId = Integer.parseInt(filenameSplit[3]);
       pos.zId = Integer.parseInt(filenameSplit[4]);
+      pos.filename = filenameSplit[1];
+      pos.filepath = FilenameUtils.getPath(srcFile);
       return pos;
     } else {
       return null;

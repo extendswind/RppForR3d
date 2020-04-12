@@ -18,7 +18,7 @@ package com.cug.rpp4raster3d.spatialInputFormat;
  * limitations under the License.
  */
 
-import com.cug.rpp4raster2d.util.SpatialConstant;
+import com.cug.rpp4raster3d.util.SpatialConstant;
 import com.cug.rpp4raster3d.raster3d.Raster3D;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
@@ -77,7 +77,7 @@ public class SpatialFileInputFormatSimpleRaster3D extends FileInputFormat<LongWr
     if ("".equals(dir)) {
       throw new IOException("no input directory");
     }
-    int radius = job.getConfiguration().getInt("rpp4raster3d.spatial.radius", 5);
+    int radius = job.getConfiguration().getInt("rpp4raster3d.spatial.radius", 10);
     LOG.info("spatial radius is set to " + radius);
 
     String infoFilename = FilenameUtils.getName(dir);

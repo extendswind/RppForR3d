@@ -18,8 +18,8 @@ package com.cug.rpp4raster3d.spatialInputFormat;
  * limitations under the License.
  */
 
-import com.cug.rpp4raster2d.util.GroupInfo;
-import com.cug.rpp4raster2d.util.SpatialConstant;
+import com.cug.rpp4raster3d.util.GroupInfo;
+import com.cug.rpp4raster3d.util.SpatialConstant;
 import com.cug.rpp4raster3d.raster3d.Raster3D;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
@@ -55,7 +55,7 @@ public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWri
 
   private String spatialFilepath;
   private String spatialFilename;
-  private GroupInfo groupInfo = GroupInfo.getDefaultGroupInfo();
+  private GroupInfo groupInfo;
   private int radius;
 
   //  public void setGridSize(long cellRowNum, long cellColNum, String spatialFilepath){
@@ -67,7 +67,7 @@ public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWri
 
   @Override
   public RecordReader<LongWritable, Raster3D> createRecordReader(InputSplit split,
-                                                                       TaskAttemptContext context) {
+                                                                 TaskAttemptContext context) {
     return new SpatialRecordReaderGroupRaster3D();
   }
 
@@ -87,9 +87,6 @@ public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWri
    * @throws IOException when INPUT_DIR is not set
    */
   public List<InputSplit> getSplits(JobContext job) throws IOException {
-
-    LOG.info("using groupInfo:  " + groupInfo.rowSize + " " + groupInfo.colSize + " " + groupInfo.zSize);
-
     StopWatch sw = new StopWatch().start();
 
     // generate splits
@@ -100,7 +97,18 @@ public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWri
     if ("".equals(dir)) {
       throw new IOException("no input directory");
     }
+
     radius = job.getConfiguration().getInt("rpp4raster3d.spatial.radius", 10);
+
+    GroupInfo defaultGroupInfo = GroupInfo.getDefaultGroupInfo();
+    groupInfo = GroupInfo.getDefaultGroupInfo();
+    groupInfo.rowSize = job.getConfiguration()
+        .getInt("rpp4raster3d.spatial.groupInfoRowSize", defaultGroupInfo.rowSize);
+    groupInfo.colSize = job.getConfiguration()
+        .getInt("rpp4raster3d.spatial.groupInfoColSize", defaultGroupInfo.colSize);
+    LOG.info("using groupInfo:  " + groupInfo.colSize + " " + groupInfo.rowSize + " " + groupInfo.zSize);
+
+//    radius = job.getConfiguration().getInt("rpp4raster3d.spatial.groupInfoRowSize", 10);
     LOG.info("spatial radius is set to " + radius);
 
     String infoFilename = FilenameUtils.getName(dir);
@@ -119,6 +127,7 @@ public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWri
     int groupZNum = (int) Math.ceil((double) cellZNum / groupInfo.zSize);
     int fileNum = cellXNum * cellYNum * cellZNum;  // number of all files
 
+    LOG.info("numbers of group in xyz directions are: " + groupColNum + " - " + groupRowNum + " - " + groupZNum);
     // ..../filename/
     spatialFilepath = FilenameUtils.getPath(dir);
 
@@ -145,18 +154,20 @@ public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWri
           int groupZSize;
           int splitId;
 
-          if(groupZ == 0 ){
+          if (groupZ == 0) {
             groupFirstZId = 0;
             groupZSize = groupInfo.zSize + 1;
-            if(groupZSize > cellZNum)
+            if (groupZSize > cellZNum) {
               groupZSize = cellZNum;
+            }
           } else {
             groupFirstZId = groupInfo.zSize * groupZ - 1;
-            if (groupZ == groupZNum - 1)
+            if (groupZ == groupZNum - 1) {
               groupZSize = groupInfo.zSize + 1;
-            else
+            } else {
               groupZSize = groupInfo.zSize + 2;
-            if(groupFirstZId + groupZSize > cellZNum){
+            }
+            if (groupFirstZId + groupZSize > cellZNum) {
               groupZSize = cellZNum - groupFirstZId;
             }
           }
@@ -175,7 +186,7 @@ public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWri
             groupRowSize = usedCellRowNum * 2;
             groupFirstColId = 0;
             groupColSize = cellXNum;
-            splitId = groupZ * (groupRowNum-1) + groupRowId + SpatialConstant.ROW_OVERLAPPED_GROUP_SPLIT_ID_BEGIN;
+            splitId = groupZ * (groupRowNum - 1) + groupRowId + SpatialConstant.ROW_OVERLAPPED_GROUP_SPLIT_ID_BEGIN;
           } else { // for normal group
             groupFirstColId = groupColId * (groupInfo.colSize - groupInfo.colOverlapSize);
             groupFirstRowId = groupRowId * groupInfo.rowSize;
@@ -192,31 +203,34 @@ public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWri
 
 
           int mainFileZSize = groupInfo.zSize;
-          if(groupInfo.zSize > groupZSize)
+          if (groupInfo.zSize > groupZSize) {
             mainFileZSize = groupZSize;  // 当groupInfo.zSize > groupZSize的情况
-          if(groupFirstZId != 0 && groupFirstZId + groupInfo.zSize >= cellZNum){
+          }
+          if (groupFirstZId != 0 && groupFirstZId + groupInfo.zSize >= cellZNum) {
             mainFileZSize = cellZNum - groupFirstZId - 1;
           }
           Path[] mainFilePaths = new Path[groupRowSize * groupColSize * mainFileZSize]; // used for get the right host
 
-          for(int zz = 0; zz < groupZSize; zz++) {
+          for (int zz = 0; zz < groupZSize; zz++) {
             // get the file path and information of file block locations
             for (int yy = 0; yy < groupRowSize; yy++) {
               for (int xx = 0; xx < groupColSize; xx++) {
-                String cellName = spatialFilepath  + "/" + SpatialConstant.RASTER_3D_INDEX_PREFIX + "_" +
+                String cellName = spatialFilepath + "/" + SpatialConstant.RASTER_3D_INDEX_PREFIX + "_" +
                     spatialFilename + "_" + (groupFirstColId + xx) + "_" + (groupFirstRowId + yy) + "_" + (groupFirstZId + zz);
                 int fileIndex = xx + yy * groupColSize + zz * groupColSize * groupRowSize;
                 groupFilePaths[fileIndex] = new Path(cellName);
 
 
-                if(groupFirstZId + zz >= groupZ * groupInfo.zSize && groupFirstZId + zz < (groupZ+1)* groupInfo.zSize)
-                  mainFilePaths[xx + yy * groupColSize + (groupFirstZId +zz - groupZ* groupInfo.zSize) * groupRowSize * groupColSize] =
+                if (groupFirstZId + zz >= groupZ * groupInfo.zSize && groupFirstZId + zz < (groupZ + 1) * groupInfo.zSize) {
+                  mainFilePaths[xx + yy * groupColSize + (groupFirstZId + zz - groupZ * groupInfo.zSize) * groupRowSize * groupColSize] =
                       new Path(cellName);
+                }
               }
             }
           }
-          if(mainFilePaths[0] == null)
+          if (mainFilePaths[0] == null) {
             System.out.println("DEBUG error");
+          }
 
           String[] hosts = getHostsFromPaths(mainFilePaths, fs);
 
@@ -240,7 +254,6 @@ public class SpatialFileInputFormatGroupRaster3D extends FileInputFormat<LongWri
 
   /**
    * 哪个host中包含的文件多就选哪个host
-   *
    */
   private String[] getHostsFromPaths(Path[] paths, FileSystem fs) throws IOException {
     // count file block locations

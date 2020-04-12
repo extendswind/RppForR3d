@@ -17,7 +17,7 @@
  */
 package org.apache.hadoop.hdfs.server.blockmanagement;
 
-import com.cug.rpp4raster2d.util.CellIndexInfo;
+import com.cug.rpp4raster3d.util.CellIndexInfo;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.classification.InterfaceAudience;

@@ -22,6 +22,10 @@ public class NormalRaster3D extends Raster3D {
 //
 //  }
 
+  /**
+   * return a large Raster3D consist of multiple small Raster3d, each in a z layer
+   * @param raster3ds
+   */
   public NormalRaster3D(NormalRaster3D[]  raster3ds){
     xDim = raster3ds[0].getXDim();
     yDim = raster3ds[0].getYDim();

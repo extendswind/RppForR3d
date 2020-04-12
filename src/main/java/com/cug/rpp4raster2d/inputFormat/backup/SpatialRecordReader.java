@@ -19,7 +19,7 @@ package com.cug.rpp4raster2d.inputFormat.backup;
  */
 
 import com.cug.rpp4raster2d.inputFormat.InputSplitWritable;
-import com.cug.rpp4raster2d.util.CellIndexInfo;
+import com.cug.rpp4raster3d.util.CellIndexInfo;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;

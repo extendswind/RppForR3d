@@ -17,7 +17,7 @@
  */
 package org.apache.hadoop.hdfs.server.blockmanagement;
 
-import com.cug.rpp4raster2d.util.*;
+import com.cug.rpp4raster3d.util.*;
 import com.google.common.annotations.VisibleForTesting;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.classification.InterfaceAudience;
@@ -105,10 +105,9 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
   HashMap<String, Integer> nodeDataCount = new HashMap<>();  // count the block number of current raster
   HashMap<String, Integer> nodeGroupCount = new HashMap<>();  // count the group number of current raster
 
-  int xSplitSize;
-  int ySplitSize;
-  int zSplitSize;
-
+  //  int xSplitSize;
+  //  int ySplitSize;
+  //  int zSplitSize;
 
   //////////////////////////////////////////
 
@@ -161,7 +160,6 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
     String filename = FilenameUtils.getName(srcPath);
 
     // get spatial index from filename
-    // TODO better to be got from database
     CellIndexInfo cellIndexInfo = CellIndexInfo.getGridCellInfoFromFilename(filename);
     if (cellIndexInfo != null) { // 对于网格索引的文件
       DatanodeStorageInfo[] result = chooseTargetSpatialGroup(cellIndexInfo, numOfReplicas, writer, chosenNodes,
@@ -173,19 +171,19 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
         resultStr.append(" ");
       }
       LOG.debug("chooseTarget result: " + resultStr.toString());
-
       return result;
-
     } else {  // for normal file
-
       // get raster data size from info file
-      // TODO better to be got from database
+      // TODO better to be written in uploading process
       String[] fileSplits = filename.split("_");
-      if (fileSplits.length == 8 && fileSplits[0].equals(SpatialConstant.RASTER_3D_INDEX_PREFIX) &&
+      if (fileSplits.length == 9 && fileSplits[0].equals(SpatialConstant.RASTER_3D_INDEX_PREFIX) &&
           fileSplits[1].equals("info")) {
-        xSplitSize = Integer.parseInt(fileSplits[2]);
-        ySplitSize = Integer.parseInt(fileSplits[3]);
-        zSplitSize = Integer.parseInt(fileSplits[4]);
+        tableOperator.clearTable(fileSplits[8]);
+        int cellXNum = Integer.parseInt(fileSplits[2]);
+        int cellYNum = Integer.parseInt(fileSplits[3]);
+        int cellZNum = Integer.parseInt(fileSplits[4]);
+        tableOperator.saveR3dDimensions(fileSplits[8], cellXNum,
+            cellYNum, cellZNum);
       }
 
       return chooseTarget(numOfReplicas, writer, chosenNodes, returnChosenNodes,
@@ -233,7 +231,6 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
     }
 
     if (cellIndexInfo.rowId == 0 && cellIndexInfo.colId == 0 && (cellIndexInfo.zId % groupInfo.zSize == 0)) {
-      tableOperator.clearTable(cellIndexInfo.filename);
       if (cellIndexInfo.zId == 0) {
         for (Node n : clusterMap.getLeaves(NodeBase.ROOT)) {
           String nodePos = n.getNetworkLocation() + "/" + n.getName();
@@ -243,18 +240,22 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
       }
     }
 
+    int[] splitSizes = tableOperator.readR3dDimensions(cellIndexInfo.filename);
+    int cellXNum = splitSizes[0];
+    int cellYNum = splitSizes[1];
+    int cellZNum = splitSizes[2];
 
     // ----------  core algorithm for spatial optimization  ----------------
 
     // Group information of current file
-    GroupCellInfo groupCellInfo = GroupCellInfo.getFromGridCellInfo(cellIndexInfo, groupInfo, xSplitSize, ySplitSize);
+    GroupCellInfo groupCellInfo = GroupCellInfo.getFromGridCellInfo(cellIndexInfo, groupInfo, cellXNum, cellYNum);
     int normalGroupBlockNumber = groupInfo.rowSize * groupInfo.colSize * groupInfo.zSize;
-    int overlappedRowGroupBlockNumber = xSplitSize * 2 * groupInfo.zSize;
+    int overlappedRowGroupBlockNumber = cellXNum * 2 * groupInfo.zSize;
 
     // choose a datanode for the overlapped group
     // write the datanode to the groupInfoFile
     // the result is not added to the result node list
-    if (cellIndexInfo.rowId % groupInfo.rowSize == 0 && (cellIndexInfo.rowId + groupInfo.rowSize < ySplitSize)
+    if (cellIndexInfo.rowId % groupInfo.rowSize == 0 && (cellIndexInfo.rowId + groupInfo.rowSize < cellYNum)
         && cellIndexInfo.colId == 0 && cellIndexInfo.zId % groupInfo.zSize == 0) {
       List<DatanodeStorageInfo> ORNodeResult = new ArrayList<>();
       chooseTargetThreeReplica(1, excludedNodes, ORNodeResult,
@@ -276,8 +277,11 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
           .put(mainGroupStorageInfo.getStorageType(), storageTypes.get(mainGroupStorageInfo.getStorageType()) + 1);
     } else {  // the first file of every row group
       // add surrounded overlapped Row group node to excludedNodes
-      findAndAddToExcludedNode(cellIndexInfo.filename, new Coord(groupCellInfo.rowId - 1, 0), OR_PREFIX, excludedNodes);
-      findAndAddToExcludedNode(cellIndexInfo.filename, new Coord(groupCellInfo.rowId, 0), OR_PREFIX, excludedNodes);
+      findAndAddToExcludedNode(cellIndexInfo.filename, new Coord(0, groupCellInfo.yId - 1, groupCellInfo.zId),
+          OR_PREFIX,
+          excludedNodes);
+      findAndAddToExcludedNode(cellIndexInfo.filename, new Coord(0, groupCellInfo.yId, groupCellInfo.zId), OR_PREFIX,
+          excludedNodes);
       chooseTargetThreeReplica(1, excludedNodes, results,
           avoidStaleNodes, maxNodesPerRack, storageTypes, blocksize, normalGroupBlockNumber);
       tableOperator.saveGroupPosition(cellIndexInfo.filename, results.get(0).getDatanodeDescriptor(), groupCellInfo,
@@ -301,15 +305,18 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
     // 假设overlapped column size只为1
     // OCCoord must be placed in the last, or the three replicas may not be placed in two racks
     if (groupCellInfo.OCCoord != null) {
-      GroupCellInfo rightGroupCellInfo = new GroupCellInfo(groupCellInfo.rowId, groupCellInfo.colId + 1,
-          null, null);
+      Coord rightGroupCellInfo = groupCellInfo.OCCoord;
       String rightGroupReplicaPos = tableOperator.readGroupPosition(cellIndexInfo.filename, rightGroupCellInfo,
           MG_PREFIX);
 
       if (rightGroupReplicaPos == null) { // overlapped column处的第一个文件（当前组最右方的列）
         // 负责写入右边group所在的位置
-        findAndAddToExcludedNode(cellIndexInfo.filename, new Coord(groupCellInfo.rowId - 1, 0), OR_PREFIX, excludedNodes);
-        findAndAddToExcludedNode(cellIndexInfo.filename, new Coord(groupCellInfo.rowId, 0), OR_PREFIX, excludedNodes);
+        findAndAddToExcludedNode(cellIndexInfo.filename, new Coord(0, groupCellInfo.yId - 1, groupCellInfo.zId),
+            OR_PREFIX,
+            excludedNodes);
+        findAndAddToExcludedNode(cellIndexInfo.filename, new Coord(0, groupCellInfo.yId, groupCellInfo.zId),
+            OR_PREFIX,
+            excludedNodes);
 
         int currentResultNum = results.size();
         chooseTargetThreeReplica(currentResultNum + 1, excludedNodes, results,
@@ -325,7 +332,8 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
       }
     }
 
-    chooseTargetThreeReplica(3, excludedNodes, results, avoidStaleNodes,
+
+    boolean chooseResult = chooseTargetThreeReplica(3, excludedNodes, results, avoidStaleNodes,
         maxNodesPerRack, storageTypes, blocksize, 1);
 
     LinkedHashSet<DatanodeStorageInfo> resultSet = new LinkedHashSet<>(results);
@@ -385,7 +393,7 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
           for (int j = 0; j < orderedList.size() - 1; j++) {
             if (nodeGroupCount.get(orderedList.get(j)) < nodeGroupCount.get(orderedList.get(j + 1)) ||
                 ((nodeGroupCount.get(orderedList.get(j)) == nodeGroupCount.get(orderedList.get(j + 1))) &&
-                    (nodeDataCount.get(orderedList.get(j)) < nodeGroupCount.get(orderedList.get(j + 1))))) {
+                    (nodeDataCount.get(orderedList.get(j)) < nodeDataCount.get(orderedList.get(j + 1))))) {
               tempStr = orderedList.get(j);
               orderedList.set(j, orderedList.get(j + 1));
               orderedList.set(j + 1, tempStr);
@@ -434,7 +442,7 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
         }
       }
     } while (true);
-    //    } while (!orderedNodes.isEmpty());
+
 
     if (result != null) {
       excludedNodes.add(result.getDatanodeDescriptor());
@@ -474,18 +482,6 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
     if (additionalNumOfReplicas <= 0) {
       return true;
     }
-
-
-    //                                   final Set<Node> softExcludedNodes,
-
-    //      for (int i = 0; i < orderedList.size(); i++) {
-    //        if (orderedList.get(i).getValue() > orderedList.getLast().getValue()) {
-    //          softExcludedNodes.add(clusterMap.getNode(orderedList.get(i).getKey()));
-    //        } else {
-    //          break;
-    //        }
-    //      }
-    //    }
 
     for (int i = 0; i < results.size(); i++)
       excludedNodes.add(results.get(i).getDatanodeDescriptor());
@@ -528,14 +524,12 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
 
       DatanodeStorageInfo info;
       if (!firstReplicaRack.equals(secondReplicaRack)) {
-        info = chooseRandomSpatial(secondReplicaRack, excludedNodes, blocksize, maxNodesPerRack,
-            results, avoidStaleNodes,
-            storageTypes, groupFileNum);
+        info = chooseRandomSpatial(secondReplicaRack, excludedNodes, blocksize, maxNodesPerRack, results,
+            avoidStaleNodes, storageTypes, groupFileNum);
 
       } else {
         info = chooseRandomSpatial("~" + secondReplicaRack, excludedNodes, blocksize, maxNodesPerRack,
-            results, avoidStaleNodes,
-            storageTypes, groupFileNum);
+            results, avoidStaleNodes, storageTypes, groupFileNum);
       }
       if (info == null) {
         info = chooseRandomSpatial(NodeBase.ROOT, excludedNodes, blocksize, maxNodesPerRack, results, avoidStaleNodes,
@@ -1334,6 +1328,7 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
     return true;
   }
 
+
   /**
    * Return a pipeline of nodes.
    * The pipeline is formed finding a shortest path that
@@ -1562,7 +1557,6 @@ public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
   void setPreferLocalNode(boolean prefer) {
     this.preferLocalNode = prefer;
   }
-
 
 
 }

@@ -1,12 +1,8 @@
 package org.apache.hadoop.hdfs.server.blockmanagement;
 
 
-import com.cug.rpp4raster2d.util.Coord;
-import com.cug.rpp4raster2d.util.GroupCellInfo;
-
-import java.io.BufferedReader;
-import java.io.FileReader;
-import java.io.IOException;
+import com.cug.rpp4raster3d.util.CellIndexInfo;
+import com.cug.rpp4raster3d.util.Coord;
 
 public abstract class SpatialInfoTableOperator {
 
@@ -19,15 +15,20 @@ public abstract class SpatialInfoTableOperator {
    * save datanode and group information to the table
    *
    * @param datanodeDescriptor current chosen result
-   * @param info               grid cell info
+   * @param coord               grid cell position
    * @param filename           filename of uploaded 3d raster file
    */
-  public abstract void saveGroupPosition(String filename, DatanodeDescriptor datanodeDescriptor, GroupCellInfo info,
-                                 String groupType);
+  public abstract void saveGroupPosition(String filename, DatanodeDescriptor datanodeDescriptor, Coord coord,
+                                         String groupType);
 
-    /**
+  /**
      * input 3d raster file name and info
      * get datanode of groupCoord from file
      */
   public abstract String readGroupPosition(String file, Coord groupCoord, String type) ;
+
+  public abstract void saveR3dDimensions(String filename, int xDim, int yDim, int zDim);
+
+  public abstract int[] readR3dDimensions(String filename);
+
 }

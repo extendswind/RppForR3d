@@ -1,7 +1,5 @@
-import com.cug.rpp4raster2d.util.SpatialConstant;
 import com.cug.rpp4raster3d.raster3d.Raster3D;
 import com.cug.rpp4raster3d.spatialInputFormat.FileSplitGroupRaster3D;
-import com.cug.rpp4raster3d.spatialInputFormat.InputSplitWritableRaster3D;
 import com.cug.rpp4raster3d.spatialInputFormat.SpatialRecordReaderSimpleRaster3D;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.BufferedFSInputStream;
@@ -9,20 +7,24 @@ import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hdfs.DFSClient;
-import org.apache.hadoop.hdfs.server.blockmanagement.DatanodeStorageInfo;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
 import org.apache.hadoop.util.StopWatch;
 import org.junit.Assert;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+
+/**
+ * 上传数据的测试类，放在kvmmaster节点上运行以避免网络IO的速度问题
+ *  运行命令 // java -cp spatialStorage-1.0-SNAPSHOT.jar TestIO
+ *
+ */
 public class TestIO {
 
   public static void recordReaderTimeTest() throws IOException {
@@ -110,7 +112,7 @@ public class TestIO {
   }
 
   public static void main(String[] argvs) throws IOException, URISyntaxException {
-    recordReaderTimeTest();
+//    recordReaderTimeTest();
 
 
 

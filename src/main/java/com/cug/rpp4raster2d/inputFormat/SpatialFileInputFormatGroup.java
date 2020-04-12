@@ -18,8 +18,8 @@ package com.cug.rpp4raster2d.inputFormat;
  * limitations under the License.
  */
 
-import com.cug.rpp4raster2d.util.GroupInfo;
-import com.cug.rpp4raster2d.util.SpatialConstant;
+import com.cug.rpp4raster3d.util.GroupInfo;
+import com.cug.rpp4raster3d.util.SpatialConstant;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -55,7 +55,7 @@ public class SpatialFileInputFormatGroup extends FileInputFormat<LongWritable, I
   private int cellColSize;
   private String spatialFilepath;
   private String spatialFilename;
-  private GroupInfo groupInfo = GroupInfo.getDefaultGroupInfo();
+  public GroupInfo groupInfo = GroupInfo.getDefaultGroupInfo(); // TODO
   private int radius;
 
   //  public void setGridSize(long cellRowNum, long cellColNum, String spatialFilepath){

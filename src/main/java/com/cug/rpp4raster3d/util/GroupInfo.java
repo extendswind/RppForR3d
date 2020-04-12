@@ -1,4 +1,4 @@
-package com.cug.rpp4raster2d.util;
+package com.cug.rpp4raster3d.util;
 
 
 /**
@@ -7,27 +7,34 @@ package com.cug.rpp4raster2d.util;
 public class GroupInfo {
     public int rowSize; // put *rowSize* row files to a group
     public int colSize;
-    public int rowOverlapSize; // overlap *rowOverlapSize* rows between two row group  暂时只考虑为1的情况
-    public int colOverlapSize;
-
-    public int zSize = 2; // TODO only 1 z layer is considered
+    public int rowOverlapSize; // overlap *rowOverlapSize* rows between two row group  TODO not used
+    public int colOverlapSize; // TODO not used
+    public int zSize;
 
     public GroupInfo(GroupInfo info){
         rowSize = info.rowSize;
         colSize = info.colSize;
         rowOverlapSize = info.rowOverlapSize;
         colOverlapSize = info.colOverlapSize;
+        zSize = info.zSize;
     }
 
+    /** WARNG!!!  此函数赋值顺序为row col， *not* X Y
+     *
+     * @param rowSize
+     * @param colSize
+     * @param rowOverlapSize
+     * @param colOverlapSize
+     */
     public GroupInfo(int rowSize, int colSize, int rowOverlapSize, int colOverlapSize){
         this.rowSize = rowSize;
         this.colSize = colSize;
         this.rowOverlapSize = rowOverlapSize;
         this.colOverlapSize = colOverlapSize;
+        zSize = 1;
     }
 
     public static GroupInfo getDefaultGroupInfo(){
-      return new GroupInfo(2, 2, 1,1);
+        return new GroupInfo(2, 2, 1,1);
     }
-
 }

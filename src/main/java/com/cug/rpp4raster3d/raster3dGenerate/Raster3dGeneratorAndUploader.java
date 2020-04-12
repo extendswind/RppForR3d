@@ -1,10 +1,11 @@
 package com.cug.rpp4raster3d.raster3dGenerate;
 
 
-import com.cug.rpp4raster2d.util.SpatialConstant;
+import com.cug.rpp4raster3d.util.SpatialConstant;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.FSDataOutputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
 
@@ -14,16 +15,15 @@ import java.net.URI;
 
 public class Raster3dGeneratorAndUploader {
 
-
-  static CellWriter cellWriter = new CellWriterByte();
+  public static CellWriter cellWriter = new CellWriter10Byte();
 
   static abstract class CellWriter {
     abstract void write(DataOutput out, long count) throws IOException;
-    abstract void copyInStream(DataInput in, DataOutput out) throws IOException;
 
+    abstract void copyInStream(DataInput in, DataOutput out) throws IOException;
   }
 
-  static class CellWriterByte extends CellWriter {
+  public static class CellWriterByte extends CellWriter {
     byte attr1;
 
     @Override
@@ -32,25 +32,25 @@ public class Raster3dGeneratorAndUploader {
     }
 
     @Override
-    void copyInStream(DataInput in, DataOutput out) throws IOException{
+    void copyInStream(DataInput in, DataOutput out) throws IOException {
       out.writeByte(in.readByte());
     }
   }
 
-  static class CellWriter10Byte extends CellWriter {
+  public static class CellWriter10Byte extends CellWriter {
     byte attr1;
 
     @Override
     void write(DataOutput out, long count) throws IOException {
       out.writeByte((byte) (count % 128));
-      for(int i=0; i<9; i++){
+      for (int i = 0; i < 9; i++) {
         out.writeByte(10);
       }
     }
 
     @Override
-    void copyInStream(DataInput in, DataOutput out) throws IOException{
-      for(int i=0; i<10; i++)
+    void copyInStream(DataInput in, DataOutput out) throws IOException {
+      for (int i = 0; i < 10; i++)
         out.writeByte(in.readByte());
     }
   }
@@ -128,15 +128,15 @@ public class Raster3dGeneratorAndUploader {
 
   /**
    * upload the split file in *localDirectory* to *hdfsDirectory* , and create a new file named
-   * *info_rowSize_colSize_cellRowSize_cellColSize*
+   * *info_xSize_ySize_zSize_cellXSize_cellYSize_cellZSize_filename*
    *
    * @param localDirectory local dir, contains cellRowNum * cellColNum file named by the name of localDirectory and
    *                       position
    * @param hdfsDirectory  hdfs dir
    */
   public static void uploadSpatialFile(String localDirectory, String hdfsDirectory,
-                                       int cellXDim, int cellYDim, int cellZDim, int xSplitSize, int ySplitSize,
-                                       int zSplitSize)
+                                       int cellXDim, int cellYDim, int cellZDim,
+                                       int xSplitSize, int ySplitSize, int zSplitSize)
       throws IOException {
     String filename = FilenameUtils.getName(localDirectory).split("_")[0];
     Configuration conf = new Configuration();
@@ -144,9 +144,17 @@ public class Raster3dGeneratorAndUploader {
 
     Path hdfsPath = new Path(hdfsDirectory);
     hdfs.mkdirs(hdfsPath);
-    hdfs.create(new Path(hdfsDirectory + "/" + SpatialConstant.RASTER_3D_INDEX_PREFIX + "_info_" +
-        xSplitSize + "_" + ySplitSize + "_" + zSplitSize + "_" + cellXDim + "_" + cellYDim+ "_" + cellZDim))
-        .close();
+    FSDataOutputStream infoFileOut = hdfs.create(new Path(hdfsDirectory + "/" +
+        SpatialConstant.RASTER_3D_INDEX_PREFIX + "_info_" + xSplitSize + "_" + ySplitSize + "_" + zSplitSize + "_"
+        + cellXDim + "_" + cellYDim + "_" + cellZDim + "_" + filename));
+    infoFileOut.writeInt(1);  // HDFS does not assign block for empty file
+    infoFileOut.close();
+
+
+    //    String infoFilename = SpatialConstant.RASTER_3D_INDEX_PREFIX + "_info_" + xSplitSize + "_" +
+    //        ySplitSize + "_" + zSplitSize + "_" + cellXDim + "_" + cellYDim+ "_" + cellZDim + "_" + filename;
+    //    new File(localDirectory + "/" + infoFilename).createNewFile();
+    //    hdfs.copyFromLocalFile(new Path(localDirectory + "/" + infoFilename), hdfsPath);
 
     for (int z = 0; z < zSplitSize; z++) {
       for (int y = 0; y < ySplitSize; y++) {
@@ -156,6 +164,7 @@ public class Raster3dGeneratorAndUploader {
           Path localPath = new Path(localDirectory + "/" + localFilename);
           try {
             hdfs.copyFromLocalFile(localPath, hdfsPath);
+            System.out.println(localFilename + " -- file uploaded");
           } catch (IOException e) {
             e.printStackTrace();
             throw e;
@@ -163,11 +172,8 @@ public class Raster3dGeneratorAndUploader {
         }
       }
     }
-
     hdfs.close();
   }
-
-
 
 
   public static void main(String[] args) throws IOException {
@@ -176,23 +182,23 @@ public class Raster3dGeneratorAndUploader {
 
     System.setProperty("HADOOP_USER_NAME", "sparkl");
 
-    // for every cell use 10 Byte, totally 24G
-    int cellXNum = 7;
-    int cellYNum = 6;
+    int cellXNum = 8;
+    int cellYNum = 9;
     int cellZNum = 4;
 
     int cellXDim = 250;
-    int cellYDim = 250;
+    int cellYDim = 200;
     int cellZDim = 200;
 
     int modelXDim = cellXDim * cellXNum;
     int modelYDim = cellYDim * cellYNum;
     int modelZDim = cellZDim * cellZNum;
 
-    String localFile = "test_data/raster3d-3.dat";
+    //String localFile = "test_data/raster3d-group322.dat";
+    String localFile = "test_data/raster3d-group221.dat";
 
     // upload directory
-    String hdfsDir = "hdfs://kvmmaster:9000/user/sparkl/rppo/" + FilenameUtils.getName(localFile); // + "_optimize";
+    String hdfsDir = "hdfs://kvmmaster:9000/user/sparkl/rppo/" + FilenameUtils.getName(localFile);
     if (false) {
       generateBinaryTestData(localFile, modelXDim, modelYDim, modelZDim);
       System.out.println("data generate done!");
@@ -211,27 +217,3 @@ public class Raster3dGeneratorAndUploader {
 
 }
 
-
-  //  public static void createInfoFileInHDFS(String hdfsDirectory, //                                          int
-  //  cellRowNum, int cellColNum, int cellRowSize, int cellColSize,
-  //                                          int groupRowSize, int groupColSize, int groupRowOverlap, int
-  //                                          groupColOverlap)
-  //      throws IOException {
-  //
-  //    Configuration conf = new Configuration();
-  //    FileSystem hdfs = FileSystem.get(URI.create(hdfsDirectory), conf);
-  //    FSDataOutputStream infoFileStream = hdfs.create(new Path(hdfsDirectory + "/info.dat"));
-  //    infoFileStream.writeInt(cellRowNum);
-  //    infoFileStream.writeInt(cellColNum);
-  //    infoFileStream.writeInt(cellRowSize);
-  //    infoFileStream.writeInt(cellColSize);
-  //    infoFileStream.writeInt(groupRowSize);
-  //    infoFileStream.writeInt(groupColSize);
-  //    infoFileStream.writeInt(groupRowOverlap);
-  //    infoFileStream.writeInt(groupColOverlap);
-  //    infoFileStream.close();
-  //
-  //
-  //    hdfs.close();
-  //
-  //  }

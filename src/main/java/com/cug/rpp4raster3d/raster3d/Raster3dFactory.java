@@ -8,6 +8,9 @@ import java.lang.reflect.Constructor;
 import java.util.Arrays;
 
 public class Raster3dFactory {
+  /**
+   * get a xDim*yDim*zDim Raster3D object, the specific type of Raster3D is set in conf
+   */
   public static Raster3D getRaster3D(Configuration conf, int xDim, int yDim, int zDim){
     String r3dClassName = conf.get("r3d.class.name", "com.cug.rpp4raster3d.raster3d.NormalRaster3D");
     Raster3D raster3D = null;
