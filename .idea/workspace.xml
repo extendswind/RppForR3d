@@ -1,42 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="ChangeListManager">
-    <list default="true" id="145dcc44-b88a-4f55-af2b-096b6ccffede" name="Default" comment="add spatialInfoOperator for the file operation">
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/encodings.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/encodings.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__org_jetbrains_annotations_java5_17_0_0.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/libraries/Maven__org_jetbrains_annotations_java5_15_0.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/.idea/modules.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/modules.xml" afterDir="false" />
+    <list default="true" id="145dcc44-b88a-4f55-af2b-096b6ccffede" name="Default" comment="change README.md">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/pom.xml" beforeDir="false" afterPath="$PROJECT_DIR$/pom.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/rpp4volume.iml" beforeDir="false" afterPath="$PROJECT_DIR$/RppForR3d.iml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/TestIO.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/TestIO.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/inputFormat/SpatialFileInputFormatGroup.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/inputFormat/SpatialFileInputFormatGroup.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/inputFormat/SpatialFileInputFormatOrdinary.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/inputFormat/SpatialFileInputFormatOrdinary.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/inputFormat/SpatialRecordReaderGroup.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/inputFormat/SpatialRecordReaderGroup.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/inputFormat/SpatialRecordReaderOrdinary.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/inputFormat/SpatialRecordReaderOrdinary.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/inputFormat/backup/SpatialFileInputFormat.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/inputFormat/backup/SpatialFileInputFormat.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/inputFormat/backup/SpatialRecordReader.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/inputFormat/backup/SpatialRecordReader.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/util/CellIndexInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/util/CellIndexInfo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/util/Coord.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/util/Coord.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/util/GroupCellInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/util/GroupCellInfo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/util/GroupInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/util/GroupInfo.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster2d/util/SpatialConstant.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/util/SpatialConstant.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/raster3d/NormalRaster3D.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/raster3d/NormalRaster3D.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/raster3d/Raster3D.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/raster3d/Raster3D.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/raster3d/Raster3dFactory.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/raster3d/Raster3dFactory.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/raster3dGenerate/Raster3dGeneratorAndUploader.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/raster3dGenerate/Raster3dGeneratorAndUploader.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/spatialInputFormat/SpatialFileInputFormatGroupRaster3D.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/spatialInputFormat/SpatialFileInputFormatGroupRaster3D.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/spatialInputFormat/SpatialFileInputFormatSimpleRaster3D.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/spatialInputFormat/SpatialFileInputFormatSimpleRaster3D.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/spatialInputFormat/SpatialRecordReaderGroupRaster3D.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/spatialInputFormat/SpatialRecordReaderGroupRaster3D.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/spatialInputFormat/SpatialRecordReaderSimpleRaster3D.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/spatialInputFormat/SpatialRecordReaderSimpleRaster3D.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicyDefaultSpatial.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicyDefaultSpatial.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicyRaster2DGroup.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicyRaster2DGroup.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicyRasterGroupRefactor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicyRasterGroupRefactor.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicySpatialUtil.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicySpatialUtil.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/SpatialInfoTableOperator.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/SpatialInfoTableOperator.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/SpatialInfoTableOperatorForFile.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/SpatialInfoTableOperatorForFile.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -482,7 +448,21 @@
       <option name="project" value="LOCAL" />
       <updated>1567310224524</updated>
     </task>
-    <option name="localTasksCounter" value="18" />
+    <task id="LOCAL-00018" summary="change README.md">
+      <created>1586694585010</created>
+      <option name="number" value="00018" />
+      <option name="presentableId" value="LOCAL-00018" />
+      <option name="project" value="LOCAL" />
+      <updated>1586694585010</updated>
+    </task>
+    <task id="LOCAL-00019" summary="change README.md">
+      <created>1586695149923</created>
+      <option name="number" value="00019" />
+      <option name="presentableId" value="LOCAL-00019" />
+      <option name="project" value="LOCAL" />
+      <updated>1586695149923</updated>
+    </task>
+    <option name="localTasksCounter" value="20" />
     <servers />
   </component>
   <component name="UnknownFeatures">
@@ -518,9 +498,14 @@
     <MESSAGE value="repairing storage balance problem in GroupBlockPlacementPolicy, but still bug" />
     <MESSAGE value="load balance optimization done, group balance well but block balance not." />
     <MESSAGE value="add spatialInfoOperator for the file operation" />
-    <option name="LAST_COMMIT_MESSAGE" value="add spatialInfoOperator for the file operation" />
+    <MESSAGE value="change README.md" />
+    <option name="LAST_COMMIT_MESSAGE" value="change README.md" />
   </component>
   <component name="WindowStateProjectService">
+    <state x="117" y="53" key="CommitChangelistDialog2" timestamp="1586695149845">
+      <screen x="0" y="0" width="1440" height="900" />
+    </state>
+    <state x="117" y="53" key="CommitChangelistDialog2/0.0.1440.900@0.0.1440.900" timestamp="1586695149845" />
     <state width="1398" height="141" key="GridCell.Tab.0.bottom" timestamp="1578409587780">
       <screen x="0" y="0" width="1440" height="878" />
     </state>
@@ -541,6 +526,10 @@
       <screen x="0" y="0" width="1440" height="900" />
     </state>
     <state x="259" y="91" key="SettingsEditor/0.0.1440.900@0.0.1440.900" timestamp="1586694103290" />
+    <state x="320" y="192" key="Vcs.Push.Dialog.v2" timestamp="1586695155893">
+      <screen x="0" y="0" width="1440" height="900" />
+    </state>
+    <state x="320" y="192" key="Vcs.Push.Dialog.v2/0.0.1440.900@0.0.1440.900" timestamp="1586695155893" />
     <state x="24" y="287" key="com.intellij.ide.util.TipDialog" timestamp="1586690889131">
       <screen x="0" y="0" width="1440" height="900" />
     </state>

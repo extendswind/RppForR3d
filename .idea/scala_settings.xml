@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ScalaProjectSettings">
     <option name="intInjectionMapping">
-      <map>
+      <map> 
         <entry key="xml" value="XML" />
       </map>
     </option>
