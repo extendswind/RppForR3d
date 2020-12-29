@@ -195,14 +195,15 @@ public class Raster3dGeneratorAndUploader {
     int modelZDim = cellZDim * cellZNum;
 
     //String localFile = "test_data/raster3d-group322.dat";
-    String localFile = "test_data/raster3d-group221.dat";
+    String localFile = "test_data/raster3d-group232.dat";
 
     // upload directory
     String hdfsDir = "hdfs://kvmmaster:9000/user/sparkl/rppo/" + FilenameUtils.getName(localFile);
-    if (false) {
+    File testDataDir = new File(localFile + "_upload");
+    if(!testDataDir.exists()){
+      System.out.println("data generate begin ......");
       generateBinaryTestData(localFile, modelXDim, modelYDim, modelZDim);
       System.out.println("data generate done!");
-
       splitSpatialDataBinary(localFile, modelXDim, modelYDim, modelZDim, modelXDim / cellXDim,
           modelYDim / cellYDim, modelZDim / cellZDim);
       System.out.println("data split done!");

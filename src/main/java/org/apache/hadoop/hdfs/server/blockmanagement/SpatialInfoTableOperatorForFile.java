@@ -1,6 +1,8 @@
 package org.apache.hadoop.hdfs.server.blockmanagement;
 
 import com.cug.rpp4raster3d.util.Coord;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 
 import java.io.*;
 
@@ -10,16 +12,16 @@ import java.io.*;
  */
 public class SpatialInfoTableOperatorForFile extends SpatialInfoTableOperator{
   private final String DIMS_TYPE = "DIMS";
+  static final Log LOG = LogFactory.getLog(SpatialInfoTableOperatorForFile.class);
 
   private String groupInfoFilePrefix;
 
-  // 假设上传文件的位置
+  // 默认的GroupInfo位置记录文件位置，此函数没有用，而是用的下面的构造函数传入namenode数据目录
   public SpatialInfoTableOperatorForFile(){
     this("/tmp");
   }
 
-  public SpatialInfoTableOperatorForFile(String spatialInfoTableFilePath){
-    groupInfoFilePrefix = spatialInfoTableFilePath + "/GROUP_" ;
+  public SpatialInfoTableOperatorForFile(String spatialInfoTableFilePath){ groupInfoFilePrefix = spatialInfoTableFilePath + "/GROUP_" ;
   }
 
   @Override
@@ -80,7 +82,10 @@ public class SpatialInfoTableOperatorForFile extends SpatialInfoTableOperator{
         line = br.readLine();
       }
     } catch (IOException e) {
-      //      e.printStackTrace();
+      e.printStackTrace();
+      if(e instanceof FileNotFoundException){
+        LOG.error("group info table file not exist");
+      }
       return null;
     }
     return null;

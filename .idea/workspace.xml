@@ -1,8 +1,23 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
   <component name="ChangeListManager">
     <list default="true" id="145dcc44-b88a-4f55-af2b-096b6ccffede" name="Default" comment="change README.md">
+      <change afterPath="$PROJECT_DIR$/.idea/jarRepositories.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/.idea/libraries/Maven__junit_junit_4_13_1.xml" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/util/IOTest.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/dictionaries/fly.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/dictionaries/fly.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/libraries/Maven__junit_junit_4_12.xml" beforeDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/RppForR3d.iml" beforeDir="false" afterPath="$PROJECT_DIR$/RppForR3d.iml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/raster3dGenerate/Raster3dGeneratorAndUploader.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/raster3dGenerate/Raster3dGeneratorAndUploader.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/raster3dGenerate/catBinaryFile.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/raster3dGenerate/CatBinaryFile.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/spatialInputFormat/SpatialRecordReaderGroupRaster3D.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/spatialInputFormat/SpatialRecordReaderGroupRaster3D.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/util/GroupInfo.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/util/GroupInfo.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicyRasterGroupRefactor.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicyRasterGroupRefactor.java" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/SpatialInfoTableOperatorForFile.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/SpatialInfoTableOperatorForFile.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -35,9 +50,6 @@
   <component name="DefaultGradleProjectSettings">
     <option name="isMigrated" value="true" />
   </component>
-  <component name="FavoritesManager">
-    <favorites_list name="rpp4volume" />
-  </component>
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
@@ -52,10 +64,10 @@
     <option name="SET_USER_NAME_GLOBALLY" value="false" />
   </component>
   <component name="MavenImportPreferences">
-    <option name="importingSettings">
-      <MavenImportingSettings>
-        <option name="importAutomatically" value="true" />
-      </MavenImportingSettings>
+    <option name="generalSettings">
+      <MavenGeneralSettings>
+        <option name="mavenHome" value="$APPLICATION_HOME_DIR$/plugins/maven/lib/maven3" />
+      </MavenGeneralSettings>
     </option>
   </component>
   <component name="MavenRunner">
@@ -70,7 +82,6 @@
   </component>
   <component name="ProjectViewState">
     <option name="hideEmptyMiddlePackages" value="true" />
-    <option name="showExcludedFiles" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
   <component name="PropertiesComponent">
@@ -83,11 +94,11 @@
     <property name="com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrarySuperClass.JUnit4" value="" />
     <property name="full.screen.before.presentation.mode" value="false" />
     <property name="last_directory_selection" value="$PROJECT_DIR$/src/main/java/com/cug/geo3d/util" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../hadoop/hadoop-hdfs-project-3.1.0-src-learning" />
     <property name="project.structure.last.edited" value="SDKs" />
     <property name="project.structure.proportion" value="0.0" />
     <property name="project.structure.side.proportion" value="0.2" />
-    <property name="settings.editor.selected.configurable" value="preferences.sourceCode.Markdown" />
+    <property name="settings.editor.selected.configurable" value="preferences.pluginManager" />
   </component>
   <component name="RecentsManager">
     <key name="CreateTestDialog.RecentsKey">
@@ -135,11 +146,25 @@
       <command value="pwd" />
     </option>
   </component>
-  <component name="RunManager" selected="Application.Raster3dGeneratorAndUploader">
+  <component name="RunManager" selected="JUnit.TestSpatialRecordReaderGroup3dRaster">
     <configuration default="true" type="Applet">
       <option name="HEIGHT" value="0" />
       <option name="POLICY_FILE" value="$APPLICATION_HOME_DIR$/bin/appletviewer.policy" />
       <option name="WIDTH" value="0" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="IOTest" type="Application" factoryName="Application" temporary="true" nameIsGenerated="true">
+      <option name="MAIN_CLASS_NAME" value="com.cug.rpp4raster3d.util.IOTest" />
+      <module name="RppForR3d" />
+      <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.cug.rpp4raster3d.util.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -160,41 +185,6 @@
     </configuration>
     <configuration default="true" type="Application" factoryName="Application">
       <option name="WORKING_DIRECTORY" value="$PROJECT_DIR$" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="TestBlockPlacementPolicyRaster2DGroupRefactor" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="RppForR3d" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="org.apache.hadoop.hdfs.server.blockmanagement.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="org.apache.hadoop.hdfs.server.blockmanagement" />
-      <option name="MAIN_CLASS_NAME" value="org.apache.hadoop.hdfs.server.blockmanagement.TestBlockPlacementPolicyRaster2DGroupRefactor" />
-      <option name="TEST_OBJECT" value="class" />
-      <option name="VM_PARAMETERS" />
-      <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
-      <method v="2">
-        <option name="Make" enabled="true" />
-      </method>
-    </configuration>
-    <configuration name="TestBlockPlacementPolicyRaster2DGroupRefactor.testChooseTargetForManyTimes" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
-      <module name="RppForR3d" />
-      <extension name="coverage">
-        <pattern>
-          <option name="PATTERN" value="org.apache.hadoop.hdfs.server.blockmanagement.*" />
-          <option name="ENABLED" value="true" />
-        </pattern>
-      </extension>
-      <option name="PACKAGE_NAME" value="org.apache.hadoop.hdfs.server.blockmanagement" />
-      <option name="MAIN_CLASS_NAME" value="org.apache.hadoop.hdfs.server.blockmanagement.TestBlockPlacementPolicyRaster2DGroupRefactor" />
-      <option name="METHOD_NAME" value="testChooseTargetForManyTimes" />
-      <option name="TEST_OBJECT" value="method" />
-      <option name="VM_PARAMETERS" />
-      <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
       <method v="2">
         <option name="Make" enabled="true" />
       </method>
@@ -228,6 +218,24 @@
       <option name="PACKAGE_NAME" value="com.cug.rpp4raster2d.spatialInputFormat.upload" />
       <option name="MAIN_CLASS_NAME" value="com.cug.rpp4raster2d.spatialInputFormat.upload.TestSpatialDataGeneratorAndUploader" />
       <option name="METHOD_NAME" value="simpleReadTest" />
+      <option name="TEST_OBJECT" value="method" />
+      <option name="VM_PARAMETERS" />
+      <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
+      <method v="2">
+        <option name="Make" enabled="true" />
+      </method>
+    </configuration>
+    <configuration name="TestSpatialFileInputFormatGroup3D.testSpatialFileInputFormat" type="JUnit" factoryName="JUnit" temporary="true" nameIsGenerated="true">
+      <module name="RppForR3d" />
+      <extension name="coverage">
+        <pattern>
+          <option name="PATTERN" value="com.cug.rpp4raster3d.spatialInputFormat.*" />
+          <option name="ENABLED" value="true" />
+        </pattern>
+      </extension>
+      <option name="PACKAGE_NAME" value="com.cug.rpp4raster3d.spatialInputFormat" />
+      <option name="MAIN_CLASS_NAME" value="com.cug.rpp4raster3d.spatialInputFormat.TestSpatialFileInputFormatGroup3D" />
+      <option name="METHOD_NAME" value="testSpatialFileInputFormat" />
       <option name="TEST_OBJECT" value="method" />
       <option name="VM_PARAMETERS" />
       <option name="WORKING_DIRECTORY" value="$MODULE_DIR$" />
@@ -283,19 +291,19 @@
     </configuration>
     <list>
       <item itemvalue="Application.Raster3dGeneratorAndUploader" />
+      <item itemvalue="Application.IOTest" />
       <item itemvalue="JUnit.TestSpatialRecordReaderGroup3dRaster" />
-      <item itemvalue="JUnit.TestBlockPlacementPolicyRaster2DGroupRefactor" />
       <item itemvalue="JUnit.TestBlockPlacementPolicyRaster2DGroupRefactor.testChooseTargetSpatialGroup4Raster3D_ZGroup" />
-      <item itemvalue="JUnit.TestBlockPlacementPolicyRaster2DGroupRefactor.testChooseTargetForManyTimes" />
       <item itemvalue="JUnit.TestSpatialDataGeneratorAndUploader.simpleReadTest" />
+      <item itemvalue="JUnit.TestSpatialFileInputFormatGroup3D.testSpatialFileInputFormat" />
     </list>
     <recent_temporary>
       <list>
-        <item itemvalue="Application.Raster3dGeneratorAndUploader" />
-        <item itemvalue="JUnit.TestSpatialDataGeneratorAndUploader.simpleReadTest" />
-        <item itemvalue="JUnit.TestBlockPlacementPolicyRaster2DGroupRefactor.testChooseTargetForManyTimes" />
+        <item itemvalue="Application.IOTest" />
         <item itemvalue="JUnit.TestBlockPlacementPolicyRaster2DGroupRefactor.testChooseTargetSpatialGroup4Raster3D_ZGroup" />
-        <item itemvalue="JUnit.TestBlockPlacementPolicyRaster2DGroupRefactor" />
+        <item itemvalue="Application.Raster3dGeneratorAndUploader" />
+        <item itemvalue="JUnit.TestSpatialFileInputFormatGroup3D.testSpatialFileInputFormat" />
+        <item itemvalue="JUnit.TestSpatialDataGeneratorAndUploader.simpleReadTest" />
       </list>
     </recent_temporary>
   </component>
@@ -306,18 +314,7 @@
       </map>
     </option>
   </component>
-  <component name="ServiceViewManager">
-    <option name="viewStates">
-      <list>
-        <serviceView>
-          <treeState>
-            <expand />
-            <select />
-          </treeState>
-        </serviceView>
-      </list>
-    </option>
-  </component>
+  <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="project-level" UseSingleDictionary="true" transferred="true" />
   <component name="SvnConfiguration">
     <configuration>$USER_HOME$/.subversion</configuration>
   </component>
@@ -473,13 +470,12 @@
       <map>
         <entry key="MAIN">
           <value>
-            <State>
-              <option name="COLUMN_ORDER" />
-            </State>
+            <State />
           </value>
         </entry>
       </map>
     </option>
+    <option name="oldMeFiltersMigrated" value="true" />
   </component>
   <component name="VcsManagerConfiguration">
     <option name="CHECK_CODE_SMELLS_BEFORE_PROJECT_COMMIT" value="false" />
@@ -502,43 +498,78 @@
     <option name="LAST_COMMIT_MESSAGE" value="change README.md" />
   </component>
   <component name="WindowStateProjectService">
-    <state x="117" y="53" key="CommitChangelistDialog2" timestamp="1586695149845">
+    <state width="952" height="485" key="DebuggerActiveHint" timestamp="1608773904162">
+      <screen x="0" y="0" width="1920" height="1080" />
+    </state>
+    <state width="952" height="485" key="DebuggerActiveHint/0.0.1920.1080@0.0.1920.1080" timestamp="1608773904162" />
+    <state x="748" y="304" key="FileChooserDialogImpl" timestamp="1608796194933">
+      <screen x="0" y="0" width="1920" height="1080" />
+    </state>
+    <state x="2188" y="304" key="FileChooserDialogImpl/0.0.1440.900/1440.0.1920.1080@1440.0.1920.1080" timestamp="1604300067171" />
+    <state x="748" y="304" key="FileChooserDialogImpl/0.0.1920.1080@0.0.1920.1080" timestamp="1608796194933" />
+    <state width="1878" height="296" key="GridCell.Tab.0.bottom" timestamp="1609144169177">
+      <screen x="0" y="0" width="1920" height="1080" />
+    </state>
+    <state width="1398" height="147" key="GridCell.Tab.0.bottom/0.0.1440.900/1440.0.1366.768@0.0.1440.900" timestamp="1604156299762" />
+    <state width="1878" height="186" key="GridCell.Tab.0.bottom/0.0.1440.900/1440.0.1920.1080@1440.0.1920.1080" timestamp="1604300075273" />
+    <state width="1878" height="296" key="GridCell.Tab.0.bottom/0.0.1920.1080@0.0.1920.1080" timestamp="1609144169177" />
+    <state width="1878" height="296" key="GridCell.Tab.0.center" timestamp="1609144169176">
+      <screen x="0" y="0" width="1920" height="1080" />
+    </state>
+    <state width="1398" height="147" key="GridCell.Tab.0.center/0.0.1440.900/1440.0.1366.768@0.0.1440.900" timestamp="1604156299762" />
+    <state width="1878" height="186" key="GridCell.Tab.0.center/0.0.1440.900/1440.0.1920.1080@1440.0.1920.1080" timestamp="1604300075273" />
+    <state width="1878" height="296" key="GridCell.Tab.0.center/0.0.1920.1080@0.0.1920.1080" timestamp="1609144169176" />
+    <state width="1878" height="296" key="GridCell.Tab.0.left" timestamp="1609144169175">
+      <screen x="0" y="0" width="1920" height="1080" />
+    </state>
+    <state width="1398" height="147" key="GridCell.Tab.0.left/0.0.1440.900/1440.0.1366.768@0.0.1440.900" timestamp="1604156299762" />
+    <state width="1878" height="186" key="GridCell.Tab.0.left/0.0.1440.900/1440.0.1920.1080@1440.0.1920.1080" timestamp="1604300075272" />
+    <state width="1878" height="296" key="GridCell.Tab.0.left/0.0.1920.1080@0.0.1920.1080" timestamp="1609144169175" />
+    <state width="1878" height="296" key="GridCell.Tab.0.right" timestamp="1609144169176">
+      <screen x="0" y="0" width="1920" height="1080" />
+    </state>
+    <state width="1398" height="147" key="GridCell.Tab.0.right/0.0.1440.900/1440.0.1366.768@0.0.1440.900" timestamp="1604156299762" />
+    <state width="1878" height="186" key="GridCell.Tab.0.right/0.0.1440.900/1440.0.1920.1080@1440.0.1920.1080" timestamp="1604300075273" />
+    <state width="1878" height="296" key="GridCell.Tab.0.right/0.0.1920.1080@0.0.1920.1080" timestamp="1609144169176" />
+    <state width="1878" height="296" key="GridCell.Tab.1.bottom" timestamp="1609144169179">
+      <screen x="0" y="0" width="1920" height="1080" />
+    </state>
+    <state width="1878" height="296" key="GridCell.Tab.1.bottom/0.0.1920.1080@0.0.1920.1080" timestamp="1609144169179" />
+    <state width="1878" height="296" key="GridCell.Tab.1.center" timestamp="1609144169178">
+      <screen x="0" y="0" width="1920" height="1080" />
+    </state>
+    <state width="1878" height="296" key="GridCell.Tab.1.center/0.0.1920.1080@0.0.1920.1080" timestamp="1609144169178" />
+    <state width="1878" height="296" key="GridCell.Tab.1.left" timestamp="1609144169177">
+      <screen x="0" y="0" width="1920" height="1080" />
+    </state>
+    <state width="1878" height="296" key="GridCell.Tab.1.left/0.0.1920.1080@0.0.1920.1080" timestamp="1609144169177" />
+    <state width="1878" height="296" key="GridCell.Tab.1.right" timestamp="1609144169178">
+      <screen x="0" y="0" width="1920" height="1080" />
+    </state>
+    <state width="1878" height="296" key="GridCell.Tab.1.right/0.0.1920.1080@0.0.1920.1080" timestamp="1609144169178" />
+    <state x="0" y="91" key="SettingsEditor" timestamp="1603977271779">
       <screen x="0" y="0" width="1440" height="900" />
     </state>
-    <state x="117" y="53" key="CommitChangelistDialog2/0.0.1440.900@0.0.1440.900" timestamp="1586695149845" />
-    <state width="1398" height="141" key="GridCell.Tab.0.bottom" timestamp="1578409587780">
-      <screen x="0" y="0" width="1440" height="878" />
+    <state x="0" y="91" key="SettingsEditor/0.0.1440.900/1280.1024.1366.768@0.0.1440.900" timestamp="1603977271779" />
+    <state x="452" y="152" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser" timestamp="1608775473231">
+      <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state width="1398" height="141" key="GridCell.Tab.0.bottom/0.0.1440.878@0.0.1440.878" timestamp="1578409587780" />
-    <state width="1398" height="141" key="GridCell.Tab.0.center" timestamp="1578409587779">
-      <screen x="0" y="0" width="1440" height="878" />
-    </state>
-    <state width="1398" height="141" key="GridCell.Tab.0.center/0.0.1440.878@0.0.1440.878" timestamp="1578409587779" />
-    <state width="1398" height="141" key="GridCell.Tab.0.left" timestamp="1578409587779">
-      <screen x="0" y="0" width="1440" height="878" />
-    </state>
-    <state width="1398" height="141" key="GridCell.Tab.0.left/0.0.1440.878@0.0.1440.878" timestamp="1578409587779" />
-    <state width="1398" height="141" key="GridCell.Tab.0.right" timestamp="1578409587780">
-      <screen x="0" y="0" width="1440" height="878" />
-    </state>
-    <state width="1398" height="141" key="GridCell.Tab.0.right/0.0.1440.878@0.0.1440.878" timestamp="1578409587780" />
-    <state x="259" y="91" key="SettingsEditor" timestamp="1586694103290">
+    <state x="339" y="127" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.1440.900/1440.0.1366.768@0.0.1440.900" timestamp="1604114779786" />
+    <state x="452" y="152" key="com.intellij.openapi.editor.actions.MultiplePasteAction$ClipboardContentChooser/0.0.1920.1080@0.0.1920.1080" timestamp="1608775473231" />
+    <state x="484" y="372" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2" timestamp="1604112748870">
       <screen x="0" y="0" width="1440" height="900" />
     </state>
-    <state x="259" y="91" key="SettingsEditor/0.0.1440.900@0.0.1440.900" timestamp="1586694103290" />
-    <state x="320" y="192" key="Vcs.Push.Dialog.v2" timestamp="1586695155893">
+    <state x="484" y="372" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.0.1440.900/1440.0.1366.768@0.0.1440.900" timestamp="1604112748870" />
+    <state x="484" y="372" key="com.intellij.openapi.vcs.update.UpdateOrStatusOptionsDialogupdate-v2/0.0.1440.900@0.0.1440.900" timestamp="1601385784174" />
+    <state x="658" y="59" width="782" height="561" key="new project wizard" timestamp="1603977500875">
       <screen x="0" y="0" width="1440" height="900" />
     </state>
-    <state x="320" y="192" key="Vcs.Push.Dialog.v2/0.0.1440.900@0.0.1440.900" timestamp="1586695155893" />
-    <state x="24" y="287" key="com.intellij.ide.util.TipDialog" timestamp="1586690889131">
-      <screen x="0" y="0" width="1440" height="900" />
+    <state x="658" y="59" width="782" height="561" key="new project wizard/0.0.1440.900/1280.1024.1366.768@0.0.1440.900" timestamp="1603977500875" />
+    <state x="31" y="227" width="896" height="814" key="search.everywhere.popup" timestamp="1608539676558">
+      <screen x="0" y="0" width="1920" height="1080" />
     </state>
-    <state x="24" y="280" key="com.intellij.ide.util.TipDialog/0.0.1440.878@0.0.1440.878" timestamp="1578297634601" />
-    <state x="24" y="287" key="com.intellij.ide.util.TipDialog/0.0.1440.900@0.0.1440.900" timestamp="1586690889131" />
-    <state x="383" y="184" width="672" height="662" key="search.everywhere.popup" timestamp="1578360198349">
-      <screen x="0" y="0" width="1440" height="878" />
-    </state>
-    <state x="383" y="184" width="672" height="662" key="search.everywhere.popup/0.0.1440.878@0.0.1440.878" timestamp="1578360198349" />
+    <state x="23" y="189" width="672" height="678" key="search.everywhere.popup/0.0.1440.900@0.0.1440.900" timestamp="1602832546095" />
+    <state x="31" y="227" width="896" height="814" key="search.everywhere.popup/0.0.1920.1080@0.0.1920.1080" timestamp="1608539676558" />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
@@ -620,7 +651,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/test/java/com/cug/rpp4raster3d/spatialInputFormat/TestSpatialFileInputFormatGroup3D.java</url>
-          <line>131</line>
+          <line>130</line>
           <option name="timeStamp" value="172" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
@@ -710,7 +741,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/test/java/com/cug/rpp4raster3d/spatialInputFormat/TestSpatialFileInputFormatGroup3D.java</url>
-          <line>171</line>
+          <line>170</line>
           <option name="timeStamp" value="269" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
@@ -735,21 +766,61 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/spatialInputFormat/SpatialRecordReaderGroupRaster3D.java</url>
-          <line>255</line>
+          <line>262</line>
           <option name="timeStamp" value="278" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicyRasterGroupRefactor.java</url>
-          <line>492</line>
+          <line>501</line>
           <option name="timeStamp" value="286" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/org/apache/hadoop/hdfs/server/blockmanagement/BlockPlacementPolicyRasterGroupRefactor.java</url>
-          <line>597</line>
+          <line>606</line>
           <option name="timeStamp" value="287" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/test/java/com/cug/rpp4raster3d/spatialInputFormat/TestSpatialFileInputFormatGroup3D.java</url>
+          <line>123</line>
+          <option name="timeStamp" value="289" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/raster3dGenerate/Raster3dGeneratorAndUploader.java</url>
+          <line>211</line>
+          <option name="timeStamp" value="291" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/raster3dGenerate/Raster3dGeneratorAndUploader.java</url>
+          <line>212</line>
+          <option name="timeStamp" value="292" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/raster3dGenerate/Raster3dGeneratorAndUploader.java</url>
+          <line>206</line>
+          <option name="timeStamp" value="294" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/test/java/org/apache/hadoop/hdfs/server/blockmanagement/TestBlockPlacementPolicyRaster2DGroupRefactor.java</url>
+          <line>202</line>
+          <option name="timeStamp" value="295" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/util/IOTest.java</url>
+          <line>51</line>
+          <option name="timeStamp" value="296" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="java-line">
+          <url>file://$PROJECT_DIR$/src/main/java/com/cug/rpp4raster3d/util/IOTest.java</url>
+          <line>50</line>
+          <option name="timeStamp" value="297" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
+    <pin-to-top-manager>
+      <pinned-members>
+        <PinnedItemInfo parentTag="org.apache.hadoop.hdfs.server.blockmanagement.SpatialInfoTableOperatorForFile" memberName="groupInfoFilePrefix" />
+      </pinned-members>
+    </pin-to-top-manager>
     <watches-manager>
       <configuration name="JUnit">
         <watch expression="orderedList" language="JAVA" />
@@ -770,16 +841,16 @@
     <option name="FILTER_TARGETS" value="false" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
-    <SUITE FILE_PATH="coverage/rpp4volume$TestSpatialRecordReaderGroupRaster3D_recordReadTestForGroup_1_1_lastZ.ic" NAME="TestSpatialRecordReaderGroupRaster3D.recordReadTestForGroup_1_1_lastZ Coverage Results" MODIFIED="1559808649408" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
+    <SUITE FILE_PATH="coverage/rpp4volume$TestSpatialRecordReaderGroupRaster3D_recordReadTestForRowOverlappedGroup001.ic" NAME="TestSpatialRecordReaderGroupRaster3D.recordReadTestForRowOverlappedGroup001 Coverage Results" MODIFIED="1558685559639" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
       <FILTER>com.cug.rpp4raster3d.spatialInputFormat.*</FILTER>
     </SUITE>
-    <SUITE FILE_PATH="coverage/rpp4volume$TestSpatialFileInputFormatGroup3D.ic" NAME="TestSpatialFileInputFormatGroup3D Coverage Results" MODIFIED="1559808660488" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
+    <SUITE FILE_PATH="coverage/rpp4volume$TestSpatialRecordReaderGroupRaster3D_recordReadTestForGroup_1_1_lastZ.ic" NAME="TestSpatialRecordReaderGroupRaster3D.recordReadTestForGroup_1_1_lastZ Coverage Results" MODIFIED="1559808649408" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
       <FILTER>com.cug.rpp4raster3d.spatialInputFormat.*</FILTER>
     </SUITE>
     <SUITE FILE_PATH="coverage/rpp4volume$TestSpatialRecordReaderGroup3dRaster.ic" NAME="TestSpatialRecordReaderGroup3dRaster Coverage Results" MODIFIED="1559220656555" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
       <FILTER>com.cug.rpp4raster3d.spatialInputFormat.SpatialRecordReaderGroupRaster3D</FILTER>
     </SUITE>
-    <SUITE FILE_PATH="coverage/rpp4volume$TestSpatialRecordReaderGroupRaster3D_recordReadTestForRowOverlappedGroup001.ic" NAME="TestSpatialRecordReaderGroupRaster3D.recordReadTestForRowOverlappedGroup001 Coverage Results" MODIFIED="1558685559639" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
+    <SUITE FILE_PATH="coverage/rpp4volume$TestSpatialFileInputFormatGroup3D.ic" NAME="TestSpatialFileInputFormatGroup3D Coverage Results" MODIFIED="1559808660488" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="idea" COVERAGE_BY_TEST_ENABLED="false" COVERAGE_TRACING_ENABLED="false">
       <FILTER>com.cug.rpp4raster3d.spatialInputFormat.*</FILTER>
     </SUITE>
   </component>

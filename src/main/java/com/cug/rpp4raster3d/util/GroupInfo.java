@@ -31,10 +31,10 @@ public class GroupInfo {
         this.colSize = colSize;
         this.rowOverlapSize = rowOverlapSize;
         this.colOverlapSize = colOverlapSize;
-        zSize = 1;
+        zSize = 2;
     }
 
     public static GroupInfo getDefaultGroupInfo(){
-        return new GroupInfo(2, 2, 1,1);
+        return new GroupInfo(3, 2, 1,1);
     }
 }

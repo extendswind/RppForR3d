@@ -19,6 +19,7 @@ package com.cug.rpp4raster3d.spatialInputFormat;
  */
 
 import com.cug.rpp4raster2d.inputFormat.InputSplitWritable;
+import com.cug.rpp4raster2d.inputFormat.SpatialRecordReaderGroup;
 import com.cug.rpp4raster3d.util.CellIndexInfo;
 import com.cug.rpp4raster3d.util.GroupInfo;
 import com.cug.rpp4raster3d.util.SpatialConstant;
@@ -38,6 +39,8 @@ import org.apache.hadoop.mapreduce.InputSplit;
 import org.apache.hadoop.mapreduce.RecordReader;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.util.StopWatch;
+import org.apache.log4j.Level;
+import org.apache.log4j.LogManager;
 
 import java.io.*;
 import java.text.DateFormat;
@@ -89,11 +92,12 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
   private Configuration conf;
 
   public SpatialRecordReaderGroupRaster3D() {
-
+    LogManager.getLogger(SpatialRecordReaderGroupRaster3D.class).setLevel(Level.DEBUG);
   }
 
 
   public void initialize(InputSplit genericSplit, TaskAttemptContext context) throws IOException {
+    LOG.debug("record reader initialize begin");
     inputSplit = (FileSplitGroupRaster3D) genericSplit;
     conf = context.getConfiguration();
     final Path[] paths = inputSplit.getPaths();
@@ -122,16 +126,17 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
     groupInfoZSize = GroupInfo.getDefaultGroupInfo().zSize;
     splitId = inputSplit.splitId;
     isFirstZGroup = inputSplit.isFristZGroup;  // 顶层的zgroup
+    LOG.debug("record reader initialize end");
   }
 
 
   public boolean nextKeyValue() throws IOException {
-    if (key == null) {
-      key = new LongWritable(inputSplit.splitId);
-      LOG.debug("splitId of currrent RecordReader is : " + key);
-    } else {
+    if (key != null){ // only one key-value pair generated for every RecordReader
       return false;
     }
+
+    key = new LongWritable(inputSplit.splitId);
+    LOG.debug("splitId of currrent RecordReader is : " + key);
 
     StopWatch sw = new StopWatch().start();
 
@@ -253,6 +258,8 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
           }
 
           int cellSize = raster3D.getCellSize();
+          LOG.debug("read data from: " +
+              inputSplit.getPaths()[zz * groupXSize * groupYSize + yy * groupXSize + xx].toString());
           readPartFromStream(inputStreams[zz * groupXSize * groupYSize + yy * groupXSize + xx], cellXDim,
               cellYDim, startX, startY, startZ, lengthX, lengthY, lengthZ,
               cellSize, raster3D, valueXDim, valueYDim, toValueX, toValueY, toValueZ
@@ -279,6 +286,8 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
                           int cellAttrSize,
                           Raster3D raster3D, int valueXDim, int valueYDim,
                           int toValueX, int toValueY, int toValueZ) throws IOException {
+    StopWatch sw = new StopWatch();
+    sw.start();
     inputStream.skip(cellXDim * cellYDim * startZ * cellAttrSize);
     for (int zz = 0; zz < lengthZ; zz++) {
       inputStream.skip(cellXDim * startY * cellAttrSize);
@@ -295,6 +304,13 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
       }
       inputStream.skip((cellYDim - lengthY - startY) * cellXDim * cellAttrSize);
     }
+    long remoteReading = ((HdfsDataInputStream) inputStream).getReadStatistics().getRemoteBytesRead();
+    long totalReading  = ((HdfsDataInputStream) inputStream).getReadStatistics().getTotalBytesRead();
+    long localReading = ((HdfsDataInputStream) inputStream).getReadStatistics().getTotalShortCircuitBytesRead();
+    String ioStatics = "remote: " + remoteReading / 1024 / 1024 + " -- total: " + totalReading / 1024 / 1024 + " -- " +
+        "short circuit: " + localReading / 1024 / 1024;
+    LOG.debug(ioStatics);
+    LOG.debug("inputStream read time: " + sw.now() / 1000 / 1000 / 1000.0 + "s");
   }
 
   @Override
@@ -349,7 +365,8 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
         bufferedWriter.close();
 
         LOG.info(
-            dateFormat.format(date) + " " + splitId + " " + totalReading / 1024 + " " + remoteReading / 1024 + "\n");
+            dateFormat.format(date) + " " + splitId + " " + totalReading / 1024 / 1024 + "Mb " +
+                remoteReading / 1024 / 1024 + "Mb\n");
 
       }
     } catch (IOException e) {

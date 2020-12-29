@@ -92,7 +92,7 @@ public class BlockPlacementPolicyRasterGroupRefactor extends BlockPlacementPolic
   // String groupInfoFile;  // the file storage the uploaded group position
   // the information is perferred to be stored in the database
 
-  SpatialInfoTableOperator tableOperator = new SpatialInfoTableOperatorForFile(); //
+  SpatialInfoTableOperator tableOperator;
   //  ---for spatial group
   // prefix sign, the file will use the prefix in the beginning of line
   final static String MG_PREFIX = "MG"; // main group 的前缀标记
@@ -140,6 +140,10 @@ public class BlockPlacementPolicyRasterGroupRefactor extends BlockPlacementPolic
             DFS_NAMENODE_BLOCKPLACEMENTPOLICY_DEFAULT_PREFER_LOCAL_NODE_KEY,
         DFSConfigKeys.
             DFS_NAMENODE_BLOCKPLACEMENTPOLICY_DEFAULT_PREFER_LOCAL_NODE_DEFAULT);
+    this.tableOperator =
+//        new SpatialInfoTableOperatorForFile(conf.getStrings(DFSConfigKeys.DFS_NAMENODE_NAME_DIR_KEY)[0]);
+        new SpatialInfoTableOperatorForFile(conf.get("dfs.namenode.rppo.group_info_table.dir",
+            "/home/sparkl/hadoop_data/master/group_info_table_dir"));
   }
 
 
@@ -177,6 +181,7 @@ public class BlockPlacementPolicyRasterGroupRefactor extends BlockPlacementPolic
       String[] fileSplits = filename.split("_");
       if (fileSplits.length == 9 && fileSplits[0].equals(SpatialConstant.RASTER_3D_INDEX_PREFIX) &&
           fileSplits[1].equals("info")) {
+        LOG.info("choose target for info file : "  + filename);
         tableOperator.clearTable(fileSplits[8]);
         int cellXNum = Integer.parseInt(fileSplits[2]);
         int cellYNum = Integer.parseInt(fileSplits[3]);
@@ -184,7 +189,6 @@ public class BlockPlacementPolicyRasterGroupRefactor extends BlockPlacementPolic
         tableOperator.saveR3dDimensions(fileSplits[8], cellXNum,
             cellYNum, cellZNum);
         chooseAllGroupInSpatialInfoTable(fileSplits[8], blocksize);
-        LOG.info("choose target for info file : "  + filename);
       } else {
         LOG.info("chooseTarget for normal file : " + filename);
       }
@@ -195,6 +199,10 @@ public class BlockPlacementPolicyRasterGroupRefactor extends BlockPlacementPolic
   }
 
 
+  /**
+   * choose datanode for every group
+   * TODO better to choose in uploading process
+   */
   public void chooseAllGroupInSpatialInfoTable(String filename, long blocksize) {
     for (Node n : clusterMap.getLeaves(NodeBase.ROOT)) {
       String nodePos = n.getNetworkLocation() + "/" + n.getName();
@@ -348,6 +356,10 @@ public class BlockPlacementPolicyRasterGroupRefactor extends BlockPlacementPolic
                                                         Set<Node> excludedNodes,
                                                         long blocksize,
                                                         final BlockStoragePolicy storagePolicy) {
+    int[] splitSizes = tableOperator.readR3dDimensions(cellIndexInfo.filename);
+    int cellXNum = splitSizes[0];
+    int cellYNum = splitSizes[1];
+    int cellZNum = splitSizes[2];
 
     // final result of the algorithm
     final List<DatanodeStorageInfo> results = new ArrayList<>();
@@ -387,10 +399,7 @@ public class BlockPlacementPolicyRasterGroupRefactor extends BlockPlacementPolic
     //      }
     //    }
 
-    int[] splitSizes = tableOperator.readR3dDimensions(cellIndexInfo.filename);
-    int cellXNum = splitSizes[0];
-    int cellYNum = splitSizes[1];
-    int cellZNum = splitSizes[2];
+
 
     // ----------  core algorithm for spatial optimization  ----------------
 
