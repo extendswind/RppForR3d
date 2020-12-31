@@ -12,7 +12,6 @@ import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
 import org.apache.hadoop.mapreduce.task.TaskAttemptContextImpl;
 import org.apache.log4j.*;
-import org.apache.log4j.spi.Configurator;
 import org.junit.Assert;
 
 import java.io.IOException;

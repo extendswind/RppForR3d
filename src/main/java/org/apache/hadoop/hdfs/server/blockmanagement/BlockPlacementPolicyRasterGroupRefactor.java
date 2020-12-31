@@ -359,7 +359,7 @@ public class BlockPlacementPolicyRasterGroupRefactor extends BlockPlacementPolic
     int[] splitSizes = tableOperator.readR3dDimensions(cellIndexInfo.filename);
     int cellXNum = splitSizes[0];
     int cellYNum = splitSizes[1];
-    int cellZNum = splitSizes[2];
+//    int cellZNum = splitSizes[2];
 
     // final result of the algorithm
     final List<DatanodeStorageInfo> results = new ArrayList<>();
@@ -405,8 +405,8 @@ public class BlockPlacementPolicyRasterGroupRefactor extends BlockPlacementPolic
 
     // Group information of current file
     GroupCellInfo groupCellInfo = GroupCellInfo.getFromGridCellInfo(cellIndexInfo, groupInfo, cellXNum, cellYNum);
-    int normalGroupBlockNumber = groupInfo.rowSize * groupInfo.colSize * groupInfo.zSize;
-    int overlappedRowGroupBlockNumber = cellXNum * 2 * groupInfo.zSize;
+//    int normalGroupBlockNumber = groupInfo.rowSize * groupInfo.colSize * groupInfo.zSize;
+//    int overlappedRowGroupBlockNumber = cellXNum * 2 * groupInfo.zSize;
 
     // choose a datanode for the overlapped row group
     // write the datanode to the groupInfoFile
@@ -428,11 +428,14 @@ public class BlockPlacementPolicyRasterGroupRefactor extends BlockPlacementPolic
     if (currentGroupReplicaPos != null) {
       DatanodeDescriptor mainGroupNode = (DatanodeDescriptor) clusterMap.getNode(currentGroupReplicaPos);
       DatanodeStorageInfo mainGroupStorageInfo = getDatanodeStorageInfo(mainGroupNode);
-      results.add(mainGroupStorageInfo);
-      excludedNodes.add(mainGroupNode);
-      storageTypes
-          .put(mainGroupStorageInfo.getStorageType(), storageTypes.get(mainGroupStorageInfo.getStorageType()) + 1);
-    } else {  // the first file of every row group
+      if(mainGroupStorageInfo != null) {
+        results.add(mainGroupStorageInfo);
+        excludedNodes.add(mainGroupNode);
+        storageTypes
+            .put(mainGroupStorageInfo.getStorageType(), storageTypes.get(mainGroupStorageInfo.getStorageType()) + 1);
+      }
+    }
+    //else {  // the first file of every row group
       //      // add surrounded overlapped Row group node to excludedNodes
       //      findAndAddToExcludedNode(cellIndexInfo.filename, new Coord(groupCellInfo.rowId - 1, 0, groupCellInfo.zId),
       //          OR_PREFIX,
@@ -445,7 +448,7 @@ public class BlockPlacementPolicyRasterGroupRefactor extends BlockPlacementPolic
       //      tableOperator.saveGroupPosition(cellIndexInfo.filename, results.get(0).getDatanodeDescriptor(),
       //      groupCellInfo,
       //          MG_PREFIX);
-    }
+    // }
 
 
     // read datanode for overlapped row group
@@ -454,9 +457,11 @@ public class BlockPlacementPolicyRasterGroupRefactor extends BlockPlacementPolic
           OR_PREFIX);
       DatanodeDescriptor node = (DatanodeDescriptor) clusterMap.getNode(replicaPos);
       DatanodeStorageInfo storageInfo = getDatanodeStorageInfo(node);
-      results.add(storageInfo);
-      excludedNodes.add(node);
-      storageTypes.put(storageInfo.getStorageType(), storageTypes.get(storageInfo.getStorageType()) - 1);
+      if(storageInfo != null) {
+        results.add(storageInfo);
+        excludedNodes.add(node);
+        storageTypes.put(storageInfo.getStorageType(), storageTypes.get(storageInfo.getStorageType()) - 1);
+      }
     }
 
 
@@ -486,14 +491,15 @@ public class BlockPlacementPolicyRasterGroupRefactor extends BlockPlacementPolic
       //      } else {
       DatanodeDescriptor rightGroupNode = (DatanodeDescriptor) clusterMap.getNode(rightGroupReplicaPos);
       DatanodeStorageInfo rightGroupStorageInfo = getDatanodeStorageInfo(rightGroupNode);
-      results.add(rightGroupStorageInfo);
-      excludedNodes.add(rightGroupNode);
-      storageTypes
-          .put(rightGroupStorageInfo.getStorageType(), storageTypes.get(rightGroupStorageInfo.getStorageType()) - 1);
-      //      }
+      if(rightGroupStorageInfo != null) {
+        results.add(rightGroupStorageInfo);
+        excludedNodes.add(rightGroupNode);
+        storageTypes
+            .put(rightGroupStorageInfo.getStorageType(), storageTypes.get(rightGroupStorageInfo.getStorageType()) - 1);
+      }
     }
 
-    boolean chooseResult = chooseTargetThreeReplica(3, excludedNodes, results, avoidStaleNodes,
+    chooseTargetThreeReplica(3, excludedNodes, results, avoidStaleNodes,
         maxNodesPerRack, storageTypes, blocksize, 1);
 
     LinkedHashSet<DatanodeStorageInfo> resultSet = new LinkedHashSet<>(results);
@@ -723,13 +729,17 @@ public class BlockPlacementPolicyRasterGroupRefactor extends BlockPlacementPolic
   /**
    * TODO  考虑具体细节
    * 从datanode上选择storageInfo
+   * when datanode is disconnected, return null
    *
    * @param dd datanode
    * @return storageInfo which is
    */
   // TODO consider datanodeStorageInfo
   DatanodeStorageInfo getDatanodeStorageInfo(DatanodeDescriptor dd) {
-    return dd.getStorageInfos()[0];
+    DatanodeStorageInfo[] infos = dd.getStorageInfos();
+    if(infos.length == 0)
+      return null;
+    return infos[0];
   }
 
 

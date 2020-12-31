@@ -30,6 +30,7 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.classification.InterfaceAudience;
 import org.apache.hadoop.classification.InterfaceStability;
 import org.apache.hadoop.conf.Configuration;
+import org.apache.hadoop.fs.BufferedFSInputStream;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
 import org.apache.hadoop.fs.Path;
@@ -63,7 +64,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
 
   public int radius = 5; // analysis radius
 
-  private FSDataInputStream[] inputStreams;
+  private DataInputStream[] inputStreams;
   //  private int splitColId;
   //  private int splitRowId;
   private LongWritable key;
@@ -104,9 +105,9 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
 
     // open the file and seek to the start of the inputSplit
     final FileSystem fs = paths[0].getFileSystem(conf);
-    inputStreams = new FSDataInputStream[paths.length];
+    inputStreams = new DataInputStream[paths.length];
     for (int i = 0; i < paths.length; i++) {
-      inputStreams[i] = fs.open(paths[i]);
+      inputStreams[i] = new DataInputStream(new BufferedInputStream(fs.open(paths[i])));
     }
 
     radius = inputSplit.radius;
@@ -281,7 +282,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
    * 从一个文件（InputStream中读取一部分到目标数组
    * 为了降低前面6重for循环的复杂度
    */
-  void readPartFromStream(FSDataInputStream inputStream, int cellXDim, int cellYDim,
+  void readPartFromStream(DataInputStream inputStream, int cellXDim, int cellYDim,
                           int startX, int startY, int startZ, int lengthX, int lengthY, int lengthZ,
                           int cellAttrSize,
                           Raster3D raster3D, int valueXDim, int valueYDim,
