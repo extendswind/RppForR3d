@@ -48,17 +48,17 @@ public class SimpleRaster3D extends Raster3D {
   public int getZDim() {return zDim; }
 
   @Override
-  public byte[] getAttr0() {
+  public byte[] getAttr1() {
     return attr;
   }
 
-  public void setAttr(int index, CellAttrsBase cell) {
-    attr[index] = ((SimpleCellAttrs) cell).attr;
+  public void setAttr(int index, VoxelAttrsBase cell) {
+    attr[index] = ((SimpleVoxelAttrs) cell).attr;
   }
 
   @Override
-  public CellAttrsBase getAttr(int index) {
-    return new SimpleCellAttrs(attr[index]);
+  public VoxelAttrsBase getAttr(int index) {
+    return new SimpleVoxelAttrs(attr[index]);
   }
 //
 //  public byte[] getAttr0() {
@@ -122,7 +122,7 @@ public class SimpleRaster3D extends Raster3D {
     int resultYDim = yDim / radius / 2;
     int resultZDim = zDim / radius / 2;
     SimpleRaster3D raster3D = new SimpleRaster3D(resultXDim, resultYDim, resultZDim);
-    SimpleCellAttrs cell = new SimpleCellAttrs();
+    SimpleVoxelAttrs cell = new SimpleVoxelAttrs();
     int xstart, ystart, zstart;
     for (int i = 0; i < resultZDim; i++) {
       for (int j = 0; j < resultYDim; j++) {

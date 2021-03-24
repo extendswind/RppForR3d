@@ -21,10 +21,10 @@ public class GroupInfo {
 
     /** WARNG!!!  此函数赋值顺序为row col， *not* X Y
      *
-     * @param rowSize
-     * @param colSize
-     * @param rowOverlapSize
-     * @param colOverlapSize
+     * @param rowSize 对应y
+     * @param colSize 对应x
+     * @param rowOverlapSize 重叠大小 默认1
+     * @param colOverlapSize 重叠大小 默认1
      */
     public GroupInfo(int rowSize, int colSize, int rowOverlapSize, int colOverlapSize){
         this.rowSize = rowSize;
@@ -35,6 +35,6 @@ public class GroupInfo {
     }
 
     public static GroupInfo getDefaultGroupInfo(){
-        return new GroupInfo(3, 2, 1,1);
+        return new GroupInfo(2, 3, 1,1);
     }
 }

@@ -13,9 +13,9 @@ import java.io.*;
 import java.net.URI;
 
 
-public class Raster3dGeneratorAndUploader {
+public class Raster3dGeneratorAndUploaderHuangtupoTMP {
 
-  public static CellWriter cellWriter = new CellWriter10Byte();
+  public static CellWriter cellWriter;
 
   static abstract class CellWriter {
     abstract void write(DataOutput out, long count) throws IOException;
@@ -55,8 +55,30 @@ public class Raster3dGeneratorAndUploader {
     }
   }
 
-  public Raster3dGeneratorAndUploader() {
+  public static class CellWriterHuangtupo extends CellWriter {
+    byte attr1;
 
+    @Override
+    void write(DataOutput out, long count) throws IOException {
+      byte writeValue = (byte) (count % 128);
+      out.writeByte(writeValue);
+      out.writeByte(writeValue);
+      out.writeFloat((float)writeValue / 3);
+      out.writeFloat((float)writeValue / 4);
+      out.writeFloat((float)writeValue / 5);
+    }
+
+    @Override
+    void copyInStream(DataInput in, DataOutput out) throws IOException {
+      out.writeByte(in.readByte());
+      out.writeByte(in.readByte());
+      out.writeFloat(in.readFloat());
+      out.writeFloat(in.readFloat());
+      out.writeFloat(in.readFloat());
+    }
+  }
+
+  public Raster3dGeneratorAndUploaderHuangtupoTMP() {
   }
 
 
@@ -68,7 +90,7 @@ public class Raster3dGeneratorAndUploader {
   public static void generateBinaryTestData(String filepath, int xDim, int yDim, int zDim)
       throws IOException {
     DataOutputStream outputStream = new DataOutputStream(new BufferedOutputStream(
-        new FileOutputStream(new File(filepath))));
+        new FileOutputStream(filepath)));
     long count = 0;
     for (int z = 0; z < zDim; z++) {
       for (int y = 0; y < yDim; y++) {
@@ -178,7 +200,7 @@ public class Raster3dGeneratorAndUploader {
 
   public static void main(String[] args) throws IOException {
 
-    cellWriter = new CellWriter10Byte();
+    cellWriter = new CellWriterHuangtupo();
 
     System.setProperty("HADOOP_USER_NAME", "sparkl");
 
@@ -197,23 +219,27 @@ public class Raster3dGeneratorAndUploader {
     //String localFile = "test_data/raster3d-group322.dat";
     String localFile = "test_data/raster3d-group232.dat";
 
+    // 首先生成localFile文件
+    // 然后将localFile切分成小文件，放入到localFile + "_upload"文件夹下
+
     // upload directory
     String hdfsDir = "hdfs://kvmmaster:9000/user/sparkl/rppo/" + FilenameUtils.getName(localFile);
     File testDataDir = new File(localFile + "_upload");
     if(!testDataDir.exists()){
-      System.out.println("data generate begin ......");
-      generateBinaryTestData(localFile, modelXDim, modelYDim, modelZDim);
-      System.out.println("data generate done!");
+      File dataFile = new File(localFile);
+      if(!dataFile.exists()) {
+        System.out.println("data generate begin ......");
+        generateBinaryTestData(localFile, modelXDim, modelYDim, modelZDim);
+        System.out.println("data generate done!");
+      }
       splitSpatialDataBinary(localFile, modelXDim, modelYDim, modelZDim, modelXDim / cellXDim,
           modelYDim / cellYDim, modelZDim / cellZDim);
       System.out.println("data split done!");
     }
 
-    if (true) {
-      uploadSpatialFile(localFile + "_upload", hdfsDir, cellXDim, cellYDim, cellZDim, modelXDim / cellXDim,
+    uploadSpatialFile(localFile + "_upload", hdfsDir, cellXDim, cellYDim, cellZDim, modelXDim / cellXDim,
           modelYDim / cellYDim, modelZDim / cellZDim);
-      System.out.println("data upload done!");
-    }
+    System.out.println("data upload done!");
   }
 
 }

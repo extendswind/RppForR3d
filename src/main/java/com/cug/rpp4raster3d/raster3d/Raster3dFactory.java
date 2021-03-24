@@ -24,6 +24,8 @@ public class Raster3dFactory {
     return raster3D;
   }
 
+  // return a large Raster3D consist of multiple small Raster3d, each in a z layer
+  // the instance of Raster3D is convert to "r3d.class.name"
   public static Raster3D getRaster3D(Configuration conf, Raster3D[] raster3Ds){
     String r3dClassName = conf.get("r3d.class.name", "com.cug.rpp4raster3d.raster3d.NormalRaster3D");
     Raster3D raster3D = null;

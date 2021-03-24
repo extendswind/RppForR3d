@@ -6,11 +6,11 @@ import java.io.*;
 /**
  * design for NormalRaster3D
  */
-public class NormalCellAttrs extends CellAttrsBase {
+public class NormalVoxelAttrs extends VoxelAttrsBase {
 
   public byte[] attrs;
 
-  public NormalCellAttrs(byte[] attrs){
+  public NormalVoxelAttrs(byte[] attrs){
     this.attrs = new byte[attrs.length];
     System.arraycopy(attrs, 0, this.attrs, 0, attrs.length);
   }

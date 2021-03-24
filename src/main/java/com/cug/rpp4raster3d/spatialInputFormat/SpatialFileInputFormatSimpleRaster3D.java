@@ -40,6 +40,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * An {@link InputFormat} for 3d raster data.
+ * 一个简单的实现，以每个文件为单位进行单独分析
+ * 读取整个文件以及周边文件半径R内的部分，
  * every file will be used as an InputSplit
  * every file use data of surround files in a certain radius
  */
@@ -102,12 +104,12 @@ public class SpatialFileInputFormatSimpleRaster3D extends FileInputFormat<LongWr
     for (int z = 0; z < cellZNum; z++) {
       for (int y = 0; y < cellYNum; y++) {
         for (int x = 0; x < cellXNum; x++) {
-          int leftX = x - 1 < 0 ? 0 : x - 1;
-          int leftY = y - 1 < 0 ? 0 : y - 1;
-          int leftZ = z - 1 < 0 ? 0 : z - 1;
-          int rightX = x + 2 > cellXNum ? cellXNum : x + 2;
-          int rightY = y + 2 > cellYNum ? cellYNum : y + 2;
-          int rightZ = z + 2 > cellZNum ? cellZNum : z + 2;
+          int leftX = Math.max(x - 1, 0);
+          int leftY = Math.max(y - 1, 0);
+          int leftZ = Math.max(z - 1, 0);
+          int rightX = Math.min(x + 2, cellXNum);
+          int rightY = Math.min(y + 2, cellYNum);
+          int rightZ = Math.min(z + 2, cellZNum);
 
           Path[] groupFilePaths = new Path[(rightX - leftX) * (rightY - leftY) * (rightZ - leftZ)];
           for (int zz = leftZ; zz < rightZ; zz++) {

@@ -15,8 +15,10 @@ public class NormalRaster3D extends Raster3D {
   private int zDim;
 
   private int attrNum = 10;
+
+  // attrNum * size of Raster3D
+  // attrArrays[0] means attributes[0] of all voxels
   private byte[][] attrArrays;
-//  private byte[] attr;
 
 //  public NormalRaster3D(){
 //
@@ -34,7 +36,7 @@ public class NormalRaster3D extends Raster3D {
     for(int attrId = 0; attrId < attrNum; attrId++){
       attrArrays[attrId] = new byte[xDim*yDim*zDim];
       for(int i=0; i<raster3ds.length; i++){
-        System.arraycopy((raster3ds[i]).attrArrays[attrId], 0, attrArrays[attrId], i*xDim*yDim*raster3ds[0].getZDim(),
+        System.arraycopy((raster3ds[i]).attrArrays[attrId], 0, attrArrays[attrId], i*xDim*yDim*raster3ds[i].getZDim(),
             xDim*yDim*raster3ds[0].getZDim());
       }
     }
@@ -59,7 +61,7 @@ public class NormalRaster3D extends Raster3D {
 
   }
 
-  public byte[] getAttr0(){
+  public byte[] getAttr1(){
     return attrArrays[0];
   }
 
@@ -107,18 +109,22 @@ public class NormalRaster3D extends Raster3D {
   }
 
   @Override
-  public void setAttr(int index, CellAttrsBase cellattrs) {
+  public void setAttr(int index, VoxelAttrsBase cellattrs) {
     for(int i=0; i<attrNum; i++) {
-      attrArrays[i][index] = ((NormalCellAttrs) cellattrs).attrs[i];
+      attrArrays[i][index] = ((NormalVoxelAttrs) cellattrs).attrs[i];
     }
   }
 
   @Override
-  public CellAttrsBase getAttr(int index) {
-    return new NormalCellAttrs(attrArrays[index]);
+  public VoxelAttrsBase getAttr(int index) {
+    return new NormalVoxelAttrs(attrArrays[index]);
   }
 
   @Override
+  /**
+   * average resampling method
+   * 通过求平均值实现重采样，将原体数据重采样为以2*radius为间隔的新Raster3D
+   */
   public NormalRaster3D averageSampling(int radius) {
     int resultXDim = xDim / radius / 2;
     int resultYDim = yDim / radius / 2;
@@ -126,7 +132,7 @@ public class NormalRaster3D extends Raster3D {
 
     NormalRaster3D raster3D = new NormalRaster3D(resultXDim, resultYDim, resultZDim);
     int xstart, ystart, zstart;
-    NormalCellAttrs cell = new NormalCellAttrs(attrArrays[0]);
+    NormalVoxelAttrs cell = new NormalVoxelAttrs(attrArrays[0]);
     for (int i = 0; i < resultZDim; i++) {
       for (int j = 0; j < resultYDim; j++) {
         for (int k = 0; k < resultXDim; k++) {

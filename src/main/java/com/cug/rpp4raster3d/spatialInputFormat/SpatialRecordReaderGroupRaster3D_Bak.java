@@ -58,8 +58,8 @@ import java.util.Date;
  */
 @InterfaceAudience.LimitedPrivate({"MapReduce", "Pig"})
 @InterfaceStability.Evolving
-public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable, Raster3D> {
-  private static final Log LOG = LogFactory.getLog(SpatialRecordReaderGroupRaster3D.class);
+public class SpatialRecordReaderGroupRaster3D_Bak extends RecordReader<LongWritable, Raster3D> {
+  private static final Log LOG = LogFactory.getLog(SpatialRecordReaderGroupRaster3D_Bak.class);
 
   public int radius = 5; // analysis radius
 
@@ -92,8 +92,8 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
 
   private Configuration conf;
 
-  public SpatialRecordReaderGroupRaster3D() {
-    LogManager.getLogger(SpatialRecordReaderGroupRaster3D.class).setLevel(Level.DEBUG);
+  public SpatialRecordReaderGroupRaster3D_Bak() {
+    LogManager.getLogger(SpatialRecordReaderGroupRaster3D_Bak.class).setLevel(Level.DEBUG);
   }
 
 

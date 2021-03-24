@@ -56,6 +56,8 @@ import static org.apache.hadoop.fs.FileSystem.FS_DEFAULT_NAME_KEY;
 /**
  * 将InputSplit解析成键值对
  * 一个inputSplit只得到一个键值对，其中key为splitId，value为{@link InputSplitWritable}，记录所在splitId的宽，高和具体数据
+ * 一种比较省内存的简单resampling实现，后期可以改为更通用的操作。
+ * 输入一个文件以及周边的文件，按层每次读一部分以降低内存占用。
  */
 @InterfaceAudience.LimitedPrivate({"MapReduce", "Pig"})
 @InterfaceStability.Evolving
@@ -65,8 +67,9 @@ public class SpatialRecordReaderSimpleRaster3D extends RecordReader<LongWritable
 
   public int radius; // analysis radius
 
-  private FSDataInputStream[] inputStreams;  // for reading data
+  private DataInputStream[] inputStreams;  // for reading data
   private DFSInputStream[] dfsInputStreams; //  for reading statistics
+  private FSDataInputStream[] fsDataInputStreams;  // for reset the read position
   private LongWritable key;
   private Raster3D value;
   //  private InputSplitWritableRaster3D value;
@@ -76,7 +79,11 @@ public class SpatialRecordReaderSimpleRaster3D extends RecordReader<LongWritable
   private int cellXDim;
   private int cellYDim;
   private int cellZDim;
-  private int groupXSize; // number of groups in x dimension
+
+  // number of files in x dimension in the group
+  // the group means the center file and surround files.
+  // usually, groupXSize is 2 for first and last group in a dimension
+  private int groupXSize;
   private int groupYSize;
   private int groupZSize;
   CellIndexInfo cellIndexInfo;
@@ -95,32 +102,31 @@ public class SpatialRecordReaderSimpleRaster3D extends RecordReader<LongWritable
     inputSplit = (FileSplitGroupRaster3D) genericSplit;
     conf = context.getConfiguration();
     final Path[] paths = inputSplit.getPaths();
-    dfsInputStreams = new DFSInputStream[paths.length];
-    inputStreams = new FSDataInputStream[paths.length];
+    dfsInputStreams = new DFSInputStream[paths.length];   // 用于读写的信息统计
+    inputStreams = new DataInputStream[paths.length];
+    fsDataInputStreams = new FSDataInputStream[paths.length];
+//    bufferedInputStreams = new BufferedInputStream[paths.length];
 
     if (conf.get(FS_DEFAULT_NAME_KEY, DEFAULT_FS).equals(DEFAULT_FS)) {  // reading local files
       FileSystem fs = paths[0].getFileSystem(conf);
       for (int i = 0; i < paths.length; i++) {
-        inputStreams[i] = fs.open(paths[i]);
+        fsDataInputStreams[i] = fs.open(paths[i]);
+
+//        bufferedInputStreams[i] = new BufferedInputStream(fs.open(paths[i]));
+//        bufferedInputStreams[i].mark(Integer.MAX_VALUE);
+        inputStreams[i] = new DataInputStream(new BufferedInputStream(fsDataInputStreams[i]));
       }
     } else {  // reading dfs files
       DFSClient dfsClient = new DFSClient(NameNode.getAddress(conf), conf);
       for (int i = 0; i < paths.length; i++) {
         dfsInputStreams[i] = dfsClient.open(paths[i].toUri().getRawPath());
+        fsDataInputStreams[i] = new FSDataInputStream(new BufferedFSInputStream(dfsInputStreams[i], 40000));
         //        inputStreams[i] = new FSDataInputStream(new BufferedFSInputStream(dfsInputStreams[i], 40000));
-        inputStreams[i] = new FSDataInputStream(dfsInputStreams[i]);
+//        bufferedInputStreams[i] = new BufferedInputStream(dfsInputStreams[i]);
+//        bufferedInputStreams[i].mark(Integer.MAX_VALUE);
+        inputStreams[i] = new DataInputStream(new BufferedInputStream(fsDataInputStreams[i]));
       }
     }
-
-    //        Stream<Path> stream = Arrays.stream(paths);
-    //    inputStreams = stream.parallel().map(is -> {
-    //      try {
-    //        return fs.open(is);
-    //      } catch (IOException e) {
-    //        e.printStackTrace();
-    //        return null;
-    //      }
-    //    }).toArray(FSDataInputStream[]::new);
 
     radius = inputSplit.radius;
     cellXDim = inputSplit.cellXDim;
@@ -148,22 +154,27 @@ public class SpatialRecordReaderSimpleRaster3D extends RecordReader<LongWritable
 
     StopWatch sw = new StopWatch().start();
 
+    // 如果为x方向的第一个或者最后一个，只需要从x方向的一个文件读一个半径内的数据；否则，要从周边两个方向读取。
     int valueXDim = (groupXSize - 1) * radius + cellXDim;
     int valueYDim = (groupYSize - 1) * radius + cellYDim;
     int valueZDim = (groupZSize - 1) * radius + cellZDim;
 
 
     // divided to multiple layers to avoid memory not enough
+    // 不知道为什么这样，后面又把所有layer都拼装起来了，仍有memory问题
     int layerZHeight = radius * 2;  // TODO  parameter  注意设置为偶数
-    if (layerZHeight % 2 != 0) {
-      LOG.error("LayerZHeight error!");
-      return false;
-    }
+    //    if (layerZHeight % 2 != 0) {
+    //      LOG.error("LayerZHeight error!");
+    //      return false;
+    //    }
+    // 此处并没有直接把所有的数据都读入raster3D变量中，而是第一次读入layerZHeigth的数据存满，
+    // 然后将layerZHeight/2到layerZHeight之间的数据挪到前方，再读入下一个layerZHeight/2的数据
     Raster3D raster3D = Raster3dFactory.getRaster3D(conf, valueXDim, valueYDim, layerZHeight);
 
-
+    // layerNum并不是valueZDim / layerZHeight，而是有重叠的layer，因此多了一倍
     int layerNum = (int) Math.ceil((double) valueZDim / (layerZHeight / 2)) - 1;
 
+    // resampling的结果
     Raster3D[] valueArray;
     if (isTest) {
       valueArray = new Raster3D[layerNum + 1];
@@ -171,6 +182,7 @@ public class SpatialRecordReaderSimpleRaster3D extends RecordReader<LongWritable
       valueArray = new Raster3D[layerNum];
     }
 
+    // 第一次读入layerZHeight，后面每次读入layerZHeight/2
     for (int layerId = 0; layerId < layerNum; layerId++) {
       int layerZStart;
       if (layerId == 0) {
@@ -186,6 +198,7 @@ public class SpatialRecordReaderSimpleRaster3D extends RecordReader<LongWritable
         readLayerFromStreams(raster3D, 0, layerZHeight, 0);
       } else {
         raster3D.upMoveLayerData(layerZHeight / 2);
+
         readLayerFromStreams(raster3D, layerZStart, layerReadZHeight, layerZHeight / 2);
         // TODO System.arraycopy之后还需要将原位置清零，否则最后一列可能会出问题
       }
@@ -216,9 +229,9 @@ public class SpatialRecordReaderSimpleRaster3D extends RecordReader<LongWritable
   }
 
 
-  // TODO 一个函数的测试
   // 读出一个layer，存入raster3D的toValueZ开始的部分，z方向长度为lengthz
-  // 第一次读出的layer z方向长度为3R，之后每次读出R，计算时每次只计算中的R部分
+  // 第一次读出的layer z方向长度为2R，之后每次读出R，计算时每次只计算中间的R部分
+  // 省内存的方法，多了数据移动的开销
   void readLayerFromStreams(Raster3D raster3D, int layerZStart, int layerReadZHeight, int toLayerRasterZ) {
     // for every file -------------
     int groupXEnd = 1;
@@ -299,17 +312,29 @@ public class SpatialRecordReaderSimpleRaster3D extends RecordReader<LongWritable
           int cellSize = raster3D.getCellSize();
 
           try {
-            for (FSDataInputStream inputStream : inputStreams) {
-              inputStream.seek(0);
-            }
+            int readFilePos = (filePos[2] - groupStart[2]) * groupXSize * groupYSize +
+                (filePos[1] - groupStart[1]) * groupXSize + (filePos[0] - groupStart[0]);
+
+            fsDataInputStreams[readFilePos].seek(0);
+            inputStreams[readFilePos] = new DataInputStream(new BufferedInputStream(fsDataInputStreams[readFilePos]));
+
+//              for(int i=0; i<inputStreams.length; i++){
+//                fsDataInputStreams[i].seek(0);
+//                inputStreams[i] = new DataInputStream(new BufferedInputStream(fsDataInputStreams[i]));
+//  //              bufferedInputStreams[i].reset();
+//  //              inputStreams[i] = new DataInputStream(bufferedInputStreams[i]);
+//              }
+//              bufferedInputStream.reset();
+
+              //              inputStream.seek(0);
+//            }
             readPartFromStream(inputStreams[(filePos[2] - groupStart[2]) * groupXSize * groupYSize +
                     (filePos[1] - groupStart[1]) * groupXSize + (filePos[0] - groupStart[0])],
                 cellXDim, cellYDim, startPos[0], startPos[1], layeFileStartZ, lengths[0], lengths[1], zLength,
                 cellSize, raster3D, raster3D.getXDim(), raster3D.getYDim(), toValuePos[0], toValuePos[1],
                 layerToValueZ);
           } catch (IOException e) {
-            //            e.printStackTrace();
-            //            System.err.println("File Reading Error!!!");
+            e.printStackTrace();
             LOG.error("file reading error! key: " + splitId + ", error file number: " +
                 ((filePos[2] - groupStart[2]) * groupXSize * groupYSize +
                     (filePos[1] - groupStart[1]) * groupXSize + (filePos[0] - groupStart[0])));
@@ -326,26 +351,26 @@ public class SpatialRecordReaderSimpleRaster3D extends RecordReader<LongWritable
    * 从一个文件（InputStream）中读取一部分到目标数组
    * 为了降低前面6重for循环的复杂度
    */
-  void readPartFromStream(FSDataInputStream inputStream, int cellXDim, int cellYDim,
+  void readPartFromStream(DataInputStream inputStream, int cellXDim, int cellYDim,
                           int startX, int startY, int startZ, int lengthX, int lengthY, int lengthZ,
                           int cellAttrSize,
                           Raster3D raster3D, int valueXDim, int valueYDim,
                           int toValueX, int toValueY, int toValueZ) throws IOException {
 
-    inputStream.skip(cellXDim * cellYDim * startZ * cellAttrSize);
+    inputStream.skip((long) cellXDim * cellYDim * startZ * cellAttrSize);
     for (int zz = 0; zz < lengthZ; zz++) {
-      inputStream.skip(cellXDim * startY * cellAttrSize);
+      inputStream.skip((long) cellXDim * startY * cellAttrSize);
       for (int yy = 0; yy < lengthY; yy++) {
-        inputStream.skip(startX * cellAttrSize);
+        inputStream.skip((long) startX * cellAttrSize);
         for (int xx = 0; xx < lengthX; xx++) {
           raster3D.readAttr(toValueX + xx +
                   (toValueY + yy) * valueXDim
                   + (toValueZ + zz) * valueXDim * valueYDim
               , inputStream);
         }
-        inputStream.skip((cellXDim - lengthX - startX) * cellAttrSize);
+        inputStream.skip((long) (cellXDim - lengthX - startX) * cellAttrSize);
       }
-      inputStream.skip((cellYDim - lengthY - startY) * cellXDim * cellAttrSize);
+      inputStream.skip((long) (cellYDim - lengthY - startY) * cellXDim * cellAttrSize);
     }
   }
 

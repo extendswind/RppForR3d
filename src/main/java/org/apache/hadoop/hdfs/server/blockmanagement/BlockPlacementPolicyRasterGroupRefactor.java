@@ -176,7 +176,10 @@ public class BlockPlacementPolicyRasterGroupRefactor extends BlockPlacementPolic
       return result;
     } else {  // for spatial information file and normal file
 
+      // if the uploaded file is info file
+      // the info file should be uploaded first
       // get raster data size from info file, and initialize some variables
+      // the group position is chosen and stored in the spatial info table
       // TODO better to be written in uploading process
       String[] fileSplits = filename.split("_");
       if (fileSplits.length == 9 && fileSplits[0].equals(SpatialConstant.RASTER_3D_INDEX_PREFIX) &&

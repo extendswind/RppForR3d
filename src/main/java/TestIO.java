@@ -2,10 +2,7 @@ import com.cug.rpp4raster3d.raster3d.Raster3D;
 import com.cug.rpp4raster3d.spatialInputFormat.FileSplitGroupRaster3D;
 import com.cug.rpp4raster3d.spatialInputFormat.SpatialRecordReaderSimpleRaster3D;
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.BufferedFSInputStream;
-import org.apache.hadoop.fs.CommonConfigurationKeysPublic;
-import org.apache.hadoop.fs.FSDataInputStream;
-import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.fs.*;
 import org.apache.hadoop.hdfs.DFSClient;
 import org.apache.hadoop.mapreduce.TaskAttemptContext;
 import org.apache.hadoop.mapreduce.TaskAttemptID;
@@ -106,6 +103,8 @@ public class TestIO {
     //    for(int i=0; i<cellXDim*cellYDim*cellZDim * 10; i++){
     //      is.readByte();
     //    }
+//    FileSystem fs = FileSystem.get(conf);
+//    fs.copyFromLocalFile();
 
     System.out.println(sw.now(TimeUnit.MICROSECONDS));
     sw.stop();
