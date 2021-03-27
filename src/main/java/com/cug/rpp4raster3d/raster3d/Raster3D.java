@@ -24,7 +24,7 @@ public abstract class Raster3D {
   public abstract int getZDim();
 
   public abstract byte[] getAttr1();
-  public abstract int getCellSize();
+  public abstract int getVoxelSize();
 
   /**
    * read the cell value from dataInput

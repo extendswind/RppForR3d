@@ -107,7 +107,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
     final FileSystem fs = paths[0].getFileSystem(conf);
     boolean isLocalFileSystem = false;
     // io statistic is ignored for local file system
-    if(fs instanceof LocalFileSystem){
+    if (fs instanceof LocalFileSystem) {
       isLocalFileSystem = true;
     } else {
       inputStreamsForIOStatistics = new HdfsDataInputStream[paths.length];
@@ -115,7 +115,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
     inputStreams = new DataInputStream[paths.length];
     for (int i = 0; i < paths.length; i++) {
       FSDataInputStream fsDataInputStream = fs.open(paths[i]);
-      if(!isLocalFileSystem) {
+      if (!isLocalFileSystem) {
         inputStreamsForIOStatistics[i] = (HdfsDataInputStream) fsDataInputStream;
         inputStreams[i] = new DataInputStream(new BufferedInputStream(inputStreamsForIOStatistics[i]));
       } else {
@@ -145,7 +145,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
 
 
   public boolean nextKeyValue() throws IOException {
-    if (key != null){ // only one key-value pair generated for every RecordReader
+    if (key != null) { // only one key-value pair generated for every RecordReader
       return false;
     }
 
@@ -173,7 +173,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
       valueZDim = cellZDim * (groupZSize - 1) + radius;
     }
 
-//    SimpleCellAttrs[] dataValue;
+    //    SimpleCellAttrs[] dataValue;
 
     if (splitId >= SpatialConstant.ROW_OVERLAPPED_GROUP_SPLIT_ID_BEGIN) { // overlapped row
       valueYDim = radius * 4;
@@ -271,7 +271,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
             }
           }
 
-          int cellSize = raster3D.getCellSize();
+          int cellSize = raster3D.getVoxelSize();
           LOG.debug("read data from: " +
               inputSplit.getPaths()[zz * groupXSize * groupYSize + yy * groupXSize + xx].toString());
           readPartFromStream(zz * groupXSize * groupYSize + yy * groupXSize + xx, cellXDim,
@@ -310,8 +310,8 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
         inputStream.skip((long) startX * cellAttrSize);
         for (int xx = 0; xx < lengthX; xx++) {
           raster3D.readAttr(toValueX + xx +
-              (toValueY + yy) * valueXDim
-              + (toValueZ + zz) * valueXDim * valueYDim,
+                  (toValueY + yy) * valueXDim
+                  + (toValueZ + zz) * valueXDim * valueYDim,
               inputStream
           );
         }
@@ -320,13 +320,13 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
       inputStream.skip((long) (cellYDim - lengthY - startY) * cellXDim * cellAttrSize);
     }
     // is null if open local file (for unit test)
-    if(inputStreamsForIOStatistics != null) {
+    if (inputStreamsForIOStatistics != null) {
       HdfsDataInputStream hdfsDataInputStream = inputStreamsForIOStatistics[inputStreamId];
       long remoteReading = hdfsDataInputStream.getReadStatistics().getRemoteBytesRead();
       long totalReading = hdfsDataInputStream.getReadStatistics().getTotalBytesRead();
       long localReading = hdfsDataInputStream.getReadStatistics().getTotalShortCircuitBytesRead();
-      String ioStatics = "remote: " + remoteReading / 1024 / 1024 + " -- total: " + totalReading / 1024 / 1024 + " -- " +
-          "short circuit: " + localReading / 1024 / 1024;
+      String ioStatics = "file id: " + inputStreamId + " -- remote: " + remoteReading / 1024 / 1024 +
+          " -- total: " + totalReading / 1024 / 1024 + " -- " + "short circuit: " + localReading / 1024 / 1024;
       LOG.debug(ioStatics);
     }
     LOG.debug("inputStream read time: " + sw.now() / 1000 / 1000 / 1000.0 + "s");
@@ -387,7 +387,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
                 remoteReading / 1024 / 1024 + "Mb\n");
       }
 
-      for(DataInputStream inputStream : inputStreams){
+      for (DataInputStream inputStream : inputStreams) {
         inputStream.close();
       }
     } catch (IOException e) {

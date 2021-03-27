@@ -105,6 +105,9 @@ public class BlockPlacementPolicyRasterGroupRefactor extends BlockPlacementPolic
   HashMap<String, Integer> nodeDataCount = new HashMap<>();  // count the block number of current raster
   HashMap<String, Integer> nodeGroupCount = new HashMap<>();  // count the group number of current raster
 
+  // for raster 3D simple group placement
+  HashMap<String, String[]> r3dsgPlacement;
+
   //////////////////////////////////////////
 
   /**
@@ -194,6 +197,22 @@ public class BlockPlacementPolicyRasterGroupRefactor extends BlockPlacementPolic
         chooseAllGroupInSpatialInfoTable(fileSplits[8], blocksize);
       } else {
         LOG.info("chooseTarget for normal file : " + filename);
+      }
+
+      // if the file is marked as r3dsg file
+      // choose target from the previous group method
+      // only for comparative experiment
+      if(SimpleGroupPlacementHelpler.isRaster3DSimpleGroupFile(filename)){
+        // initialize or update the file
+         if(r3dsgPlacement == null || !r3dsgPlacement.containsKey(filename)){
+           r3dsgPlacement = SimpleGroupPlacementHelpler.getPlacements();
+         }
+         String[] placements = r3dsgPlacement.get(filename);
+         DatanodeStorageInfo[] results = new DatanodeStorageInfo[placements.length];
+         for(int i=0; i<placements.length; i++){
+           results[i] = getDatanodeStorageInfo((DatanodeDescriptor) clusterMap.getNode(placements[i]));
+         }
+         return results;
       }
 
       return chooseTarget(numOfReplicas, writer, chosenNodes, returnChosenNodes, excludedNodes, blocksize,

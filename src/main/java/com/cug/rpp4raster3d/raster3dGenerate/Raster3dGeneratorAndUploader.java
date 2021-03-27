@@ -23,6 +23,10 @@ public class Raster3dGeneratorAndUploader {
     abstract void copyInStream(DataInput in, DataOutput out) throws IOException;
   }
 
+  /**
+   * 写入一个字节
+   * <B>default value is used in the unit test</B>
+   */
   public static class CellWriterByte extends CellWriter {
     byte attr1;
 
@@ -86,7 +90,7 @@ public class Raster3dGeneratorAndUploader {
    * warning: fileRowSize should be divided exactly by rowSplitSize, the same to fileColSize
    */
   public static void splitSpatialDataBinary(String filepath, int fileXDim, int fileYDim, int fileZDim,
-                                            int xSplitSize, int ySplitSize, int zSplitSize) throws IOException {
+                                            int xSplitSize, int ySplitSize, int zSplitSize, String filePrefix) throws IOException {
     DataInputStream inputStream = new DataInputStream(new BufferedInputStream(new FileInputStream(new File(filepath))));
     String filename = FilenameUtils.getName(filepath);
     String uploadFilepath = filepath + "_upload";
@@ -102,7 +106,7 @@ public class Raster3dGeneratorAndUploader {
       for (int y = 0; y < ySplitSize; y++) {
         for (int x = 0; x < xSplitSize; x++) {
           FileOutputStream fileOutputStream = new FileOutputStream(new File(uploadFilepath +
-              "/" + SpatialConstant.RASTER_3D_INDEX_PREFIX + "_" + filename + "_" + x + "_" + y + "_" + z));
+              "/" + filePrefix + "_" + filename + "_" + x + "_" + y + "_" + z));
           resultWriters[z * xSplitSize * ySplitSize + y * xSplitSize + x] =
               new DataOutputStream(new BufferedOutputStream(fileOutputStream));
         }
@@ -133,10 +137,11 @@ public class Raster3dGeneratorAndUploader {
    * @param localDirectory local dir, contains cellRowNum * cellColNum file named by the name of localDirectory and
    *                       position
    * @param hdfsDirectory  hdfs dir
+   * @param filePrefix for the sign of different files
    */
   public static void uploadSpatialFile(String localDirectory, String hdfsDirectory,
                                        int cellXDim, int cellYDim, int cellZDim,
-                                       int xSplitSize, int ySplitSize, int zSplitSize)
+                                       int xSplitSize, int ySplitSize, int zSplitSize, String filePrefix)
       throws IOException {
     String filename = FilenameUtils.getName(localDirectory).split("_")[0];
     Configuration conf = new Configuration();
@@ -145,7 +150,7 @@ public class Raster3dGeneratorAndUploader {
     Path hdfsPath = new Path(hdfsDirectory);
     hdfs.mkdirs(hdfsPath);
     FSDataOutputStream infoFileOut = hdfs.create(new Path(hdfsDirectory + "/" +
-        SpatialConstant.RASTER_3D_INDEX_PREFIX + "_info_" + xSplitSize + "_" + ySplitSize + "_" + zSplitSize + "_"
+        filePrefix + "_info_" + xSplitSize + "_" + ySplitSize + "_" + zSplitSize + "_"
         + cellXDim + "_" + cellYDim + "_" + cellZDim + "_" + filename));
     infoFileOut.writeInt(1);  // HDFS does not assign block for empty file
     infoFileOut.close();
@@ -159,7 +164,7 @@ public class Raster3dGeneratorAndUploader {
     for (int z = 0; z < zSplitSize; z++) {
       for (int y = 0; y < ySplitSize; y++) {
         for (int x = 0; x < xSplitSize; x++) {
-          String localFilename = "/" + SpatialConstant.RASTER_3D_INDEX_PREFIX + "_" + filename + "_" + x + "_" + y +
+          String localFilename = "/" + filePrefix + "_" + filename + "_" + x + "_" + y +
               "_" + z;
           Path localPath = new Path(localDirectory + "/" + localFilename);
           try {
@@ -205,13 +210,13 @@ public class Raster3dGeneratorAndUploader {
       generateBinaryTestData(localFile, modelXDim, modelYDim, modelZDim);
       System.out.println("data generate done!");
       splitSpatialDataBinary(localFile, modelXDim, modelYDim, modelZDim, modelXDim / cellXDim,
-          modelYDim / cellYDim, modelZDim / cellZDim);
+          modelYDim / cellYDim, modelZDim / cellZDim, SpatialConstant.RASTER_3D_INDEX_PREFIX);
       System.out.println("data split done!");
     }
 
     if (true) {
       uploadSpatialFile(localFile + "_upload", hdfsDir, cellXDim, cellYDim, cellZDim, modelXDim / cellXDim,
-          modelYDim / cellYDim, modelZDim / cellZDim);
+          modelYDim / cellYDim, modelZDim / cellZDim, SpatialConstant.RASTER_3D_INDEX_PREFIX);
       System.out.println("data upload done!");
     }
   }

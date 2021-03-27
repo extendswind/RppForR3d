@@ -69,7 +69,7 @@ public class NormalRaster3D extends Raster3D {
 //    return new SimpleCellAttrs(attr[index]);
 //  }
 
-  public int getCellSize(){
+  public int getVoxelSize(){
     return 10;
   }
 

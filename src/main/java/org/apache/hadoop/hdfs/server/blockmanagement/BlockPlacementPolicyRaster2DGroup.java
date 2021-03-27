@@ -49,6 +49,8 @@ import static org.apache.hadoop.util.Time.monotonicNow;
  * gridRowId gridColId datanode1 datanode2 ....
  * <p>
  * gridRowId and gridColId is -1 represent the split id which will be got in InputFormat, used for datanode balance.
+ *
+ * 先前的实现，没有后续的优化
  */
 
 
@@ -58,6 +60,7 @@ import static org.apache.hadoop.util.Time.monotonicNow;
  * 3D 数据会被视为多层 2D 数据处理
  */
 @InterfaceAudience.Private
+@Deprecated
 public class BlockPlacementPolicyRaster2DGroup extends BlockPlacementPolicy {
 
   private static final String enableDebugLogging =

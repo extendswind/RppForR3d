@@ -83,15 +83,16 @@ public class SpatialFileInputFormatSimpleRaster3D extends FileInputFormat<LongWr
     LOG.info("spatial radius is set to " + radius);
 
     String infoFilename = FilenameUtils.getName(dir);
+    String[] filenameSplits = infoFilename.split("_");
 
     // number of cells in x direction
-    int cellXNum = Integer.parseInt(infoFilename.split("_")[2]);
-    int cellYNum = Integer.parseInt(infoFilename.split("_")[3]);
-    int cellZNum = Integer.parseInt(infoFilename.split("_")[4]);
+    int cellXNum = Integer.parseInt(filenameSplits[2]);
+    int cellYNum = Integer.parseInt(filenameSplits[3]);
+    int cellZNum = Integer.parseInt(filenameSplits[4]);
     // dimension of a cell in x direction
-    int cellXDim = Integer.parseInt(infoFilename.split("_")[5]);
-    int cellYDim = Integer.parseInt(infoFilename.split("_")[6]);
-    int cellZDim = Integer.parseInt(infoFilename.split("_")[7]);
+    int cellXDim = Integer.parseInt(filenameSplits[5]);
+    int cellYDim = Integer.parseInt(filenameSplits[6]);
+    int cellZDim = Integer.parseInt(filenameSplits[7]);
         // ..../filename/
     String spatialFilepath = FilenameUtils.getPath(dir);
 
@@ -115,7 +116,7 @@ public class SpatialFileInputFormatSimpleRaster3D extends FileInputFormat<LongWr
           for (int zz = leftZ; zz < rightZ; zz++) {
             for (int yy = leftY; yy < rightY; yy++) {
               for (int xx = leftX; xx < rightX; xx++) {
-                String cellName = spatialFilepath + "/" + SpatialConstant.RASTER_3D_INDEX_PREFIX + "_" +
+                String cellName = spatialFilepath + "/" + filenameSplits[0] + "_" +
                     spatialFilename + "_" + (xx) + "_" + (yy) + "_" + (zz);
                 groupFilePaths[xx - leftX + (yy - leftY) * (rightX - leftX) + (zz - leftZ) * (rightX - leftX) * (rightY - leftY)] =
                     new Path(cellName);
@@ -123,10 +124,12 @@ public class SpatialFileInputFormatSimpleRaster3D extends FileInputFormat<LongWr
             }
           }
 
-          String currentCell = spatialFilepath + "/" + SpatialConstant.RASTER_3D_INDEX_PREFIX + "_" +
+          String currentCell = spatialFilepath + "/" + filenameSplits[0] + "_" +
               spatialFilename + "_" + (x) + "_" + (y) + "_" + (z);
           BlockLocation[] blkLocations = fs.getFileBlockLocations(new Path(currentCell), 0, 1);
           String[] blkHosts = blkLocations[0].getHosts();
+          blkHosts = sortBlockHosts(blkHosts, groupFilePaths, fs);
+
           int splitId = x + y * cellXNum + z * cellXNum * cellYNum;
 
           // isFirstZGroup is useless
@@ -147,4 +150,28 @@ public class SpatialFileInputFormatSimpleRaster3D extends FileInputFormat<LongWr
     return splits;
   }
 
+  /**
+   *  Sort block host
+   *  对主文件的三个副本所在数据节点，根据节点上的其它文件数量进行排序
+   */
+  private String[] sortBlockHosts(String[] blockHosts, Path[] paths, FileSystem fs) throws IOException {
+    // count file block locations
+    TreeMap<String, Integer> nodeCount = new TreeMap<>();
+    for(String str: blockHosts){
+      nodeCount.put(str, 1);
+    }
+    for (Path path : paths) {
+      BlockLocation[] blkLocations = fs.getFileBlockLocations(path, 0, 1);
+      String[] blkHosts = blkLocations[0].getHosts();
+      for (String host : blkHosts) {
+        if (nodeCount.containsKey(host)) {
+          nodeCount.put(host, nodeCount.get(host) + 1);
+        }
+      }
+    }
+    // 对nodeCount根据value排序后返回key的数组
+    return nodeCount.entrySet().stream()
+        .sorted(Map.Entry.comparingByValue(Comparator.reverseOrder()))
+        .map(a->a.getKey()).toArray(size -> new String[size]);
+  }
 }
