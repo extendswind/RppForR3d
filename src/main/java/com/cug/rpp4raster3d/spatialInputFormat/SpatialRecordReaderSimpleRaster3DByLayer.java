@@ -66,7 +66,8 @@ import static org.apache.hadoop.fs.FileSystem.FS_DEFAULT_NAME_KEY;
  */
 @InterfaceAudience.LimitedPrivate({"MapReduce", "Pig"})
 @InterfaceStability.Evolving
-@Since(1.8)
+@Deprecated
+@Since(1.8)  //暂不维护
 public class SpatialRecordReaderSimpleRaster3DByLayer extends RecordReader<LongWritable, Raster3D> {
   private static final Log LOG = LogFactory.getLog(SpatialRecordReaderSimpleRaster3DByLayer.class);
 

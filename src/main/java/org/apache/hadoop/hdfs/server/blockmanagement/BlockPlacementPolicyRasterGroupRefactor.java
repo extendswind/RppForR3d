@@ -168,6 +168,7 @@ public class BlockPlacementPolicyRasterGroupRefactor extends BlockPlacementPolic
     CellIndexInfo cellIndexInfo = CellIndexInfo.getGridCellInfoFromFilename(filename);
     if (cellIndexInfo != null) { // 对于网格索引的文件
       LOG.info("chooseTarget for spatial r3d file: " + filename);
+      LOG.info("using group size:  " + groupInfo.colSize + "-" + groupInfo.rowSize + "-" + groupInfo.zSize);
       DatanodeStorageInfo[] result = chooseTargetSpatialGroup(cellIndexInfo, numOfReplicas, writer, chosenNodes,
           returnChosenNodes, excludedNodes, blocksize, storagePolicy);
 //      StringBuilder resultStr = new StringBuilder();
@@ -245,12 +246,15 @@ public class BlockPlacementPolicyRasterGroupRefactor extends BlockPlacementPolic
 
     EnumMap<StorageType, Integer> storageTypes = new EnumMap<>(StorageType.class);
     storageTypes.put(StorageType.DISK, groupRowNum * groupColNum * groupZNum + (groupRowNum - 1) * groupZNum);
+    String lastORGroupDatanode = "";
 
     // choose overlapped row groups
+    // put the overlapped row groups to different datanodes
     int groupFileNum = cellXNum * 2 * groupInfo.zSize;
     for (int zId = 0; zId < groupZNum; zId++) {
       for (int rowId = 0; rowId < groupRowNum - 1; rowId++) {
         Set<Node> excludedNodes = new HashSet<>();
+        // add previous OR group to excluded nodes
         if (rowId != 0) {
           Coord previousGroupCoord = new Coord(0, rowId - 1, zId);
           Node previousNode = clusterMap.getNode(tableOperator.readGroupPosition(filename, previousGroupCoord,
@@ -258,29 +262,51 @@ public class BlockPlacementPolicyRasterGroupRefactor extends BlockPlacementPolic
           excludedNodes.add(previousNode);
         }
         DatanodeStorageInfo storageInfo =
-            chooseTargetGroupInOrder(NodeBase.ROOT, blocksize, false, excludedNodes, storageTypes, groupFileNum, true);
+            chooseTargetGroupWithLoadBalance(NodeBase.ROOT, blocksize, false, excludedNodes, storageTypes, groupFileNum, true);
+
+        // 如果获取不到storageInfo，则每次删除excludedNodes中的一个
+        // （此处后添加的代码，对前面的理解有问题，这种情况出现的概率几乎为0）
+        //        while(storageInfo == null){
+        //          if(excludedNodes.size() == 0){
+        //            break;
+        //          }
+        //          Iterator<Node> iterator = excludedNodes.iterator();
+        //          iterator.next();
+        //          iterator.remove();
+        //          storageInfo =
+        //              chooseTargetGroupWithLoadBalance(NodeBase.ROOT, blocksize, false, excludedNodes, storageTypes, groupFileNum, true);
+        //        }
+
         if (storageInfo != null) {
           tableOperator
               .saveGroupPosition(filename, storageInfo.getDatanodeDescriptor(), new Coord(0, rowId, zId), OR_PREFIX);
 
           // the datanode storing last row overlapped group often has less number of groups for the excluded rule
+          // 最后的一个OR group由于和其它所有的MG重叠，因此放置最后的MG不能放在此数据节点上，导致此数据节点经常少一，因此在此处先减一
           if (rowId == groupRowNum - 2 && zId == groupZNum - 1) {
             String nodeLoc =
                 storageInfo.getDatanodeDescriptor().getNetworkLocation() + "/" + storageInfo.getDatanodeDescriptor()
                     .getName();
-            nodeGroupCount.put(nodeLoc, 0);
+            nodeGroupCount.put(nodeLoc, nodeGroupCount.get(nodeLoc) - 1);
+            lastORGroupDatanode = nodeLoc;
           }
+        } else {
+          // 当前组的位置选择失败
+          LOG.error("choose target for overlapped row group 0-" + rowId + "-" + zId + " !!!");
         }
       }
     }
 
-    // choose normal groups
+    // choose normal groups (MG, main group)
     groupFileNum = groupInfo.rowSize * groupInfo.colSize * groupInfo.zSize;
     for (int zId = 0; zId < groupZNum; zId++) {
       for (int rowId = 0; rowId < groupRowNum; rowId++) {
         for (int colId = 0; colId < groupColNum; colId++) {
           Set<Node> excludedNodes = new HashSet<>();
           Set<String> excludedGroups = new HashSet();
+
+          // 选择的MG不能和上下两个OR group以及左边的Group在同一个结点
+          // 由于当前MG和这些group有重叠文件，如果在同一个结点文件在选择三副本时会少
           excludedGroups.add(tableOperator.readGroupPosition(filename, new Coord(colId - 1, rowId, zId),
               MG_PREFIX));
           excludedGroups.add(tableOperator.readGroupPosition(filename, new Coord(0, rowId, zId),
@@ -294,7 +320,7 @@ public class BlockPlacementPolicyRasterGroupRefactor extends BlockPlacementPolic
           }
 
           DatanodeStorageInfo storageInfo =
-              chooseTargetGroupInOrder(NodeBase.ROOT, blocksize, false, excludedNodes, storageTypes, groupFileNum,
+              chooseTargetGroupWithLoadBalance(NodeBase.ROOT, blocksize, false, excludedNodes, storageTypes, groupFileNum,
                   false);
           if (storageInfo != null) {
             tableOperator
@@ -304,19 +330,22 @@ public class BlockPlacementPolicyRasterGroupRefactor extends BlockPlacementPolic
         }
       }
     }
+
+    // 前面为了负载均衡少记了一次，此处加回来
+    nodeGroupCount.put(lastORGroupDatanode, nodeGroupCount.get(lastORGroupDatanode) + 1);
   }
 
 
   // choose a datanode for a group in order of the load recorder in nodeGroupCount
-  private DatanodeStorageInfo chooseTargetGroupInOrder(String scope, long blocksize, boolean avoidStaleNodes,
-                                                       Set<Node> excludedNodes,
-                                                       EnumMap<StorageType, Integer> storageTypes, int groupFileNum,
-                                                       boolean isORGroup) {
+  private DatanodeStorageInfo chooseTargetGroupWithLoadBalance(String scope, long blocksize, boolean avoidStaleNodes,
+                                                               Set<Node> excludedNodes,
+                                                               EnumMap<StorageType, Integer> storageTypes, int groupFileNum,
+                                                               boolean isORGroup) {
     LinkedList<String> orderedList = new LinkedList<>(nodeGroupCount.keySet());
     //    orderedList.sort((o1, o2) -> nodeDataCount.get(o1).compareTo(nodeDataCount.get(o2)) * (-1));
     String tempStr;
-    for (int i = 0; i < orderedList.size(); i++) {
-      for (int j = i; j < orderedList.size() - 1; j++) {
+    for (int i = 0; i < orderedList.size(); i++) {   // 冒泡排序...  放group少的结点放后面
+      for (int j = 0; j < orderedList.size() - 1 -i; j++) {
         if (nodeGroupCount.get(orderedList.get(j)) < nodeGroupCount.get(orderedList.get(j + 1)) ||
             ((nodeGroupCount.get(orderedList.get(j)).equals(nodeGroupCount.get(orderedList.get(j + 1)))) &&
                 (nodeDataCount.get(orderedList.get(j)) < nodeDataCount.get(orderedList.get(j + 1))))) {

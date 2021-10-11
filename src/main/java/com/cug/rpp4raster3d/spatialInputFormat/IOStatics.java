@@ -14,6 +14,8 @@ import java.util.Date;
 /**
  * 直接在InputFormat中统计IO的开销
  *
+ * 读数据的过程不影响此数据（如buffer等），仅用于理论处理
+ *
  */
 public class IOStatics {
 
@@ -56,20 +58,18 @@ public class IOStatics {
   }
 
   public void writeTofile() {
-    // write to a local file
     try {
       File file = new File("/tmp/rpp_iostats_theory");
       if (!file.isFile()) {
         file.createNewFile();
-        FileOutputStream fileOutputStream = null;
-        fileOutputStream = new FileOutputStream(file, true);
-        BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fileOutputStream));
-        Date date = new Date();
-        DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd|HH:mm");
-        bufferedWriter.write(dateFormat.format(date) + " " + splitId + " " + totalIO + "G " +
-            remoteIO + "G\n");
-        bufferedWriter.close();
       }
+      FileOutputStream fileOutputStream = new FileOutputStream(file, true);
+      BufferedWriter bufferedWriter = new BufferedWriter(new OutputStreamWriter(fileOutputStream));
+      Date date = new Date();
+      DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd|HH:mm");
+      bufferedWriter.write(dateFormat.format(date) + " " + splitId + " " + totalIO + " " +
+          remoteIO + "\n");
+      bufferedWriter.close();
     } catch (IOException e) {
       e.printStackTrace();
     }

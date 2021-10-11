@@ -353,11 +353,11 @@ public class SpatialRecordReaderSimpleRaster3D extends RecordReader<LongWritable
       long totalReading = hdfsDataInputStream.getReadStatistics().getTotalBytesRead();
       long localReading = hdfsDataInputStream.getReadStatistics().getTotalShortCircuitBytesRead();
       String ioStatics =
-          "fileId: " + inputStreamId + " -- remote: " + remoteReading / 1024 / 1024 + " -- total: " +
-              totalReading / 1024 / 1024 + " " + "-- " + "short circuit: " + localReading / 1024 / 1024;
+          "fileId: " + inputStreamId + " -- remote: " + remoteReading / 1024.0 / 1024.0 + " -- total: " +
+              totalReading / 1024.0 / 1024.0 + " " + "-- " + "short circuit: " + localReading / 1024.0 / 1024.0;
       LOG.debug(ioStatics);
     }
-    LOG.debug("inputStream read time: " + sw.now() / 1000 / 1000 / 1000.0 + "s");
+    LOG.debug("inputStream read time: " + sw.now() / 1000.0 / 1000.0 / 1000.0 + "s");
   }
 
   private void enforceSkip(InputStream inputStream, long n) {
@@ -423,13 +423,13 @@ public class SpatialRecordReaderSimpleRaster3D extends RecordReader<LongWritable
 
         Date date = new Date();
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd|HH:mm");
-        bufferedWriter.write(dateFormat.format(date) + " " + splitId + " " + totalReading / 1024.0 + " " +
-            remoteReading / 1024.0 + "\n");
+        bufferedWriter.write(dateFormat.format(date) + " " + splitId + " " + totalReading / 1024.0 / 1024.0 + " " +
+            remoteReading / 1024.0 / 1024.0 + "\n");
         bufferedWriter.close();
 
         LOG.info(
-            dateFormat.format(date) + " " + splitId + " " + totalReading / 1024.0 + " " +
-                remoteReading / 1024.0 + "\n");
+            dateFormat.format(date) + " " + splitId + " " + totalReading / 1024.0 / 1024.0 + " " +
+                remoteReading / 1024.0 / 1024.0 + "\n");
 
         ioStatics.writeTofile();
       }

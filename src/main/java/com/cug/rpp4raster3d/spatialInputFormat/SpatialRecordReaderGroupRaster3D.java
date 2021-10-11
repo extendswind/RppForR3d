@@ -117,7 +117,9 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
       FSDataInputStream fsDataInputStream = fs.open(paths[i]);
       if (!isLocalFileSystem) {
         inputStreamsForIOStatistics[i] = (HdfsDataInputStream) fsDataInputStream;
-        inputStreams[i] = new DataInputStream(new BufferedInputStream(inputStreamsForIOStatistics[i]));
+        inputStreams[i] = fsDataInputStream;
+        // TODO 去掉buffer提高IO统计精度
+//        inputStreams[i] = new DataInputStream(new BufferedInputStream(inputStreamsForIOStatistics[i]));
       } else {
         inputStreams[i] = new DataInputStream(new BufferedInputStream(fsDataInputStream));
       }
@@ -165,7 +167,7 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
       valueXDim = (2 * radius) % cellXDim + cellXDim * (groupXSize - 1);
     }
 
-    // TODO 不考虑半径超过一个文件的情况 因此groupZSize在顶层和底层时为2，其它层为3
+    // TODO 不考虑半径超过一个文件的情况 因此groupZSize在顶层和底层时为groupInfoZSize + 1，其它层为groupZSize + 2
     // TODO BUG 当数据不是groupZSize的整数倍时暂不考虑
     if (groupZSize == groupInfoZSize + 2) {  // 中间层
       valueZDim = cellZDim * (groupZSize - 2) + radius * 2;
@@ -325,8 +327,8 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
       long remoteReading = hdfsDataInputStream.getReadStatistics().getRemoteBytesRead();
       long totalReading = hdfsDataInputStream.getReadStatistics().getTotalBytesRead();
       long localReading = hdfsDataInputStream.getReadStatistics().getTotalShortCircuitBytesRead();
-      String ioStatics = "file id: " + inputStreamId + " -- remote: " + remoteReading / 1024 / 1024 +
-          " -- total: " + totalReading / 1024 / 1024 + " -- " + "short circuit: " + localReading / 1024 / 1024;
+      String ioStatics = "file id: " + inputStreamId + " -- remote: " + remoteReading / 1024.0 / 1024.0 +
+          " -- total: " + totalReading / 1024.0 / 1024.0 + " -- " + "short circuit: " + localReading / 1024.0 / 1024.0;
       LOG.debug(ioStatics);
     }
     LOG.debug("inputStream read time: " + sw.now() / 1000 / 1000 / 1000.0 + "s");
@@ -378,13 +380,13 @@ public class SpatialRecordReaderGroupRaster3D extends RecordReader<LongWritable,
 
         Date date = new Date();
         DateFormat dateFormat = new SimpleDateFormat("yyyy/MM/dd|HH:mm");
-        bufferedWriter.write(dateFormat.format(date) + " " + splitId + " " + totalReading / 1024 + " " +
-            remoteReading / 1024 + "\n");
+        bufferedWriter.write(dateFormat.format(date) + " " + splitId + " " + totalReading / 1024.0 / 1024.0 + " " +
+            remoteReading / 1024.0 / 1024.0 + "\n");
         bufferedWriter.close();
 
         LOG.info(
-            dateFormat.format(date) + " " + splitId + " " + totalReading / 1024 / 1024 + "Mb " +
-                remoteReading / 1024 / 1024 + "Mb\n");
+            dateFormat.format(date) + " " + splitId + " " + totalReading / 1024.0 / 1024.0 + "Mb " +
+                remoteReading / 1024.0 / 1024.0 + "Mb\n");
       }
 
       for (DataInputStream inputStream : inputStreams) {

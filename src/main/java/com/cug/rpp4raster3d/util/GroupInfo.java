@@ -35,6 +35,6 @@ public class GroupInfo {
     }
 
     public static GroupInfo getDefaultGroupInfo(){
-        return new GroupInfo(2, 3, 1,1);
+        return new GroupInfo(2, 2, 1,1);
     }
 }
